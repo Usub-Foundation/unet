@@ -16,15 +16,16 @@ ServerHandler handlerFunction(usub::unet::http::Request &request, usub::unet::ht
     std::cout << "Query Params:\n"
               << request.metadata.uri.query << "\n";
 
-    // response.setStatus(200)
-    //         .setMessage("OK")
-    //         .addHeader("Content-Type", "text/html")
-    //         .setBody("Hello World! How are you \n");
+    response.setStatus(200)
+            .setStatusMessage("OK")
+            .addHeader("Content-Type", "text/html")
+            .setBody("Hello World! How are you \n");
     // co_await test1();
     co_return;
 }
 
 int main() {
     usub::unet::http::ServerRadix server;
+    server.handle("GET", "/path", handlerFunction);
     server.run();
 }

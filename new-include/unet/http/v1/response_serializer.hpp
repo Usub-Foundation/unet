@@ -36,6 +36,8 @@ namespace usub::unet::http::v1 {
 
         SerializerContext &getContext();
 
+        static std::string serialize(const Response &response);
+
     private:
         SerializerContext context_;
     };

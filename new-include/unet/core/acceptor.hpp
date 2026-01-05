@@ -20,9 +20,9 @@ namespace usub::unet::core {
         Acceptor(std::shared_ptr<Uvent> uvent /*Other params*/) : uvent_(uvent) {}
 
 
-        template<typename Dispatcher>
+        template<typename Dispatcher, typename RouterType>
             requires StreamHandlerFor<StreamHandler, Dispatcher>
-        usub::uvent::task::Awaitable<void> acceptLoop() {
+        usub::uvent::task::Awaitable<void> acceptLoop(std::shared_ptr<RouterType> router) {
             // TODO: propper init
             usub::uvent::net::TCPServerSocket server_socket{
                     "0.0.0.0",
@@ -35,7 +35,7 @@ namespace usub::unet::core {
                 auto soc = co_await server_socket.async_accept();
 
                 if (soc) {
-                    Dispatcher dispatcher{};
+                    Dispatcher dispatcher{router};
                     usub::uvent::system::co_spawn(StreamHandler::readLoop(std::move(soc.value()), std::move(dispatcher)));
                 }
             }

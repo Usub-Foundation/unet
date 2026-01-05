@@ -21,8 +21,9 @@ namespace usub::unet::http {
     template<class RouterType>
     class Dispatcher {
     public:
-        Dispatcher() = default;
+        Dispatcher() = delete;//("Unsafe to deafault construct")
         ~Dispatcher() = default;
+        Dispatcher(std::shared_ptr<RouterType> router) : router_(router), session_(router_) {}
 
         usub::uvent::task::Awaitable<void> on_read(std::string_view data, usub::uvent::net::TCPClientSocket &socket) {
             // We need to determine the http version here, non tls allows for http0.9 http1.0 http1.1 and h2c
@@ -87,7 +88,7 @@ namespace usub::unet::http {
         //TODO: implement constructors
         explicit ServerImpl(const ServerConfig &config) : config_(config), router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)) {
             usub::unet::core::Acceptor<usub::unet::core::stream::PlainText> acceptor(this->uvent_);
-            usub::uvent::system::co_spawn(acceptor.acceptLoop<decltype(this->dispatcher_)>());
+            usub::uvent::system::co_spawn(acceptor.acceptLoop<Dispatcher<RouterType>>(router_));
             return;
         };
 
@@ -97,7 +98,7 @@ namespace usub::unet::http {
 
         ServerImpl() : router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)) {
             usub::unet::core::Acceptor<usub::unet::core::stream::PlainText> acceptor(this->uvent_);
-            usub::uvent::system::co_spawn(acceptor.acceptLoop<decltype(this->dispatcher_)>());
+            usub::uvent::system::co_spawn(acceptor.acceptLoop<Dispatcher<RouterType>>(router_));
             return;
         };
 
@@ -119,7 +120,7 @@ namespace usub::unet::http {
         ServerConfig config_;
         std::shared_ptr<RouterType> router_;
         std::shared_ptr<usub::Uvent> uvent_;
-        Dispatcher<RouterType> dispatcher_;
+        // Dispatcher<RouterType> dispatcher_;
     };
 
     using ServerRadix = ServerImpl<usub::unet::http::router::Radix>;

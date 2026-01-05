@@ -29,7 +29,7 @@ namespace usub::unet::http {
         std::string body{};
 
         std::unordered_map<std::string, std::string> uri_params{};
-        std::any user_data{};
+        std::any user_data{};// A place to store content between middlewares
 
         MessagePolicy policy{};// keep it last for easier initialization
     };

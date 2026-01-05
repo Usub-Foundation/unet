@@ -8,13 +8,15 @@
 #include "unet/http/router/route.hpp"
 #include "unet/http/session.hpp"
 #include "unet/http/v1/request_parser.hpp"
+#include "unet/http/v1/response_serializer.hpp"
 
 namespace usub::unet::http {
 
     template<typename RouterType>
     class ServerSession<VERSION::HTTP_1_1, RouterType> {
     public:
-        ServerSession() = default;
+        explicit ServerSession(std::shared_ptr<RouterType> router) : router_(router) {}
+        ServerSession() = delete;
         ~ServerSession() = default;
 
         usub::uvent::task::Awaitable<void> on_read(std::string_view data, usub::uvent::net::TCPClientSocket &socket) {
@@ -34,6 +36,7 @@ namespace usub::unet::http {
                     state = v1::RequestParser::STATE::FAILED;
                     // TODO: Status code & message
                     this->response_.metadata.status_code = match.error();
+                    goto send_body;
                 }
                 this->current_route_ = match.value();
             }
@@ -63,7 +66,12 @@ namespace usub::unet::http {
                     if (!middleware_result) {
                         break;
                     }
-                    goto continue_parse;
+                    state = this->request_reader_.getContext().post_header_middleware_state;
+                    if (state != v1::RequestParser::STATE::COMPLETE) {
+                        goto continue_parse;
+                    } else {
+                        goto complete;
+                    }
                     break;
                 }
                 case v1::RequestParser::STATE::DATA_CHUNK_DONE: {
@@ -75,7 +83,7 @@ namespace usub::unet::http {
                     break;
                 }
                 case v1::RequestParser::STATE::COMPLETE: {
-
+                complete:
                     auto handler = this->current_route_->handler;
                     co_await handler(request_, response_);
 
@@ -116,7 +124,7 @@ namespace usub::unet::http {
 
             } else {
             }
-            std::string responseString{"200 OK\r\nServer: usub/unet\r\nContent-Length: 0\r\n\r\n"};
+            std::string responseString = v1::ResponseSerializer::serialize(this->response_);
             ssize_t wrsz = co_await socket.async_write((uint8_t *) responseString.data(), responseString.size());
             if (wrsz <= 0) {
                 co_return;
@@ -128,7 +136,7 @@ namespace usub::unet::http {
         Request request_{};
         Response response_{};
         v1::RequestParser request_reader_{};
-        // HTTP1ResponseSerializer response_writer_;
+        v1::ResponseSerializer response_writer_{};
         std::shared_ptr<RouterType> router_;
         // TODO: Better way to handle current route?
         // std::optional<router::Route *> current_route_;

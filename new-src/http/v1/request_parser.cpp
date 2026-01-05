@@ -493,14 +493,14 @@ namespace usub::unet::http::v1 {
                         if (ctx.headers_size > request.policy.max_header_size) {
                             return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
                         }
-                        state = STATE::HEADERS_DONE;
-                        return {};
+                        state = STATE::HEADERS_VALIDATION;
+                        // return {};
                     } else {
                         return fail(Status::BAD_REQUEST, "Header Missing CR/unknown char");
                     }
                     [[fallthrough]];
                 }
-                case STATE::HEADERS_DONE: {
+                case STATE::HEADERS_VALIDATION: {
                     ctx.current_state_size = 0;
 
                     const bool method_no_body =
@@ -606,7 +606,7 @@ namespace usub::unet::http::v1 {
                     }
 
                     if (has_chunked && content_length_seen) {
-                        return fail(Status::BAD_REQUEST, "Both Transfer-Encoding and Content-Length");
+                        return fail(Status::BAD_REQUEST, "Both Transfer-Encoding and Content-Length present");
                     }
 
                     if (method_no_body) {
@@ -616,13 +616,15 @@ namespace usub::unet::http::v1 {
                         if (content_length_seen && content_length_value != 0) {
                             return fail(Status::BAD_REQUEST, "Body not allowed for method");
                         }
-                        state = STATE::COMPLETE;
+                        ctx.post_header_middleware_state = STATE::COMPLETE;
+                        state = STATE::HEADERS_DONE;
                         break;
                     }
 
                     if (has_chunked) {
                         ctx.current_state_size = 0;
-                        state = STATE::DATA_CHUNKED_SIZE;
+                        ctx.post_header_middleware_state = STATE::DATA_CHUNKED_SIZE;
+                        state = STATE::HEADERS_DONE;
                         break;
                     }
 
@@ -632,14 +634,22 @@ namespace usub::unet::http::v1 {
                         }
                         ctx.body_read_size = content_length_value;
                         if (content_length_value == 0) {
-                            state = STATE::COMPLETE;
+                            ctx.post_header_middleware_state = STATE::COMPLETE;
+                            state = STATE::HEADERS_DONE;
                         } else {
-                            state = STATE::DATA_CONTENT_LENGTH;
+                            ctx.post_header_middleware_state = STATE::DATA_CONTENT_LENGTH;
+                            state = STATE::HEADERS_DONE;
                         }
                         break;
                     }
 
-                    state = STATE::COMPLETE;
+                    ctx.post_header_middleware_state = STATE::DATA_CONTENT_LENGTH;
+                    state = STATE::HEADERS_DONE;
+                    break;
+                }
+                case STATE::HEADERS_DONE: {
+                    // Realistically we dont get there... but so the parser can work standalone
+                    state = this->context_.post_header_middleware_state;
                     break;
                 }
                 case STATE::DATA_CONTENT_LENGTH: {

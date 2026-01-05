@@ -17,7 +17,7 @@ namespace usub::unet::http::v1 {
 
     class RequestParser {
     public:
-        enum class STATE {
+        enum class STATE : std::uint8_t {
             METHOD_TOKEN,
             URI,
             ORIGIN_FORM,
@@ -35,6 +35,7 @@ namespace usub::unet::http::v1 {
             HEADER_CR,
             HEADER_LF,
             HEADERS_CRLF,
+            HEADERS_VALIDATION,
             HEADERS_DONE,
             DATA_CONTENT_LENGTH,
             DATA_CHUNKED_SIZE,
@@ -57,6 +58,7 @@ namespace usub::unet::http::v1 {
 
         struct ParserContext {
             STATE state{STATE::METHOD_TOKEN};
+            STATE post_header_middleware_state{STATE::METHOD_TOKEN};// State after we invoke middleware, to avoid reparse
             std::pair<std::string, std::string> kv_buffer{};
             std::size_t headers_size{0};
 
