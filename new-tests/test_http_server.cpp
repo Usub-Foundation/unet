@@ -17,7 +17,7 @@ ServerHandler handlerFunction(usub::unet::http::Request &request, usub::unet::ht
               << request.metadata.uri.query << "\n";
 
     response.setStatus(200)
-            .setStatusMessage("OK")
+            // .setStatusMessage("NOK")
             .addHeader("Content-Type", "text/html")
             .setBody("Hello World! How are you \n");
     // co_await test1();
