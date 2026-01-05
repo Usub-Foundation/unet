@@ -663,7 +663,9 @@ namespace usub::unet::http::v1 {
                     if (already >= content_length) break;
 
                     // TODO: memcpy?
-                    request.body.append(static_cast<const char *>(begin), take);
+                    // request.body.append(static_cast<const char *>(begin), take);
+                    // MSVC?
+                    request.body.append(&*begin, take);
 
                     begin += take;
                     ctx.current_state_size += take;
