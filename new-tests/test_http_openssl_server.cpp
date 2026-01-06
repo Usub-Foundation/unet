@@ -1,13 +1,12 @@
+#include <unet/core/streams/openssl.hpp>
 #include <unet/http.hpp>
 
-bool metadataMiddle(const usub::unet::http::Request &request,
-                    usub::unet::http::Response &response) {
+bool metadataMiddle(const usub::unet::http::Request &request, usub::unet::http::Response &response) {
     std::cout << "metadata middleware reached" << std::endl;
     return true;
 }
 
-bool globalMetadataMiddle(const usub::unet::http::Request &request,
-                          usub::unet::http::Response &response) {
+bool globalMetadataMiddle(const usub::unet::http::Request &request, usub::unet::http::Response &response) {
     std::cout << "global metadata middleware reached" << std::endl;
     return true;
 }
@@ -17,8 +16,7 @@ bool headerMiddle(const usub::unet::http::Request &request, usub::unet::http::Re
     return true;
 }
 
-bool globalHeaderMiddle(const usub::unet::http::Request &request,
-                        usub::unet::http::Response &response) {
+bool globalHeaderMiddle(const usub::unet::http::Request &request, usub::unet::http::Response &response) {
     std::cout << "global header middleware reached" << std::endl;
     return true;
 }
@@ -28,14 +26,12 @@ bool bodyMiddle(const usub::unet::http::Request &request, usub::unet::http::Resp
     return true;
 }
 
-bool responseMiddle(const usub::unet::http::Request &request,
-                    usub::unet::http::Response &response) {
+bool responseMiddle(const usub::unet::http::Request &request, usub::unet::http::Response &response) {
     std::cout << "request middleware reached " << std::endl;
     return true;
 }
 
-ServerHandler handlerFunction(usub::unet::http::Request &request,
-                              usub::unet::http::Response &response) {
+ServerHandler handlerFunction(usub::unet::http::Request &request, usub::unet::http::Response &response) {
 
     // auto headers = request.getHeaders();
     // for (const auto &[name, values]: headers) {
@@ -59,7 +55,7 @@ ServerHandler handlerFunction(usub::unet::http::Request &request,
 }
 
 int main() {
-    usub::unet::http::ServerRadix server;
+    usub::unet::http::ServerImpl<usub::unet::http::router::Radix, usub::unet::core::OpenSSLStream> server;
     server.addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, globalHeaderMiddle)
             .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::METADATA, globalMetadataMiddle);
     server.handle("GET", "/path", handlerFunction)

@@ -2,7 +2,9 @@
 
 namespace usub::unet::http {
 
-    MiddlewareChain &MiddlewareChain::emplace_back(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware) {
+    MiddlewareChain &
+    MiddlewareChain::emplace_back(MIDDLEWARE_PHASE phase,
+                                  std::function<MiddlewareFunctionType> middleware) {
         switch (phase) {
             case MIDDLEWARE_PHASE::METADATA:
                 this->settings_middlewares_.emplace_back(std::move(middleware));
@@ -20,7 +22,28 @@ namespace usub::unet::http {
         return *this;
     }
 
-    bool MiddlewareChain::execute(MIDDLEWARE_PHASE phase, Request &request, Response &response) const {
+    MiddlewareChain &
+    MiddlewareChain::addMiddleware(MIDDLEWARE_PHASE phase,
+                                   std::function<MiddlewareFunctionType> middleware) {
+        switch (phase) {
+            case MIDDLEWARE_PHASE::METADATA:
+                this->settings_middlewares_.emplace_back(std::move(middleware));
+                break;
+            case MIDDLEWARE_PHASE::HEADER:
+                this->header_middlewares_.emplace_back(std::move(middleware));
+                break;
+            case MIDDLEWARE_PHASE::BODY:
+                this->body_middlewares_.emplace_back(std::move(middleware));
+                break;
+            case MIDDLEWARE_PHASE::RESPONSE:
+                this->response_middlewares_.emplace_back(std::move(middleware));
+                break;
+        }
+        return *this;
+    }
+
+    bool MiddlewareChain::execute(MIDDLEWARE_PHASE phase, Request &request,
+                                  Response &response) const {
         const std::vector<std::function<MiddlewareFunctionType>> *middlewares = nullptr;
 
         switch (phase) {

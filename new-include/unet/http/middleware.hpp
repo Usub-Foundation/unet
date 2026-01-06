@@ -55,7 +55,8 @@ namespace usub::unet::http {
      * 
      * @note Intended for logging mostly.
      */
-    using GenericErrorFunctionType = usub::uvent::task::Awaitable<void>(const Request &, const Response &, const usub::unet::utils::UnetError &);
+    using GenericErrorFunctionType = usub::uvent::task::Awaitable<void>(
+            const Request &, const Response &, const usub::unet::utils::UnetError &);
 
     /**
      * @class MiddlewareChain
@@ -112,8 +113,10 @@ namespace usub::unet::http {
          * @see MiddlewarePhase
          * @see MiddlewareFunctionType
          */
-        MiddlewareChain &emplace_back(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware);
-
+        MiddlewareChain &emplace_back(MIDDLEWARE_PHASE phase,
+                                      std::function<MiddlewareFunctionType> middleware);
+        MiddlewareChain &addMiddleware(MIDDLEWARE_PHASE phase,
+                                       std::function<MiddlewareFunctionType> middleware);
         /**
          * @brief Executes all middleware functions associated with a specific phase.
          *
