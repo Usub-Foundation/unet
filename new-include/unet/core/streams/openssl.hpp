@@ -6,6 +6,8 @@
 #include <openssl/ssl.h>
 #include <uvent/Uvent.h>
 
+#warning "NOT IMPLEMENTED IN FULL"
+
 #include "unet/core/acceptor.hpp"
 
 namespace usub::unet::core {
@@ -46,7 +48,6 @@ namespace usub::unet::core {
     public:
         OpenSSLStream() = delete;
 
-        // TODO: Implement
         OpenSSLStream(std::string_view key, std::string_view cert) {
             // TODO: Propper config passing
             ctx_ = openssl_create_ctx(key.data(), cert.data());
@@ -70,7 +71,7 @@ namespace usub::unet::core {
         }
 
         template<typename Dispatcher>
-        usub::uvent::task::Awaitable<void> readLoop(usub::uvent::net::TCPClientSocket socket, Dispatcher &&dispatcher) {
+        usub::uvent::task::Awaitable<void> readLoop(usub::uvent::net::TCPClientSocket socket, Dispatcher dispatcher) {
 
             SSL *ssl = openssl_create_ssl(this->ctx_);
             if (!ssl) {
@@ -147,8 +148,8 @@ namespace usub::unet::core {
 
                 bool should_cleanup = false;
                 while (true) {
-                    int ret = SSL_is_init_finished(ssl) ? ::SSL_read(ssl, ssl_buffer.data(), MAX_READ_SIZE)
-                                                        : ::SSL_do_handshake(ssl);
+                    std::size_t ret = SSL_is_init_finished(ssl) ? ::SSL_read(ssl, ssl_buffer.data(), MAX_READ_SIZE)
+                                                                : ::SSL_do_handshake(ssl);
                     if (ret > 0) {
                         // std::string request_string{ssl_buffer.data(),
                         //                            ssl_buffer.data() + ssl_buffer.size()};

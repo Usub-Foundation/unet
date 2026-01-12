@@ -28,8 +28,8 @@ namespace usub::unet::http::v1 {
             AUTHORITY_FORM,
             ASTERISK_FORM,
             VERSION,
-            METADATA_CRLF,
-            METADATA_DONE,
+            REQUEST_LINE_CRLF_HTTP_0_9,// Not implemented
+            REQUEST_LINE_CRLF,
             HEADER_KEY,
             HEADER_VALUE,
             HEADER_CR,
@@ -58,18 +58,14 @@ namespace usub::unet::http::v1 {
 
         struct ParserContext {
             STATE state{STATE::METHOD_TOKEN};
-            STATE post_header_middleware_state{STATE::METHOD_TOKEN};// State after we invoke middleware, to avoid reparse
+            STATE post_header_middleware_state{
+                    STATE::METHOD_TOKEN};// State after we invoke middleware, to avoid reparse
             std::pair<std::string, std::string> kv_buffer{};
             std::size_t headers_size{0};
 
             std::size_t body_bytes_read{0};
-            std::size_t chunk_bytes_read{0};
+            // std::size_t chunk_bytes_read{0};
 
-            // TODO: another name or maybe store it in body bytes read
-            // On a completely side node, thank LLMs for doing absolutely nothing
-            // MANUALLY Moving from Message.cpp would've been fu... FASTER
-            // Now I have to go through this mess and clean up
-            // Well today I once again proved that using agents is as useless as it can be
             std::size_t current_state_size{0};
 
             std::size_t body_read_size{};// content-length or current chunk read size
@@ -82,7 +78,8 @@ namespace usub::unet::http::v1 {
         // Tries to parse full request
         static std::expected<Request, ParseError> parse(const std::string_view raw_request);
 
-        std::expected<void, ParseError> parse(Request &request, std::string_view::const_iterator &begin, const std::string_view::const_iterator end);
+        std::expected<void, ParseError> parse(Request &request, std::string_view::const_iterator &begin,
+                                              const std::string_view::const_iterator end);
 
         ParserContext &getContext();
 

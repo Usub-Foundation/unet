@@ -31,9 +31,7 @@ namespace usub::unet::http::v1 {
             for (char c = 'A'; c <= 'Z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = 'a'; c <= 'z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = '0'; c <= '9'; ++c) table[static_cast<unsigned char>(c)] = 1;
-            for (char c: {'+', '-', '.'}) {
-                table[static_cast<unsigned char>(c)] = 1;
-            }
+            for (char c: {'+', '-', '.'}) { table[static_cast<unsigned char>(c)] = 1; }
             return table;
         }
 
@@ -42,15 +40,11 @@ namespace usub::unet::http::v1 {
             for (char c = 'A'; c <= 'Z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = 'a'; c <= 'z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = '0'; c <= '9'; ++c) table[static_cast<unsigned char>(c)] = 1;
-            for (char c: {'-', '.', '_', '~'}) {
-                table[static_cast<unsigned char>(c)] = 1;
-            }
+            for (char c: {'-', '.', '_', '~'}) { table[static_cast<unsigned char>(c)] = 1; }
             for (char c: {'!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='}) {
                 table[static_cast<unsigned char>(c)] = 1;
             }
-            for (char c: {':', '@', '/'}) {
-                table[static_cast<unsigned char>(c)] = 1;
-            }
+            for (char c: {':', '@', '/'}) { table[static_cast<unsigned char>(c)] = 1; }
             return table;
         }
 
@@ -59,15 +53,11 @@ namespace usub::unet::http::v1 {
             for (char c = 'A'; c <= 'Z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = 'a'; c <= 'z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = '0'; c <= '9'; ++c) table[static_cast<unsigned char>(c)] = 1;
-            for (char c: {'-', '.', '_', '~'}) {
-                table[static_cast<unsigned char>(c)] = 1;
-            }
+            for (char c: {'-', '.', '_', '~'}) { table[static_cast<unsigned char>(c)] = 1; }
             for (char c: {'!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='}) {
                 table[static_cast<unsigned char>(c)] = 1;
             }
-            for (char c: {':', '@', '/', '?', '%'}) {
-                table[static_cast<unsigned char>(c)] = 1;
-            }
+            for (char c: {':', '@', '/', '?', '%'}) { table[static_cast<unsigned char>(c)] = 1; }
             return table;
         }
 
@@ -76,9 +66,7 @@ namespace usub::unet::http::v1 {
             for (char c = 'A'; c <= 'Z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = 'a'; c <= 'z'; ++c) table[static_cast<unsigned char>(c)] = 1;
             for (char c = '0'; c <= '9'; ++c) table[static_cast<unsigned char>(c)] = 1;
-            for (char c: {'-', '.', '_', '~'}) {
-                table[static_cast<unsigned char>(c)] = 1;
-            }
+            for (char c: {'-', '.', '_', '~'}) { table[static_cast<unsigned char>(c)] = 1; }
             for (char c: {'!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=', '%'}) {
                 table[static_cast<unsigned char>(c)] = 1;
             }
@@ -105,46 +93,26 @@ namespace usub::unet::http::v1 {
         constexpr std::array<std::uint8_t, 256> host_table = build_host_table();
         constexpr std::array<std::uint8_t, 256> version_table = build_version_table();
 
-        inline bool is_version(unsigned char c) {
-            return version_table[c] != 0;
-        }
+        inline bool is_version(unsigned char c) { return version_table[c] != 0; }
 
-        inline bool is_alpha(unsigned char c) {
-            return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-        }
+        inline bool is_alpha(unsigned char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
 
-        inline bool is_tchar(unsigned char c) {
-            return tchar_table[c] != 0;
-        }
+        inline bool is_tchar(unsigned char c) { return tchar_table[c] != 0; }
 
-        inline bool is_vchar_or_obs(unsigned char c) {
-            return vchar_obs_table[c] != 0;
-        }
+        inline bool is_vchar_or_obs(unsigned char c) { return vchar_obs_table[c] != 0; }
 
-        inline bool is_scheme_char(unsigned char c) {
-            return scheme_table[c] != 0;
-        }
+        inline bool is_scheme_char(unsigned char c) { return scheme_table[c] != 0; }
 
-        inline bool is_path_char(unsigned char c) {
-            return path_table[c] != 0;
-        }
+        inline bool is_path_char(unsigned char c) { return path_table[c] != 0; }
 
-        inline bool is_query_char(unsigned char c) {
-            return query_table[c] != 0;
-        }
+        inline bool is_query_char(unsigned char c) { return query_table[c] != 0; }
 
-        inline bool is_host_char(unsigned char c) {
-            return host_table[c] != 0;
-        }
+        inline bool is_host_char(unsigned char c) { return host_table[c] != 0; }
 
-        inline char ascii_lower(char c) {
-            return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
-        }
+        inline char ascii_lower(char c) { return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c; }
 
         inline bool is_hex_digit(unsigned char c) {
-            return (c >= '0' && c <= '9') ||
-                   (c >= 'a' && c <= 'f') ||
-                   (c >= 'A' && c <= 'F');
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
 
         inline std::uint8_t hex_value(unsigned char c) {
@@ -156,12 +124,8 @@ namespace usub::unet::http::v1 {
         inline std::string_view trim_ows(const std::string &value) {
             std::size_t start = 0;
             std::size_t end = value.size();
-            while (start < end && (value[start] == ' ' || value[start] == '\t')) {
-                ++start;
-            }
-            while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) {
-                --end;
-            }
+            while (start < end && (value[start] == ' ' || value[start] == '\t')) { ++start; }
+            while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) { --end; }
             return std::string_view(value.data() + start, end - start);
         }
 
@@ -169,9 +133,7 @@ namespace usub::unet::http::v1 {
             constexpr std::string_view token = "chunked";
             std::size_t i = 0;
             while (i < value.size()) {
-                while (i < value.size() && (value[i] == ' ' || value[i] == '\t' || value[i] == ',')) {
-                    ++i;
-                }
+                while (i < value.size() && (value[i] == ' ' || value[i] == '\t' || value[i] == ',')) { ++i; }
                 if (i + token.size() > value.size()) break;
                 bool match = true;
                 for (std::size_t j = 0; j < token.size(); ++j) {
@@ -182,9 +144,7 @@ namespace usub::unet::http::v1 {
                     }
                 }
                 if (match) return true;
-                while (i < value.size() && value[i] != ',') {
-                    ++i;
-                }
+                while (i < value.size() && value[i] != ',') { ++i; }
             }
             return false;
         }
@@ -198,12 +158,8 @@ namespace usub::unet::http::v1 {
         auto end = raw_request.end();
         for (;;) {
             auto result = parser.parse(request, begin, end);
-            if (!result) {
-                return std::unexpected(result.error());
-            }
-            if (parser.context_.state == STATE::COMPLETE) {
-                return request;
-            }
+            if (!result) { return std::unexpected(result.error()); }
+            if (parser.context_.state == STATE::COMPLETE) { return request; }
             if (begin == end) {
                 ParseError err{ParseError::CODE::GENERIC_ERROR, STATUS_CODE::BAD_REQUEST, "Incomplete request", {}};
                 return std::unexpected(err);
@@ -211,9 +167,11 @@ namespace usub::unet::http::v1 {
         }
     }
 
-    std::expected<void, ParseError> RequestParser::parse(Request &request, std::string_view::const_iterator &begin, const std::string_view::const_iterator end) {
+    std::expected<void, ParseError> RequestParser::parse(Request &request, std::string_view::const_iterator &begin,
+                                                         const std::string_view::const_iterator end) {
         auto &ctx = this->context_;
         auto &state = ctx.state;
+        if (state == STATE::HEADERS_DONE) { state = ctx.post_header_middleware_state; }
         using Status = usub::unet::http::STATUS_CODE;
 
         // TODO future reimplementation
@@ -238,11 +196,11 @@ namespace usub::unet::http::v1 {
             switch (state) {
                 case STATE::METHOD_TOKEN: {
                     auto &method = request.metadata.method_token;
-                    // TODO: WTF? Ok, imma leave it here for now, because it's 5 o'clock, but hell one time I return to LLMS
+                    // TODO: im gonna leave it here for now, because it's 5 o'clock, but hell one time I return to LLMS
                     if (method.empty()) {
                         ctx.headers_size = 0;
                         ctx.body_bytes_read = 0;
-                        ctx.chunk_bytes_read = 0;
+                        // ctx.chunk_bytes_read = 0;
                         ctx.current_state_size = 0;
                         ctx.kv_buffer = {};
                         request.metadata.uri = {};
@@ -255,9 +213,7 @@ namespace usub::unet::http::v1 {
                             ++begin;
                             ++ctx.current_state_size;
                         } else if (*begin == ' ') {
-                            if (method.empty()) {
-                                return fail(Status::BAD_REQUEST, "Empty method token");
-                            }
+                            if (method.empty()) { return fail(Status::BAD_REQUEST, "Empty method token"); }
                             ++begin;
                             state = STATE::URI;
                             ctx.current_state_size = 0;
@@ -295,24 +251,23 @@ namespace usub::unet::http::v1 {
                             ++begin;
                             ++ctx.current_state_size;
                             continue;
-                        }
-                        if (*begin == '?') {
+                        } else if (*begin == '?') {
                             state = STATE::ORIGIN_QUERY;
                             ++begin;
                             ++ctx.current_state_size;
                             break;
-                        }
-                        if (*begin == '#') {
+                        } else if (*begin == '#') {
                             return fail(Status::BAD_REQUEST, "Fragment is diallowed");
                             state = STATE::ORIGIN_FRAGMENT;
                             ++begin;
                             break;
-                        }
-                        if (*begin == ' ') {
+                        } else if (*begin == ' ') {
                             state = STATE::VERSION;
                             ++begin;
                             ctx.current_state_size = 0;
                             break;
+                        } else if (*begin == '\r') {
+                            return fail(Status::BAD_REQUEST, "HTTP/0.9 not supported yet");
                         } else {
                             return fail(Status::BAD_REQUEST, "Invalid path character");
                         }
@@ -373,46 +328,36 @@ namespace usub::unet::http::v1 {
                             ++ctx.current_state_size;
                             ++begin;
                         } else if (*begin == '\r') {
-                            state = STATE::METADATA_CRLF;
+                            state = STATE::REQUEST_LINE_CRLF;
                             ++begin;
                             break;
                         } else {
                             return fail(Status::BAD_REQUEST, "Wrong Version");
                         }
-                        if (ctx.current_state_size > 8) {
-                            return fail(Status::BAD_REQUEST, "Version too large");
-                        }
+                        if (ctx.current_state_size > 8) { return fail(Status::BAD_REQUEST, "Version too large"); }
                     }
                     [[fallthrough]];
                 }
-                case STATE::METADATA_CRLF: {
-                    if (begin == end) [[unlikely]] {
-                        return {};
-                    }
+                case STATE::REQUEST_LINE_CRLF: {
+                    if (begin == end) [[unlikely]] { return {}; }
                     auto &version_buf = ctx.kv_buffer.first;
-                    if (*begin != '\n') {
-                        return fail(Status::BAD_REQUEST, "Missing LF");
-                    }
+                    if (*begin != '\n') { return fail(Status::BAD_REQUEST, "Missing LF"); }
                     ++begin;
                     if (version_buf == "HTTP/1.1") {
                         request.metadata.version = VERSION::HTTP_1_1;
                     } else if (version_buf == "HTTP/1.0") {
                         request.metadata.version = VERSION::HTTP_1_0;
                     } else {
-                        request.metadata.version = VERSION::HTTP_0_9;
+                        return fail(Status::BAD_REQUEST, "Unknown version");
                     }
-                    state = STATE::METADATA_DONE;
-                    return {};
-                }
-                case STATE::METADATA_DONE:
-                    // We clean here in case the user decides to stop in the middleware, saves time in RAREST cases
                     ctx.kv_buffer.first.clear();
                     ctx.current_state_size = 0;
                     state = STATE::HEADER_KEY;
                     [[fallthrough]];
+                }
                 case STATE::HEADER_KEY: {
                     auto &key = ctx.kv_buffer.first;
-                    while (begin != end && state == STATE::HEADER_KEY) {
+                    while (begin != end) {
                         if (is_tchar(*begin)) [[likely]] {
                             key.push_back(static_cast<char>(*begin));
                             ++begin;
@@ -428,7 +373,7 @@ namespace usub::unet::http::v1 {
                     }
                     // Since our reads are limited by 16 kb, there should be no case where not checking this
                     // after every append can cause problems
-                    if (ctx.headers_size > request.policy.max_header_size) {
+                    if (ctx.headers_size > usub::unet::http::max_headers_size) {
                         return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
                     }
                     break;
@@ -452,7 +397,7 @@ namespace usub::unet::http::v1 {
                     }
                     // Since our reads are limited by 16 kb, there should be no case where not checking this
                     // after every append can cause problems
-                    if (ctx.headers_size > request.policy.max_header_size) {
+                    if (ctx.headers_size > usub::unet::http::max_headers_size) {
                         return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
                     }
                     break;
@@ -471,9 +416,7 @@ namespace usub::unet::http::v1 {
                 case STATE::HEADER_LF: {
                     auto &[key, value] = ctx.kv_buffer;
                     request.headers.addHeader(std::move(key), std::move(value));
-                    if (begin == end) {
-                        return {};
-                    }
+                    if (begin == end) { return {}; }
                     if (is_tchar(*begin)) {
                         state = STATE::HEADER_KEY;
                     } else if (*begin == '\r') {
@@ -490,7 +433,7 @@ namespace usub::unet::http::v1 {
                     if (*begin == '\n') {
                         ++begin;
                         ++ctx.headers_size;
-                        if (ctx.headers_size > request.policy.max_header_size) {
+                        if (ctx.headers_size > usub::unet::http::max_headers_size) {
                             return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
                         }
                         state = STATE::HEADERS_VALIDATION;
@@ -503,11 +446,11 @@ namespace usub::unet::http::v1 {
                 case STATE::HEADERS_VALIDATION: {
                     ctx.current_state_size = 0;
 
+                    if (!request.headers.contains("host")) { return fail(Status::BAD_REQUEST, "Missing Host header"); }
+
                     const bool method_no_body =
-                            request.metadata.method_token == "GET" ||
-                            request.metadata.method_token == "HEAD" ||
-                            request.metadata.method_token == "OPTIONS" ||
-                            request.metadata.method_token == "TRACE";
+                            request.metadata.method_token == "GET" || request.metadata.method_token == "HEAD" ||
+                            request.metadata.method_token == "OPTIONS" || request.metadata.method_token == "TRACE";
 
                     const auto content_length_headers = request.headers.all("content-length");
                     const auto transfer_encoding_headers = request.headers.all("transfer-encoding");
@@ -519,12 +462,8 @@ namespace usub::unet::http::v1 {
                     auto trim_view = [](std::string_view value) -> std::string_view {
                         std::size_t start = 0;
                         std::size_t end = value.size();
-                        while (start < end && (value[start] == ' ' || value[start] == '\t')) {
-                            ++start;
-                        }
-                        while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) {
-                            --end;
-                        }
+                        while (start < end && (value[start] == ' ' || value[start] == '\t')) { ++start; }
+                        while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) { --end; }
                         return std::string_view(value.data() + start, end - start);
                     };
 
@@ -532,13 +471,9 @@ namespace usub::unet::http::v1 {
                         if (value.empty()) return false;
                         std::size_t result = 0;
                         for (char c: value) {
-                            if (c < '0' || c > '9') {
-                                return false;
-                            }
+                            if (c < '0' || c > '9') { return false; }
                             std::size_t digit = static_cast<std::size_t>(c - '0');
-                            if (result > (std::numeric_limits<std::size_t>::max() - digit) / 10) {
-                                return false;
-                            }
+                            if (result > (std::numeric_limits<std::size_t>::max() - digit) / 10) { return false; }
                             result = result * 10 + digit;
                         }
                         out = result;
@@ -583,9 +518,7 @@ namespace usub::unet::http::v1 {
                             const std::size_t comma = value.find(',');
                             std::string_view token = (comma == std::string_view::npos) ? value : value.substr(0, comma);
                             token = trim_view(token);
-                            if (token.empty()) {
-                                return fail(Status::BAD_REQUEST, "Invalid Transfer-Encoding");
-                            }
+                            if (token.empty()) { return fail(Status::BAD_REQUEST, "Invalid Transfer-Encoding"); }
                             if (is_chunked_token(token)) {
                                 has_chunked = true;
                             } else {
@@ -610,9 +543,7 @@ namespace usub::unet::http::v1 {
                     }
 
                     if (method_no_body) {
-                        if (has_chunked) {
-                            return fail(Status::BAD_REQUEST, "Body not allowed for method");
-                        }
+                        if (has_chunked) { return fail(Status::BAD_REQUEST, "Body not allowed for method"); }
                         if (content_length_seen && content_length_value != 0) {
                             return fail(Status::BAD_REQUEST, "Body not allowed for method");
                         }
@@ -674,7 +605,8 @@ namespace usub::unet::http::v1 {
                     if (ctx.current_state_size == content_length) {
                         state = STATE::COMPLETE;
                         return {};
-                    } else if (ctx.current_state_size > request.policy.max_body_size || ctx.current_state_size > content_length) {
+                    } else if (ctx.current_state_size > request.policy.max_body_size ||
+                               ctx.current_state_size > content_length) {
                         return fail(Status::PAYLOAD_TOO_LARGE, "Body size too big");
                     }
 
@@ -703,21 +635,20 @@ namespace usub::unet::http::v1 {
                 }
                 case STATE::DATA_CHUNKED_SIZE_CRLF: {
                     if (*begin == '\n') {
-                        ctx.body_read_size = std::stoull(ctx.kv_buffer.first, nullptr, 16);// this might throw, TODO: Replace with some not throwing alt
+                        ctx.body_read_size =
+                                std::stoull(ctx.kv_buffer.first, nullptr,
+                                            16);// this might throw, TODO: Replace with some not throwing alt
                         ++begin;
                         ++ctx.body_bytes_read;
                         state = STATE::DATA_CHUNKED_DATA;
-                        if (ctx.body_read_size == 0) {
-                            state = STATE::DATA_CHUNKED_LAST_CR;
-                        }
+                        if (ctx.body_read_size == 0) { state = STATE::DATA_CHUNKED_LAST_CR; }
                     } else {
                         return fail(Status::BAD_REQUEST, "Missing LF in chunked size");
                     }
                     break;
                 }
                 case STATE::DATA_CHUNKED_DATA: {
-                    const std::size_t remaining =
-                            static_cast<std::size_t>(ctx.body_read_size - ctx.current_state_size);
+                    const std::size_t remaining = static_cast<std::size_t>(ctx.body_read_size - ctx.current_state_size);
                     if (remaining == 0) {
                         state = STATE::DATA_CHUNKED_DATA_CR;
                         break;
@@ -740,18 +671,14 @@ namespace usub::unet::http::v1 {
                     break;
                 }
                 case STATE::DATA_CHUNKED_DATA_CR: {
-                    if (*begin != '\r') {
-                        return fail(Status::BAD_REQUEST, "Missing CR after chunk data");
-                    }
+                    if (*begin != '\r') { return fail(Status::BAD_REQUEST, "Missing CR after chunk data"); }
                     ++begin;
                     ++ctx.body_bytes_read;
                     state = STATE::DATA_CHUNKED_DATA_LF;
                 }
                 case STATE::DATA_CHUNKED_DATA_LF: {
                     if (begin == end) break;
-                    if (*begin != '\n') {
-                        return fail(Status::BAD_REQUEST, "Missing LF after chunk data");
-                    }
+                    if (*begin != '\n') { return fail(Status::BAD_REQUEST, "Missing LF after chunk data"); }
                     ++begin;
                     ++ctx.body_bytes_read;
 
@@ -773,9 +700,7 @@ namespace usub::unet::http::v1 {
                     [[fallthrough]];
                 }
                 case STATE::DATA_CHUNKED_LAST_LF: {
-                    if (begin == end) {
-                        return {};
-                    }
+                    if (begin == end) { return {}; }
                     if (*begin == '\n') {
                         ++begin;
                         ++ctx.body_bytes_read;
@@ -786,9 +711,7 @@ namespace usub::unet::http::v1 {
                     [[fallthrough]];
                 }
                 case STATE::DATA_DONE:
-                    if (begin != end) {
-                        return fail(Status::BAD_REQUEST, "Trailers unsupported yet");
-                    }
+                    if (begin != end) { return fail(Status::BAD_REQUEST, "Trailers unsupported yet"); }
                     return {};
                     // TODO: Think if content-length should also go here, for some kind of check
                     break;
@@ -806,7 +729,5 @@ namespace usub::unet::http::v1 {
         return {};
     }
 
-    RequestParser::ParserContext &RequestParser::getContext() {
-        return this->context_;
-    }
+    RequestParser::ParserContext &RequestParser::getContext() { return this->context_; }
 }// namespace usub::unet::http::v1

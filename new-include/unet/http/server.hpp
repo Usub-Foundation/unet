@@ -13,51 +13,69 @@
 #include "unet/http/router/radix.hpp"
 #include "unet/http/session.hpp"
 #include "unet/http/v1/server_session.hpp"
+#include "unet/http/v2/server_session.hpp"
 
 
 namespace usub::unet::http {
 
+    template<class... ServerSession>
+    struct ServerSessionVisitor : ServerSession... {
+        using ServerSession::operator()...;
+    };
+    template<class... ServerSession>
+    ServerSessionVisitor(ServerSession...) -> ServerSessionVisitor<ServerSession...>;
 
     template<class RouterType>
     class Dispatcher {
     public:
-        Dispatcher() = delete;//("Unsafe to deafault construct")
-        ~Dispatcher() = default;
-        Dispatcher(std::shared_ptr<RouterType> router) : router_(router), session_(router_) {}
+        Dispatcher() = delete;
+        explicit Dispatcher(std::shared_ptr<RouterType> router)
+            : router_(std::move(router))// session_ starts as monostate
+        {}
 
         usub::uvent::task::Awaitable<void> on_read(std::string_view data, usub::uvent::net::TCPClientSocket &socket) {
-            // We need to determine the http version here, non tls allows for http0.9 http1.0 http1.1 and h2c
-
-            co_await session_.on_read(data, socket);
-            co_return;
-
-            // We really expect that PRI will come in full, but no guarantees, this is not a commonly used protocol
-            // and just buffering requests strings until we can make a decision is not acceptable performance wise.
-            constexpr std::string_view h2c_preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
-            const bool looks_like_h2c =
-                    data.size() >= h2c_preface.size() && data.substr(0, h2c_preface.size()) == h2c_preface;
-            if (looks_like_h2c) {
-                // TODO: initialize and hand off to HTTP/2 (h2c) handler
-            } else {
-                // TODO: initialize and hand off to HTTP/1.x parser/dispatcher
+            std::string a;
+            if (std::holds_alternative<std::monostate>(this->session_)) {
+                if (data.size() >= h2_preface.size() && data.substr(0, h2_preface.size()) == h2_preface) {
+                    // We assume preface comes in full
+                    session_.template emplace<ServerSession<VERSION::HTTP_2_0, RouterType>>(this->router_);
+                } else {
+                    session_.template emplace<ServerSession<VERSION::HTTP_1_1, RouterType>>(this->router_);
+                }
             }
-            co_return;
-        };
-        usub::uvent::task::Awaitable<void> on_close() {
-            session_.on_close();
+
+            co_await std::visit(ServerSessionVisitor{[&](std::monostate &) -> usub::uvent::task::Awaitable<void> {
+                                                         co_return;// should not happen
+                                                     },
+                                                     [&](auto &s) -> usub::uvent::task::Awaitable<void> {
+                                                         co_await s.on_read(data, socket);
+                                                         co_return;
+                                                     }},
+                                this->session_);
+
             co_return;
         }
-        usub::uvent::task::Awaitable<void> on_error(int error_code) {
-            session_.on_error(error_code);
+
+        usub::uvent::task::Awaitable<void> on_close() {
+            std::visit(ServerSessionVisitor{[](std::monostate &) {}, [](auto &s) { s.on_close(); }}, this->session_);
+            co_return;
+        }
+
+        usub::uvent::task::Awaitable<void> on_error(int ec) {
+            std::visit(ServerSessionVisitor{[&](std::monostate &) {}, [&](auto &s) { s.on_error(ec); }},
+                       this->session_);
             co_return;
         }
 
     private:
         std::shared_ptr<RouterType> router_;
-        //TODO: propper multi protocol handling std::variant seems like the best idea here?
-        ServerSession<VERSION::HTTP_1_1, RouterType> session_;
-    };
 
+        std::variant<std::monostate, ServerSession<VERSION::HTTP_1_1, RouterType>,
+                     ServerSession<VERSION::HTTP_2_0, RouterType>>
+                session_{};
+
+        static constexpr std::string_view h2_preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
+    };
 
     struct ServerConfig_idea {
         int uvent_threads{4};
@@ -82,11 +100,10 @@ namespace usub::unet::http {
     public:
         //TODO: implement constructors
         explicit ServerImpl(const ServerConfig &config)
-            : config_(config), router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)) {
+            : config_(config), router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)),
+              acceptors_(usub::unet::core::Acceptor<Streams>{uvent_}...) {
             //TODO: for_each_thread
-            usub::unet::core::Acceptor<usub::unet::core::stream::PlainText> acceptor(this->uvent_);
-            usub::uvent::system::co_spawn(acceptor.acceptLoop<Dispatcher<RouterType>>(router_));
-            return;
+            (start_acceptor<Streams>(), ...);
         };
 
         // TODO: Make possible construction from existing
@@ -113,6 +130,10 @@ namespace usub::unet::http {
 
         auto &addMiddleware(auto &&...args) {// allow for modifying router when wanted
             return this->router_->addMiddleware(std::forward<decltype(args)>(args)...);
+        }
+
+        auto &addErrorHandler(auto &&...args) {
+            return this->router_->addErrorHandler(std::forward<decltype(args)>(args)...);
         }
 
         void run() { this->uvent_->run(); }

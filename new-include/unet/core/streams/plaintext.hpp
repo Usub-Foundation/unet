@@ -16,7 +16,7 @@ namespace usub::unet::core::stream {
         //     { &Dispatcher::on_error } -> std::same_as<usub::uvent::task::Awaitable<void> (Dispatcher::*)(std::error_code)>;
         // }
         static usub::uvent::task::Awaitable<void> readLoop(usub::uvent::net::TCPClientSocket socket,
-                                                           Dispatcher &&dispatcher) {
+                                                           Dispatcher dispatcher) {
             usub::uvent::utils::DynamicBuffer buffer;
             static constexpr size_t MAX_READ_SIZE = 16 * 1024;
             buffer.reserve(MAX_READ_SIZE);

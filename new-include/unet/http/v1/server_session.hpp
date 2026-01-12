@@ -15,7 +15,7 @@ namespace usub::unet::http {
     template<typename RouterType>
     class ServerSession<VERSION::HTTP_1_1, RouterType> {
     public:
-        explicit ServerSession(std::shared_ptr<RouterType> router) : router_(router) {}
+        explicit ServerSession(std::shared_ptr<RouterType> router) : router_(std::move(router)) {}
         ServerSession() = delete;
         ~ServerSession() = default;
 
@@ -25,47 +25,32 @@ namespace usub::unet::http {
             auto &state = this->request_reader_.getContext().state;
 
         continue_parse:
-            if (begin == end) {
-                co_return;
-            }
+            if (begin == end) { co_return; }
             auto result = this->request_reader_.parse(this->request_, begin, end);
 
-            if (!this->current_route_ && state == v1::RequestParser::STATE::METADATA_DONE) {
+            if (!result) {
+                this->response_.metadata.status_code = result.error().expected_status;
+                state = v1::RequestParser::STATE::FAILED;
+            }
+
+            if (!this->current_route_ && state == v1::RequestParser::STATE::HEADERS_DONE) {
+                this->response_.metadata.version = this->request_.metadata.version;
                 auto match = this->router_->match(this->request_);
                 if (!match) {
                     state = v1::RequestParser::STATE::FAILED;
                     // TODO: Status code & message
                     this->response_.metadata.status_code = match.error();
-                    goto send_body;
-                }
-                this->current_route_ = match.value();
-            }
-
-            if (!result) {
-                goto send_body;
-            }
-            switch (state) {
-                case v1::RequestParser::STATE::METADATA_DONE: {
-                    auto match = router_->match(this->request_);
-                    if (!match) {
-                        break;
-                    }
-
+                } else {
                     this->current_route_ = match.value();
-                    auto middleware_result = this->invoke_middleware(MIDDLEWARE_PHASE::METADATA, request_, response_);
-                    if (!middleware_result) {
-                        break;
-                    }
-                    goto continue_parse;
-                    break;
                 }
+            }
+
+            switch (state) {
                 case v1::RequestParser::STATE::HEADERS_DONE:
                     [[fallthrough]];
                 case v1::RequestParser::STATE::TRAILERS_DONE: {
                     auto middleware_result = this->invoke_middleware(MIDDLEWARE_PHASE::HEADER, request_, response_);
-                    if (!middleware_result) {
-                        break;
-                    }
+                    if (!middleware_result) { break; }
                     state = this->request_reader_.getContext().post_header_middleware_state;
                     if (state != v1::RequestParser::STATE::COMPLETE) {
                         goto continue_parse;
@@ -76,9 +61,7 @@ namespace usub::unet::http {
                 }
                 case v1::RequestParser::STATE::DATA_CHUNK_DONE: {
                     auto middleware_result = this->invoke_middleware(MIDDLEWARE_PHASE::BODY, request_, response_);
-                    if (!middleware_result) {
-                        break;
-                    }
+                    if (!middleware_result) { break; }
                     goto continue_parse;
                     break;
                 }
@@ -90,7 +73,9 @@ namespace usub::unet::http {
                     break;
                 }
                 case v1::RequestParser::STATE::FAILED:
-                    // Handle parse error
+                    this->router_->error("log", this->request_, this->response_);
+                    this->router_->error(std::to_string(this->response_.metadata.status_code), this->request_,
+                                         this->response_);
                     break;
                 default:
                     // any other state
@@ -126,9 +111,7 @@ namespace usub::unet::http {
             }
             std::string responseString = v1::ResponseSerializer::serialize(this->response_);
             ssize_t wrsz = co_await socket.async_write((uint8_t *) responseString.data(), responseString.size());
-            if (wrsz <= 0) {
-                co_return;
-            }
+            if (wrsz <= 0) { co_return; }
             co_return;
         }
 
@@ -138,8 +121,6 @@ namespace usub::unet::http {
         v1::RequestParser request_reader_{};
         v1::ResponseSerializer response_writer_{};
         std::shared_ptr<RouterType> router_;
-        // TODO: Better way to handle current route?
-        // std::optional<router::Route *> current_route_;
         router::Route *current_route_;
 
 

@@ -17,8 +17,7 @@ using usub::unet::http::Request;
 namespace {
 
     struct ParseHarness {
-        explicit ParseHarness(std::string input)
-            : data(std::move(input)), view(data), begin(view.begin()) {}
+        explicit ParseHarness(std::string input) : data(std::move(input)), view(data), begin(view.begin()) {}
 
         std::expected<void, ParseError> parse_to(std::size_t end_index) {
             assert(end_index <= view.size());
@@ -86,9 +85,7 @@ namespace {
     }
 
 
-    void expect_error_with_request(const std::string &data,
-                                   Request &request,
-                                   STATUS_CODE expected_status) {
+    void expect_error_with_request(const std::string &data, Request &request, STATUS_CODE expected_status) {
         RequestParser parser;
 
         std::string_view view(data);
@@ -129,11 +126,10 @@ namespace {
 
 
     void test_metadata_and_headers() {
-        std::string data =
-                "GET /path?x=1 HTTP/1.1\r\n"
-                "Host: example\r\n"
-                "User-Agent: test\r\n"
-                "\r\n";
+        std::string data = "GET /path?x=1 HTTP/1.1\r\n"
+                           "Host: example\r\n"
+                           "User-Agent: test\r\n"
+                           "\r\n";
 
         ParseHarness harness(data);
         std::size_t line_end = data.find("\r\n");
@@ -141,11 +137,7 @@ namespace {
 
         auto result = harness.parse_to(line_end + 1);
         assert(result);
-        assert(harness.parser.getContext().state == State::METADATA_CRLF);
-
-        result = harness.parse_to(line_end + 2);
-        assert(result);
-        assert(harness.parser.getContext().state == State::METADATA_DONE);
+        assert(harness.parser.getContext().state == State::REQUEST_LINE_CRLF);
 
         result = harness.parse_to(data.size());
         assert(result);
@@ -166,21 +158,16 @@ namespace {
     }
 
     void test_content_length_body_partial() {
-        std::string data =
-                "POST /submit HTTP/1.1\r\n"
-                "Host: example\r\n"
-                "Content-Length: 5\r\n"
-                "\r\n"
-                "Hello";
+        std::string data = "POST /submit HTTP/1.1\r\n"
+                           "Host: example\r\n"
+                           "Content-Length: 5\r\n"
+                           "\r\n"
+                           "Hello";
 
         ParseHarness harness(data);
         std::size_t header_end = header_end_index(data);
 
         auto result = harness.parse_to(header_end);
-        assert(result);
-        assert(harness.parser.getContext().state == State::METADATA_DONE);
-
-        result = harness.parse_to(header_end);
         assert(result);
         assert(harness.parser.getContext().state == State::HEADERS_DONE);
 
@@ -195,22 +182,17 @@ namespace {
     }
 
     void test_chunked_states() {
-        std::string data =
-                "POST /chunk HTTP/1.1\r\n"
-                "Host: example\r\n"
-                "Transfer-Encoding: chunked\r\n"
-                "\r\n"
-                "5\r\n"
-                "Hello\r\n";
+        std::string data = "POST /chunk HTTP/1.1\r\n"
+                           "Host: example\r\n"
+                           "Transfer-Encoding: chunked\r\n"
+                           "\r\n"
+                           "5\r\n"
+                           "Hello\r\n";
 
         ParseHarness harness(data);
         std::size_t header_end = header_end_index(data);
 
         auto result = harness.parse_to(header_end);
-        assert(result);
-        assert(harness.parser.getContext().state == State::METADATA_DONE);
-
-        result = harness.parse_to(header_end);
         assert(result);
         assert(harness.parser.getContext().state == State::HEADERS_DONE);
 
@@ -279,22 +261,20 @@ namespace {
 
         expect_error("GET / HTTP/1.1\r\nHost: example\x7f\r\n\r\n", STATUS_CODE::BAD_REQUEST);
 
-        expect_error(
-                "GET / HTTP/1.1\r\n"
-                "Host: example\r\n"
-                "Bad Header: value\r\n"
-                "\r\n",
-                STATUS_CODE::BAD_REQUEST);
+        expect_error("GET / HTTP/1.1\r\n"
+                     "Host: example\r\n"
+                     "Bad Header: value\r\n"
+                     "\r\n",
+                     STATUS_CODE::BAD_REQUEST);
 
         {
             Request request;
-            request.policy.max_header_size = 5;
-            expect_error_with_request(
-                    "GET / HTTP/1.1\r\nHost: example\r\n\r\n",
-                    request,
-                    STATUS_CODE::REQUEST_HEADER_FIELDS_TOO_LARGE);
+            usub::unet::http::max_headers_size = 5;
+            expect_error_with_request("GET / HTTP/1.1\r\nHost: example\r\n\r\n", request,
+                                      STATUS_CODE::REQUEST_HEADER_FIELDS_TOO_LARGE);
         }
 
+        usub::unet::http::max_headers_size = 256 * 1024;
         // expect_error("POST / HTTP/1.1\r\nContent-Length: abc\r\n\r\n", STATUS_CODE::BAD_REQUEST);
         // expect_error(
         //         "POST / HTTP/1.1\r\n"
@@ -306,31 +286,27 @@ namespace {
         expect_error("POST / HTTP/1.0\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n", STATUS_CODE::BAD_REQUEST);
         expect_error("POST / HTTP/1.1\r\nTransfer-Encoding: gzip\r\n\r\nData", STATUS_CODE::BAD_REQUEST);
         expect_error("POST / HTTP/1.1\r\nTransfer-Encoding: gzip, chunked\r\n\r\n0\r\n\r\n", STATUS_CODE::BAD_REQUEST);
-        expect_error(
-                "POST / HTTP/1.1\r\n"
-                "Transfer-Encoding: chunked\r\n"
-                "Content-Length: 5\r\n"
-                "\r\n"
-                "Hello",
-                STATUS_CODE::BAD_REQUEST);
+        expect_error("POST / HTTP/1.1\r\n"
+                     "Transfer-Encoding: chunked\r\n"
+                     "Content-Length: 5\r\n"
+                     "\r\n"
+                     "Hello",
+                     STATUS_CODE::BAD_REQUEST);
 
-        expect_error(
-                "GET / HTTP/1.1\r\n"
-                "Content-Length: 5\r\n"
-                "\r\n"
-                "Hello",
-                STATUS_CODE::BAD_REQUEST);
+        expect_error("GET / HTTP/1.1\r\n"
+                     "Content-Length: 5\r\n"
+                     "\r\n"
+                     "Hello",
+                     STATUS_CODE::BAD_REQUEST);
 
         {
             Request request;
             request.policy.max_body_size = 2;
-            expect_error_with_request(
-                    "POST / HTTP/1.1\r\n"
-                    "Content-Length: 5\r\n"
-                    "\r\n"
-                    "Hello",
-                    request,
-                    STATUS_CODE::PAYLOAD_TOO_LARGE);
+            expect_error_with_request("POST / HTTP/1.1\r\n"
+                                      "Content-Length: 5\r\n"
+                                      "\r\n"
+                                      "Hello",
+                                      request, STATUS_CODE::BAD_REQUEST);
         }
     }
 

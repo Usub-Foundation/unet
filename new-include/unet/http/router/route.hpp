@@ -6,7 +6,7 @@
 #include "unet/http/middleware.hpp"
 
 namespace usub::unet::http::router {
-    // TODO: That's not right
+    // TODO: That requires review
 
     /**
      * @typedef FunctionType
@@ -76,10 +76,8 @@ namespace usub::unet::http::router {
          * @see MiddlewareChain
          * @see FunctionType
          */
-        Route(const std::set<std::string> &methods,
-              const std::vector<std::string> &params,
-              std::function<FunctionType> handler,
-              bool accept_all = false);
+        Route(const std::set<std::string> &methods, const std::vector<std::string> &params,
+              std::function<FunctionType> handler, bool accept_all = false);
 
         /**
          * @brief Default constructor.

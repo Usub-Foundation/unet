@@ -7,6 +7,8 @@
 
 namespace usub::unet::http {
 
+    extern std::size_t max_headers_size;// chrome uses 256KB as max header size
+
     enum STATUS_CODE : uint16_t {
         // 1XX Informational
         CONTINUE = 100,
@@ -175,8 +177,6 @@ namespace usub::unet::http {
         return arr;
     }();
 
-    // TODO: Think about FramingPolicy: wether to allow/disallow certain encodings: only chunked, only content-length, both, etc.
-    // Allow trailers or not, etc.
     enum class FRAMING_POLICY : uint8_t {
         ALL = 0,
         CONTENT_LENGTH_ONLY = 1,
@@ -184,9 +184,9 @@ namespace usub::unet::http {
     };
 
     struct MessagePolicy {
-        static const FRAMING_POLICY framing = FRAMING_POLICY::ALL;// Allow both chunked and content-length // NO SUPPORT YET
-        static const bool allow_trailers = false;                 // Disallow trailers for now // NO SUPPORT FOR TRAILERS YET
-        std::size_t max_header_size = 256 * 1024;                 // chrome uses 256KB as max header size
+        static const FRAMING_POLICY framing =
+                FRAMING_POLICY::ALL;             // Allow both chunked and content-length // NO SUPPORT YET
+        static const bool allow_trailers = false;// Disallow trailers for now // NO SUPPORT FOR TRAILERS YET
         std::size_t max_body_size = 8 * 1024 * 1024;
     };
 

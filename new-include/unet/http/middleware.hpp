@@ -18,10 +18,9 @@ namespace usub::unet::http {
      * Middleware functions can be executed during specific phases of handling an HTTP request and response.
      */
     enum class MIDDLEWARE_PHASE {
-        METADATA,///< Middleware executed when the uri or pseudo headers become known, to set up handler specific limits
-        HEADER,  ///< Middleware executed after the headers were parsed.
-        BODY,    ///< Middleware executed during the body processing phase in certain data types.
-        RESPONSE ///< Middleware executed during sending response, called only once per response.
+        HEADER, ///< Middleware executed after the headers were parsed.
+        BODY,   ///< Middleware executed during the body processing phase in certain data types.
+        RESPONSE///< Middleware executed during sending response, called only once per response.
     };
 
     /**
@@ -55,8 +54,8 @@ namespace usub::unet::http {
      * 
      * @note Intended for logging mostly.
      */
-    using GenericErrorFunctionType = usub::uvent::task::Awaitable<void>(
-            const Request &, const Response &, const usub::unet::utils::UnetError &);
+    using GenericErrorFunctionType = usub::uvent::task::Awaitable<void>(const Request &, const Response &,
+                                                                        const usub::unet::utils::UnetError &);
 
     /**
      * @class MiddlewareChain
@@ -71,13 +70,6 @@ namespace usub::unet::http {
      */
     class MiddlewareChain {
     private:
-        /**
-         * @brief Vector of middleware functions to be executed during the SETTINGS phase.
-         *
-         * Each middleware function in this vector is executed in the order they were added.
-         */
-        std::vector<std::function<MiddlewareFunctionType>> settings_middlewares_;
-
         /**
          * @brief Vector of middleware functions to be executed during the HEADER phase.
          *
@@ -113,10 +105,8 @@ namespace usub::unet::http {
          * @see MiddlewarePhase
          * @see MiddlewareFunctionType
          */
-        MiddlewareChain &emplace_back(MIDDLEWARE_PHASE phase,
-                                      std::function<MiddlewareFunctionType> middleware);
-        MiddlewareChain &addMiddleware(MIDDLEWARE_PHASE phase,
-                                       std::function<MiddlewareFunctionType> middleware);
+        MiddlewareChain &emplace_back(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware);
+        MiddlewareChain &addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware);
         /**
          * @brief Executes all middleware functions associated with a specific phase.
          *
