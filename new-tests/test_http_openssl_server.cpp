@@ -1,4 +1,4 @@
-#include <unet/core/streams/openssl.hpp>
+// #include <unet/core/streams/openssl.hpp>
 #include <unet/http.hpp>
 
 bool metadataMiddle(const usub::unet::http::Request &request, usub::unet::http::Response &response) {
@@ -55,11 +55,11 @@ ServerHandler handlerFunction(usub::unet::http::Request &request, usub::unet::ht
 }
 
 int main() {
-    usub::unet::http::ServerImpl<usub::unet::http::router::Radix, usub::unet::core::OpenSSLStream> server;
-    server.addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, globalHeaderMiddle);
-    server.handle("GET", "/path", handlerFunction)
-            .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle)
-            .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle);
-    ;
-    server.run();
+    // usub::unet::http::ServerImpl<usub::unet::http::router::Radix, usub::unet::core::OpenSSLStream> server;
+    // server.addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, globalHeaderMiddle);
+    // server.handle("GET", "/path", handlerFunction)
+    //         .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle)
+    //         .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle);
+    // ;
+    // server.run();
 }

@@ -2,6 +2,8 @@
 
 #include <uvent/Uvent.h>
 
+#include "unet/core/streams/stream.hpp"
+
 namespace usub::unet::core::stream {
 
     class PlainText {
@@ -20,6 +22,11 @@ namespace usub::unet::core::stream {
             usub::uvent::utils::DynamicBuffer buffer;
             static constexpr size_t MAX_READ_SIZE = 16 * 1024;
             buffer.reserve(MAX_READ_SIZE);
+
+            Transport transport{.async_write = [&](std::string_view out) -> usub::uvent::task::Awaitable<ssize_t> {
+                co_return co_await socket.async_write((uint8_t *) out.data(), out.size());
+            }};
+
             while (true) {
                 buffer.clear();
 
@@ -31,7 +38,7 @@ namespace usub::unet::core::stream {
                 }
                 socket.set_timeout_ms(20000);
                 co_await dispatcher.on_read(
-                        std::string_view{reinterpret_cast<const char *>(buffer.data()), buffer.size()}, socket);
+                        std::string_view{reinterpret_cast<const char *>(buffer.data()), buffer.size()}, transport);
                 // we need to pass socket for writing response, and for possible timeout reset for keep-alive, for example
                 // or to close in case of error
             }

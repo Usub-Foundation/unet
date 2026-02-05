@@ -33,7 +33,8 @@ namespace usub::unet::http {
             : router_(std::move(router))// session_ starts as monostate
         {}
 
-        usub::uvent::task::Awaitable<void> on_read(std::string_view data, usub::uvent::net::TCPClientSocket &socket) {
+        usub::uvent::task::Awaitable<void> on_read(std::string_view data,
+                                                   usub::unet::core::stream::Transport &transport) {
             std::string a;
             if (std::holds_alternative<std::monostate>(this->session_)) {
                 if (data.size() >= h2_preface.size() && data.substr(0, h2_preface.size()) == h2_preface) {
@@ -48,7 +49,7 @@ namespace usub::unet::http {
                                                          co_return;// should not happen
                                                      },
                                                      [&](auto &s) -> usub::uvent::task::Awaitable<void> {
-                                                         co_await s.on_read(data, socket);
+                                                         co_await s.on_read(data, transport);
                                                          co_return;
                                                      }},
                                 this->session_);
@@ -100,8 +101,8 @@ namespace usub::unet::http {
     public:
         //TODO: implement constructors
         explicit ServerImpl(const ServerConfig &config)
-            : config_(config), router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)),
-              acceptors_(usub::unet::core::Acceptor<Streams>{uvent_}...) {
+            : config_(config), router_(std::make_shared<RouterType>()),
+              acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
             //TODO: for_each_thread
             (start_acceptor<Streams>(), ...);
         };
@@ -110,16 +111,15 @@ namespace usub::unet::http {
         // explicit ServerImpl(usub::Uvent &uvent);
         // ServerImpl(const ServerConfig &config, usub::Uvent &uvent);
 
-        // ServerImpl() : router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)) {
+        // ServerImpl() : router_(std::make_shared<RouterType>()) {
         //     //TODO: for_each_thread
-        //     usub::unet::core::Acceptor<usub::unet::core::stream::PlainText> acceptor(this->uvent_);
+        //     usub::unet::core::Acceptor<usub::unet::core::stream::PlainText> acceptor();
         //     usub::uvent::system::co_spawn(acceptor.acceptLoop<Dispatcher<RouterType>>(router_));
         //     return;
         // };
 
         explicit ServerImpl()
-            : router_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(4)),
-              acceptors_(usub::unet::core::Acceptor<Streams>{uvent_}...) {
+            : router_(std::make_shared<RouterType>()), acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
             (start_acceptor<Streams>(), ...);
         }
 
@@ -136,12 +136,11 @@ namespace usub::unet::http {
             return this->router_->addErrorHandler(std::forward<decltype(args)>(args)...);
         }
 
-        void run() { this->uvent_->run(); }
+        // void run() { this->uvent_->run(); }
 
     private:
         ServerConfig config_;
         std::shared_ptr<RouterType> router_;
-        std::shared_ptr<usub::Uvent> uvent_;
         // Dispatcher<RouterType> dispatcher_;
 
         // TODO: Not sure that's the best

@@ -9,6 +9,7 @@
 #include "unet/http/session.hpp"
 #include "unet/http/v1/request_parser.hpp"
 #include "unet/http/v1/response_serializer.hpp"
+#include "unet/http/v1/server_stream.hpp"
 
 namespace usub::unet::http {
 
@@ -19,7 +20,8 @@ namespace usub::unet::http {
         ServerSession() = delete;
         ~ServerSession() = default;
 
-        usub::uvent::task::Awaitable<void> on_read(std::string_view data, usub::uvent::net::TCPClientSocket &socket) {
+        usub::uvent::task::Awaitable<void> on_read(std::string_view data,
+                                                   usub::unet::core::stream::Transport &transport) {
             std::string_view::const_iterator begin = data.begin();
             const std::string_view::const_iterator end = data.end();
             auto &state = this->request_reader_.getContext().state;
@@ -83,7 +85,7 @@ namespace usub::unet::http {
                     break;
             }
         send_body:
-            co_await this->write_response(socket);
+            co_await this->write_response(transport);
         end:
             co_return;
         };
@@ -102,7 +104,7 @@ namespace usub::unet::http {
             co_return;
         }
 
-        usub::uvent::task::Awaitable<void> write_response(usub::uvent::net::TCPClientSocket &socket) {
+        usub::uvent::task::Awaitable<void> write_response(usub::unet::core::stream::Transport &transport) {
 
             // TODO:
             if (this->current_route_) {
@@ -110,7 +112,7 @@ namespace usub::unet::http {
             } else {
             }
             std::string responseString = v1::ResponseSerializer::serialize(this->response_);
-            ssize_t wrsz = co_await socket.async_write((uint8_t *) responseString.data(), responseString.size());
+            ssize_t wrsz = co_await transport.async_write(responseString);
             if (wrsz <= 0) { co_return; }
             co_return;
         }
@@ -120,6 +122,9 @@ namespace usub::unet::http {
         Response response_{};
         v1::RequestParser request_reader_{};
         v1::ResponseSerializer response_writer_{};
+
+        // TODO Swith all from top to the
+        // ServerStream server_stream_;
         std::shared_ptr<RouterType> router_;
         router::Route *current_route_;
 

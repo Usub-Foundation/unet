@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace usub::unet::http::v2 {
-    enum ERROR_CODES : std::uint32_t {
+    enum class ERROR_CODE : std::uint32_t {
         NO_ERROR = 0x00,
         PROTOCOL_ERROR = 0x01,
         INTERNAL_ERROR = 0x02,

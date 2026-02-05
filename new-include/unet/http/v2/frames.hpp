@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace usub::unet::http::v2 {
@@ -31,12 +33,12 @@ namespace usub::unet::http::v2 {
     };
 
     enum class SETTINGS : std::uint16_t {
-        SETTINGS_HEADER_TABLE_SIZE = 0x01,
-        SETTINGS_ENABLE_PUSH = 0x02,
-        SETTINGS_MAX_CONCURRENT_STREAMS = 0x03,
-        SETTINGS_INITIAL_WINDOW_SIZE = 0x04,
-        SETTINGS_MAX_FRAME_SIZE = 0x05,
-        SETTINGS_MAX_HEADER_LIST_SIZE = 0x06,
+        HEADER_TABLE_SIZE = 0x01,
+        ENABLE_PUSH = 0x02,
+        MAX_CONCURRENT_STREAMS = 0x03,
+        INITIAL_WINDOW_SIZE = 0x04,
+        MAX_FRAME_SIZE = 0x05,
+        MAX_HEADER_LIST_SIZE = 0x06,
     };
 
     struct FrameHeader {
@@ -48,15 +50,15 @@ namespace usub::unet::http::v2 {
 
     struct GenericFrame {
         FrameHeader frame_header;
-        std::vector<std::uint8_t> payload;// payload.size() == h.length
+        std::vector<std::byte> payload;// payload.size() == h.length
     };
 
     // Data of frames
 
     struct DataPayload {
         std::uint8_t pad_length{};
-        std::vector<std::uint8_t> data{};
-        std::vector<std::uint8_t> padding{};
+        std::vector<std::byte> data{};
+        std::vector<std::byte> padding{};
     };
 
     struct HeadersPayload {
@@ -67,8 +69,8 @@ namespace usub::unet::http::v2 {
         std::uint32_t stream_dependency{};
         std::uint8_t weight{};
 
-        std::vector<std::uint8_t> header_block_fragment;
-        std::vector<std::uint8_t> padding;
+        std::vector<std::byte> header_block_fragment;
+        std::vector<std::byte> padding;
     };
 
     struct PriorityPayload {
@@ -93,8 +95,8 @@ namespace usub::unet::http::v2 {
     struct PushPromisePayload {
         std::uint8_t pad_length{};
         std::uint32_t promised_stream_id{};
-        std::vector<std::uint8_t> header_block_fragment{};
-        std::vector<std::uint8_t> padding{};
+        std::vector<std::byte> header_block_fragment{};
+        std::vector<std::byte> padding{};
     };
 
     struct PingPayload {
@@ -104,7 +106,7 @@ namespace usub::unet::http::v2 {
     struct GoAwayPayload {
         std::uint32_t last_stream_id{};
         std::uint32_t error_code{};
-        std::vector<std::uint8_t> additional_debug_data{};
+        std::vector<std::byte> additional_debug_data{};
     };
 
     struct WindowUpdatePayload {
@@ -112,22 +114,22 @@ namespace usub::unet::http::v2 {
     };
 
     struct ContinuationPayload {
-        std::vector<std::uint8_t> header_block_fragment{};
+        std::vector<std::byte> header_block_fragment{};
     };
 
     // TODO: Not Implemented
     struct AltSvcPayload {
-        std::vector<std::uint8_t> origin{};
-        std::vector<std::uint8_t> field_value{};
+        std::vector<std::byte> origin{};
+        std::vector<std::byte> field_value{};
     };
 
     struct OriginPayload {
-        std::vector<std::vector<std::uint8_t>> origins{};
+        std::vector<std::vector<std::byte>> origins{};
     };
 
     struct PriorityUpdatePayload {
         std::uint32_t prioritized_element_id{};
-        std::vector<std::uint8_t> priority_field_value{};
+        std::vector<std::byte> priority_field_value{};
     };
 
     template<class FramePayload>

@@ -36,6 +36,9 @@ FetchContent_MakeAvailable(uvent)
 file(GLOB_RECURSE UNET_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/new-include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/new-include/*.hpp")
 file(GLOB_RECURSE UNET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/new-src/*.cpp")
 
+list(FILTER UNET_HEADERS EXCLUDE REGEX "/new-include/unet/http/v2/")
+list(FILTER UNET_SOURCES EXCLUDE REGEX "/new-src/http/v2/")
+
 # Build the new implementation as a separate library so it can be tested independently
 add_library(unet
     ${UNET_SOURCES}

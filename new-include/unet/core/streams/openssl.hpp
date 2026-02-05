@@ -207,7 +207,8 @@ namespace usub::unet::core {
     template<>
     class Acceptor<OpenSSLStream> {
     public:
-        Acceptor(std::shared_ptr<Uvent> uvent /*Other params*/) : uvent_(uvent) {}
+        Acceptor() = default;
+        ~Acceptor() = default;
 
         template<typename Dispatcher, typename RouterType>
             requires StreamHandlerFor<OpenSSLStream, Dispatcher>
@@ -228,10 +229,6 @@ namespace usub::unet::core {
                 }
             }
         }
-
-
-    private:
-        std::shared_ptr<Uvent> uvent_;
     };
 
 }// namespace usub::unet::core

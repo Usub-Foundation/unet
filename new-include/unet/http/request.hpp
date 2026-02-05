@@ -14,8 +14,8 @@
 
 namespace usub::unet::http {
 
-    static std::uint8_t max_method_token_size;
-    static std::uint16_t max_uri_size;
+    extern std::uint8_t max_method_token_size;
+    extern std::uint16_t max_uri_size;
 
     struct RequestMetadata {
         std::string method_token{};
