@@ -33,11 +33,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(uvent)
 
 
-file(GLOB_RECURSE UNET_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/new-include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/new-include/*.hpp")
-file(GLOB_RECURSE UNET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/new-src/*.cpp")
+file(GLOB_RECURSE UNET_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
+file(GLOB_RECURSE UNET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-list(FILTER UNET_HEADERS EXCLUDE REGEX "/new-include/unet/http/v2/")
-list(FILTER UNET_SOURCES EXCLUDE REGEX "/new-src/http/v2/")
+list(FILTER UNET_HEADERS EXCLUDE REGEX "/include/unet/http/v2/")
+list(FILTER UNET_SOURCES EXCLUDE REGEX "/src/http/v2/")
 
 # Build the new implementation as a separate library so it can be tested independently
 add_library(unet
@@ -60,9 +60,9 @@ include(GNUInstallDirs)
 
 target_include_directories(unet 
 PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/new-include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/new-include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/>
 )
 
@@ -83,7 +83,7 @@ install(TARGETS unet
 
 foreach(header ${UNET_HEADERS})
     get_filename_component(header_path ${header} DIRECTORY)
-    file(RELATIVE_PATH header_relative_path "${CMAKE_CURRENT_SOURCE_DIR}/new-include" ${header_path})
+    file(RELATIVE_PATH header_relative_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header_path})
     install(FILES ${header} DESTINATION include/${header_relative_path})
 endforeach()
 
@@ -113,5 +113,5 @@ option(UNET_BUILD_TESTS "Build unet tests" ON)
 
 if(BUILD_EXAMPLES)
     # TODO: Add example directories here
-    add_subdirectory(new-tests)
+    add_subdirectory(tests)
 endif()
