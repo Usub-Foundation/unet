@@ -176,74 +176,254 @@ namespace usub::unet::http::v1 {
         auto &ctx = this->context_;
         auto &state = ctx.state;
 
+        using Status = usub::unet::http::STATUS_CODE;
+
+        // TODO future reimplementation
+        auto fail = [&](Status status, std::string_view message) -> std::expected<void, ParseError> {
+            ParseError err{};
+            err.code = ParseError::CODE::GENERIC_ERROR;
+            err.expected_status = status;
+            err.message = std::string(message);
+            //TODO: Rethink
+            // std::size_t remaining = static_cast<std::size_t>(e - it);
+            // std::size_t copy_len = remaining < err.tail.size() ? remaining : err.tail.size();
+            // std::memset(err.tail.data(), 0, err.tail.size());
+            // if (copy_len > 0) {
+            //     std::memcpy(err.tail.data(), it, copy_len);
+            // }
+            state = STATE::FAILED;
+            // begin = it;
+            return std::unexpected(err);
+        };
+
+
         while (begin != end) {
             switch (state) {
-                case STATE::PROTOCOL:
-                    break;
-                case STATE::STATUS_CODE:
-                    break;
-                case STATE::REASON_PHRASE:
-                    break;
-                case STATE::VERSION:
-                    break;
-                case STATE::REQUEST_LINE_CRLF_HTTP_0_9:
-                    break;
-                case STATE::REQUEST_LINE_CRLF:
-                    break;
-                case STATE::HEADER_KEY:
-                    break;
-                case STATE::HEADER_VALUE:
-                    break;
-                case STATE::HEADER_CR:
-                    break;
-                case STATE::HEADER_LF:
-                    break;
-                case STATE::HEADERS_CRLF:
-                    break;
-                case STATE::HEADERS_VALIDATION:
-                    break;
-                case STATE::HEADERS_DONE:
-                    break;
-                case STATE::DATA_CONTENT_LENGTH:
-                    break;
-                case STATE::DATA_CHUNKED_SIZE:
-                    break;
-                case STATE::DATA_CHUNKED_SIZE_CRLF:
-                    break;
-                case STATE::DATA_CHUNKED_DATA:
-                    break;
-                case STATE::DATA_CHUNKED_DATA_CR:
-                    break;
-                case STATE::DATA_CHUNKED_DATA_LF:
-                    break;
-                case STATE::DATA_CHUNKED_LAST_CR:
-                    break;
-                case STATE::DATA_CHUNKED_LAST_LF:
-                    break;
-                case STATE::DATA_CHUNK_DONE:
-                    break;
-                case STATE::DATA_DONE:
-                    break;
-                case STATE::TRAILER_KEY:
-                    break;
-                case STATE::TRAILER_VALUE:
-                    break;
-                case STATE::TRAILER_CR:
-                    break;
-                case STATE::TRAILER_LF:
-                    break;
-                case STATE::TRAILERS_DONE:
-                    break;
-                case STATE::FAILED: {
-                };
-                case STATE::COMPLETE: {
-                    // Result r;
-                    // r.done = true;
-                    // r.need_more = false;
-                    // r.response = std::move(resp_);
-                    // reset_for_next();
-                    // return r;
+
+                case STATE::STATUS_LINE: {
+                    auto &ver_buf = ctx.kv_buffer.first;
+                    auto &reason = ctx.kv_buffer.second;
+
+                    while (begin != end) {
+                        const char ch = *begin;
+
+                        switch (ctx.status_line_phase) {
+
+                            case 0: {
+
+                                if (ch == ' ') {
+                                    if (ver_buf.empty()) {
+                                        return fail(Status::BAD_REQUEST, "Empty HTTP version in status line");
+                                    }
+
+                                    if (ver_buf == "HTTP/1.1") {
+                                        response.metadata.version = VERSION::HTTP_1_1;
+                                    } else if (ver_buf == "HTTP/1.0") {
+                                        response.metadata.version = VERSION::HTTP_1_0;
+                                    } else {
+                                        return fail(Status::BAD_REQUEST, "Unknown HTTP version in status line");
+                                    }
+
+                                    ++begin;
+                                    ctx.status_line_phase = 2;
+                                    ctx.status_code_digits = 0;
+                                    ctx.status_code_value = 0;
+                                    break;
+                                }
+
+                                if (ch == '\r' || ch == '\n') {
+                                    return fail(Status::BAD_REQUEST,
+                                                "Malformed status line (version not followed by SP)");
+                                }
+
+                                if (!is_version(static_cast<unsigned char>(ch))) {
+                                    return fail(Status::BAD_REQUEST, "Invalid character in HTTP version");
+                                }
+
+                                ver_buf.push_back(ch);
+                                ++begin;
+
+                                if (ver_buf.size() > 16) { return fail(Status::BAD_REQUEST, "HTTP version too large"); }
+                                break;
+                            }
+
+                            case 2: {
+                                if (ch < '0' || ch > '9') {
+                                    return fail(Status::BAD_REQUEST, "Invalid status code (expected digit)");
+                                }
+
+                                ctx.status_code_value =
+                                        static_cast<std::uint16_t>(ctx.status_code_value * 10 + (ch - '0'));
+                                ++ctx.status_code_digits;
+                                ++begin;
+
+                                if (ctx.status_code_digits == 3) {
+                                    response.metadata.status_code =
+                                            static_cast<usub::unet::http::STATUS_CODE>(ctx.status_code_value);
+
+                                    ctx.status_line_phase = 3;
+                                }
+                                break;
+                            }
+
+                            case 3: {
+                                if (ch != ' ') { return fail(Status::BAD_REQUEST, "Missing SP after status code"); }
+                                ++begin;
+                                ctx.status_line_phase = 4;
+                                break;
+                            }
+
+                            case 4: {
+                                if (ch == '\r') {
+                                    ++begin;
+                                    ctx.status_line_phase = 5;
+                                    break;
+                                }
+
+
+                                if (!is_vchar_or_obs(static_cast<unsigned char>(ch))) {
+                                    return fail(Status::BAD_REQUEST, "Invalid character in reason phrase");
+                                }
+
+                                reason.push_back(ch);
+                                ++begin;
+
+                                if (reason.size() > 1024) {
+                                    return fail(Status::BAD_REQUEST, "Reason phrase too large");
+                                }
+                                break;
+                            }
+
+                            case 5: {
+                                if (ch != '\n') {
+                                    return fail(Status::BAD_REQUEST, "Missing LF after CR in status line");
+                                }
+                                ++begin;
+
+                                response.metadata.status_code = std::move(reason);
+
+                                ver_buf.clear();
+                                reason.clear();
+
+                                ctx.status_line_phase = 0;
+                                ctx.status_code_digits = 0;
+                                ctx.status_code_value = 0;
+
+                                state = STATE::HEADER_KEY;
+                                return {};
+                            }
+
+                            default:
+                                return fail(Status::BAD_REQUEST, "Internal error: invalid status line phase");
+                        }
+                    }
+
+                    return {};
                 }
+
+                case STATE::HEADER_KEY: {
+                    break;
+                }
+
+                case STATE::HEADER_VALUE: {
+                    break;
+                }
+
+                case STATE::HEADER_CR: {
+                    break;
+                }
+
+                case STATE::HEADER_LF: {
+                    break;
+                }
+
+                case STATE::HEADERS_CRLF: {
+                    break;
+                }
+
+                case STATE::HEADERS_VALIDATION: {
+                    break;
+                }
+
+                case STATE::HEADERS_DONE: {
+                    state = this->context_.post_header_middleware_state;
+                    break;
+                }
+
+                case STATE::BODY_CONTENT_LENGTH: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_SIZE: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_SIZE_CRLF: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_DATA: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_DATA_CR: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_DATA_LF: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNK_DONE: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_LAST_CR: {
+                    break;
+                }
+
+                case STATE::BODY_CHUNKED_LAST_LF: {
+                    break;
+                }
+
+                case STATE::BODY_DONE: {
+                    break;
+                }
+
+                case STATE::TRAILER_KEY: {
+                    break;
+                }
+
+                case STATE::TRAILER_VALUE: {
+                    break;
+                }
+
+                case STATE::TRAILER_CR: {
+                    break;
+                }
+
+                case STATE::TRAILER_LF: {
+                    break;
+                }
+
+                case STATE::TRAILERS_DONE: {
+                    break;
+                }
+
+                case STATE::BODY_UNTIL_CLOSE: {
+                    break;
+                }
+
+                case STATE::COMPLETE:
+                    state = STATE::STATUS_LINE;
+                    break;
+
+                case STATE::FAILED:
+                    begin = end;
+                    return fail(Status::BAD_REQUEST, "Parser in failed state");
+
+                default:
+                    return fail(Status::BAD_REQUEST, "Invalid parser state");
             }
         }
     }
