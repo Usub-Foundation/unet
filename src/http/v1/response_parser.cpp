@@ -702,7 +702,7 @@ namespace usub::unet::http::v1 {
                     ++ctx.body_bytes_read;
 
                     state = STATE::DATA_CHUNK_DONE;
-                    return {};
+                    // return {};
                 }
                 case STATE::DATA_CHUNK_DONE: {
                     ctx.current_state_size = 0;
