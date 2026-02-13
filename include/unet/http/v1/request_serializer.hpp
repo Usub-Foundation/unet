@@ -1,8 +1,7 @@
 #pragma once
 
-#include <cstdint>
-#include <expected>
 #include <string>
+#include <string_view>
 
 #include "unet/http/error.hpp"
 #include "unet/http/request.hpp"
@@ -11,26 +10,22 @@ namespace usub::unet::http::v1 {
 
     class RequestSerializer {
     public:
-        enum class STATE : std::uint8_t {
-            REQUEST_LINE,
-            HEADERS,
-            BODY,
-            COMPLETE,
-            FAILED,
-        };
+        enum class STATE { METHOD, URI, VERSION, HEADERS, BODY };
 
         struct SerializerContext {
-            STATE state{STATE::REQUEST_LINE};
+            STATE state{};
         };
 
+    public:
         RequestSerializer() = default;
         ~RequestSerializer() = default;
 
         SerializerContext &getContext();
 
-        static std::expected<std::string, ParseError> serialize(const Request &request);
+        static std::string serialize(const Request &request);
 
     private:
-        SerializerContext context_{};
+        SerializerContext context_;
     };
+
 }// namespace usub::unet::http::v1

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 #include "unet/header/generic.hpp"
 #include "unet/http/message.hpp"
-
 
 namespace usub::unet::http {
 
@@ -17,7 +17,8 @@ namespace usub::unet::http {
     struct Response {
         ResponseMetadata metadata{};
         usub::unet::header::Headers headers{};
-        std::string body{};// TODO: std::variant<std::monostate, FileBody(int fd, std::size_t length, std::size_t offset), chunkedGenerator> ??
+        std::string
+                body{};// TODO: std::variant<std::monostate, FileBody(int fd, std::size_t length, std::size_t offset), chunkedGenerator> ??
 
 
         MessagePolicy policy{};// keep it last for easier initialization
@@ -35,7 +36,8 @@ namespace usub::unet::http {
             this->metadata.status_code = std::stoi(status_code);
             return *this;
         }
-        [[deprecated("Most clients dont support custom messages, or custom status codes, this function has no effect on HTTP >= 2")]]
+        [[deprecated("Most clients dont support custom messages, or custom status codes, this function has no effect "
+                     "on HTTP >= 2")]]
         Response &setStatusMessage(const std::string &status_message) {
             this->metadata.status_message = status_message;
             return *this;
