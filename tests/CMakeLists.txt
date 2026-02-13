@@ -24,6 +24,14 @@ add_executable(test_http_openssl_server
     test_http_openssl_server.cpp
 )
 
+add_executable(test_openssl_stream_roundtrip
+    test_openssl_stream_roundtrip.cpp
+)
+
+add_executable(test_http_client_example
+    test_http_client_example.cpp
+)
+
 # Include new headers
 target_include_directories(test_form_data PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
@@ -45,12 +53,22 @@ target_include_directories(test_http_openssl_server PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
 
+target_include_directories(test_openssl_stream_roundtrip PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
+target_include_directories(test_http_client_example PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
 if(TARGET unet)
     target_link_libraries(test_form_data PRIVATE unet)
     target_link_libraries(test_http1_parser PRIVATE unet)
     target_link_libraries(test_http2_parser PRIVATE unet)
     target_link_libraries(test_http_server PRIVATE unet)
     target_link_libraries(test_http_openssl_server PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
+    target_link_libraries(test_openssl_stream_roundtrip PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
+    target_link_libraries(test_http_client_example PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
 endif()
 
 # Simple test run target
@@ -81,5 +99,17 @@ add_custom_target(run_http_server_tests
 add_custom_target(run_http_openssl_server_tests
     COMMAND test_http_openssl_server
     DEPENDS test_http_openssl_server
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_openssl_stream_roundtrip_tests
+    COMMAND test_openssl_stream_roundtrip
+    DEPENDS test_openssl_stream_roundtrip
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_http_client_example_test
+    COMMAND test_http_client_example
+    DEPENDS test_http_client_example
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )

@@ -50,12 +50,17 @@ namespace usub::unet::http::router {
         addRoute(const std::set<std::string> &methods, const std::string &pattern, std::function<FunctionType> handler,
                  const std::unordered_map<std::string_view, const param_constraint *> &constraints = no_constraints);
 
-        Route &addHandler(const std::set<std::string> &method, const std::string &pathPattern,
-                          std::function<FunctionType> function,
-                          std::unordered_map<std::string_view, const param_constraint *> &&constraints = {});
+        Route &
+        addRoute(std::string_view method, const std::string &pathPattern, std::function<FunctionType> function,
+                 const std::unordered_map<std::string_view, const param_constraint *> &constraints = no_constraints);
 
-        Route &addHandler(std::string_view method, const std::string &pathPattern,
-                          std::function<FunctionType> function);
+
+        // Route &addHandler(const std::set<std::string> &method, const std::string &pathPattern,
+        //                   std::function<FunctionType> function,
+        //                   std::unordered_map<std::string_view, const param_constraint *> &&constraints = {});
+
+        // Route &addHandler(std::string_view method, const std::string &pathPattern,
+        //                   std::function<FunctionType> function);
 
         Radix &addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn);
 

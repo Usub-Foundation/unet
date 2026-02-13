@@ -1,6 +1,8 @@
 #include "unet/http/v1/response_serializer.hpp"
 
 namespace usub::unet::http::v1 {
+    ResponseSerializer::SerializerContext &ResponseSerializer::getContext() { return this->context_; }
+
     std::string ResponseSerializer::serialize(const Response &response) {
         std::string rv;
         rv.reserve(16 * 1024);

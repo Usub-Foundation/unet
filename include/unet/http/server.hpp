@@ -18,65 +18,57 @@
 
 namespace usub::unet::http {
 
-    template<class... ServerSession>
-    struct ServerSessionVisitor : ServerSession... {
-        using ServerSession::operator()...;
-    };
-    template<class... ServerSession>
-    ServerSessionVisitor(ServerSession...) -> ServerSessionVisitor<ServerSession...>;
-
     template<class RouterType>
-    class Dispatcher {
+    class Bootstrap {
     public:
-        Dispatcher() = delete;
-        explicit Dispatcher(std::shared_ptr<RouterType> router)
-            : router_(std::move(router))// session_ starts as monostate
-        {}
+        explicit Bootstrap(std::shared_ptr<RouterType> router) : router_(std::move(router)) {}
 
-        usub::uvent::task::Awaitable<void> on_read(std::string_view data,
-                                                   usub::unet::core::stream::Transport &transport) {
-            std::string a;
-            if (std::holds_alternative<std::monostate>(this->session_)) {
-                if (data.size() >= h2_preface.size() && data.substr(0, h2_preface.size()) == h2_preface) {
-                    // We assume preface comes in full
-                    // session_.template emplace<ServerSession<VERSION::HTTP_2_0, RouterType>>(this->router_);
-                } else {
-                    session_.template emplace<ServerSession<VERSION::HTTP_1_1, RouterType>>(this->router_);
-                }
+        usub::uvent::task::Awaitable<SessionAction> onBytes(std::string_view data,
+                                                            usub::unet::core::stream::Transport & /*transport*/) {
+            if (decided_) {
+                co_return SessionAction{
+                        .kind = SessionAction::Kind::Error,
+                        .out_bytes = {},
+                        .upgrade_proto = {},
+                        .carry_bytes = {},
+                };
             }
 
-            co_await std::visit(ServerSessionVisitor{[&](std::monostate &) -> usub::uvent::task::Awaitable<void> {
-                                                         co_return;// should not happen
-                                                     },
-                                                     [&](auto &s) -> usub::uvent::task::Awaitable<void> {
-                                                         co_await s.on_read(data, transport);
-                                                         co_return;
-                                                     }},
-                                this->session_);
+            pending_.append(data.data(), data.size());
+            std::string_view probe{pending_};
 
-            co_return;
+            // Wait only while the currently buffered bytes still match an h2 preface prefix.
+            if (probe.size() < kH2Preface.size() && is_h2_prefix(probe)) {
+                co_return SessionAction{.kind = SessionAction::Kind::Continue};
+            }
+
+            decided_ = true;
+
+            const bool is_h2_prior_knowledge =
+                    probe.size() >= kH2Preface.size() && probe.substr(0, kH2Preface.size()) == kH2Preface;
+
+            co_return SessionAction{
+                    .kind = SessionAction::Kind::Upgrade,
+                    .out_bytes = {},
+                    .upgrade_proto = is_h2_prior_knowledge ? "h2-prior" : "http/1.1",
+                    .carry_bytes = std::move(pending_),// pass everything to next session
+            };
         }
 
-        usub::uvent::task::Awaitable<void> on_close() {
-            std::visit(ServerSessionVisitor{[](std::monostate &) {}, [](auto &s) { s.on_close(); }}, this->session_);
-            co_return;
-        }
-
-        usub::uvent::task::Awaitable<void> on_error(int ec) {
-            std::visit(ServerSessionVisitor{[&](std::monostate &) {}, [&](auto &s) { s.on_error(ec); }},
-                       this->session_);
-            co_return;
-        }
+        usub::uvent::task::Awaitable<void> onClose() { co_return; }
 
     private:
+        static constexpr std::string_view kH2Preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
+
+        static bool is_h2_prefix(std::string_view v) {
+            return v.size() <= kH2Preface.size() && kH2Preface.substr(0, v.size()) == v;
+        }
+
         std::shared_ptr<RouterType> router_;
-
-        std::variant<std::monostate, ServerSession<VERSION::HTTP_1_1, RouterType>/*,
-                     ServerSession<VERSION::HTTP_2_0, RouterType>*/>
-                session_{};
-
-        static constexpr std::string_view h2_preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
+        std::string pending_;
+        bool decided_{false};
     };
+
 
     struct ServerConfig_idea {
         int uvent_threads{4};
@@ -107,17 +99,6 @@ namespace usub::unet::http {
             (start_acceptor<Streams>(), ...);
         };
 
-        // TODO: Make possible construction from existing
-        // explicit ServerImpl(usub::Uvent &uvent);
-        // ServerImpl(const ServerConfig &config, usub::Uvent &uvent);
-
-        // ServerImpl() : router_(std::make_shared<RouterType>()) {
-        //     //TODO: for_each_thread
-        //     usub::unet::core::Acceptor<usub::unet::core::stream::PlainText> acceptor();
-        //     usub::uvent::system::co_spawn(acceptor.acceptLoop<Dispatcher<RouterType>>(router_));
-        //     return;
-        // };
-
         explicit ServerImpl()
             : router_(std::make_shared<RouterType>()), acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
             (start_acceptor<Streams>(), ...);
@@ -126,7 +107,7 @@ namespace usub::unet::http {
 
         ~ServerImpl() = default;
 
-        auto &handle(auto &&...args) { return this->router_->addHandler(std::forward<decltype(args)>(args)...); }
+        auto &handle(auto &&...args) { return this->router_->addRoute(std::forward<decltype(args)>(args)...); }
 
         auto &addMiddleware(auto &&...args) {// allow for modifying router when wanted
             return this->router_->addMiddleware(std::forward<decltype(args)>(args)...);
@@ -136,19 +117,83 @@ namespace usub::unet::http {
             return this->router_->addErrorHandler(std::forward<decltype(args)>(args)...);
         }
 
-        // void run() { this->uvent_->run(); }
-
     private:
         ServerConfig config_;
         std::shared_ptr<RouterType> router_;
-        // Dispatcher<RouterType> dispatcher_;
+
+        template<class Socket, class Stream>
+        usub::uvent::task::Awaitable<void> runConnection(Stream &stream, Socket socket) {
+            usub::uvent::utils::DynamicBuffer buffer;
+            usub::unet::core::stream::Transport transport{
+                    .send = [&](std::string_view out) -> usub::uvent::task::Awaitable<ssize_t> {
+                        auto *buf = const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(out.data()));
+                        co_return co_await socket.async_write(buf, out.size());
+                    },
+                    .close = [&]() -> usub::uvent::task::Awaitable<void> {
+                        socket.shutdown();
+                        co_return;
+                    }};
+            bool running = true;
+
+            SessionBox active = SessionBox::make<Bootstrap<RouterType>>(this->router_);
+
+            while (running) {
+                buffer.clear();
+                const ssize_t rdsz = co_await stream.read(socket, buffer);
+                if (rdsz <= 0) {
+                    co_await active.ops.on_close(active.state);
+                    break;
+                }
+
+                SessionAction action = co_await active.ops.on_bytes(
+                        active.state,
+                        std::string_view{reinterpret_cast<const char *>(buffer.data()), static_cast<std::size_t>(rdsz)},
+                        transport);
+
+                // Handle chained upgrades in the same tick (bootstrap -> http1, http1 -> ws, etc.)
+                while (action.kind == SessionAction::Kind::Upgrade) {
+                    if (action.upgrade_proto == "http/1.1") {
+                        active = SessionBox::make<ServerSession<VERSION::HTTP_1_1, RouterType>>(this->router_);
+                    } else if (action.upgrade_proto == "h2-prior") {
+                        // TODO: when h2 session is ready
+                        // active = SessionBox::make<ServerSession<VERSION::HTTP_2_0, RouterType>>(router);
+                        co_await transport.close();
+                        co_return;
+                    } else {
+                        // TODO: registry lookup for custom protocols
+                        co_await transport.close();
+                        co_return;
+                    }
+
+                    if (action.carry_bytes.empty()) {
+                        action = SessionAction{.kind = SessionAction::Kind::Continue};
+                        break;
+                    }
+
+                    action = co_await active.ops.on_bytes(active.state, action.carry_bytes, transport);
+                }
+
+                if (!action.out_bytes.empty()) { co_await transport.send(action.out_bytes); }
+
+                if (action.kind == SessionAction::Kind::Close || action.kind == SessionAction::Kind::Error) { break; }
+            }
+
+            co_await transport.close();
+            co_return;
+        }
 
         // TODO: Not sure that's the best
         std::tuple<usub::unet::core::Acceptor<Streams>...> acceptors_;
         template<typename Stream>
         void start_acceptor() {
             auto &acc = std::get<usub::unet::core::Acceptor<Stream>>(acceptors_);
-            usub::uvent::system::co_spawn(acc.template acceptLoop<Dispatcher<RouterType>>(router_));
+
+            auto on_connection = [this](Stream &stream, auto socket) -> usub::uvent::task::Awaitable<void> {
+                co_await this->runConnection(stream, std::move(socket));
+            };
+
+            usub::uvent::system::co_spawn(acc.acceptLoop(std::move(on_connection)));
+            // usub::uvent::system::co_spawn(acc.template acceptLoop<Dispatcher<RouterType>>(router_));
         }
     };
 
