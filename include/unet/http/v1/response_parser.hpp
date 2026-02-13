@@ -28,16 +28,16 @@ namespace usub::unet::http::v1 {
             HEADERS_VALIDATION,// compute body framing mode, validate TE/CL rules, status-code rules
             HEADERS_DONE,      // middleware hook like your request parser (optional but consistent)
 
-            BODY_CONTENT_LENGTH,   // read exactly Content-Length bytes (0 => COMPLETE)
-            BODY_CHUNKED_SIZE,     // read hex digits until '\r' (optionally ignore extensions)
-            BODY_CHUNKED_SIZE_CRLF,// expects '\n', computes chunk size, chooses DATA or LAST
-            BODY_CHUNKED_DATA,     // read exactly chunk_size bytes
-            BODY_CHUNKED_DATA_CR,  // expect '\r'
-            BODY_CHUNKED_DATA_LF,  // expect '\n'
-            BODY_CHUNK_DONE,       // reset counters and go back to BODY_CHUNKED_SIZE
-            BODY_CHUNKED_LAST_CR,  // expect '\r' after 0-size line (or after size CRLF => last)
-            BODY_CHUNKED_LAST_LF,  // expect '\n', then trailers or done
-            BODY_DONE,             // end-of-message check (trailers unsupported or validated)
+            DATA_CONTENT_LENGTH,   // read exactly Content-Length bytes (0 => COMPLETE)
+            DATA_CHUNKED_SIZE,     // read hex digits until '\r' (optionally ignore extensions)
+            DATA_CHUNKED_SIZE_CRLF,// expects '\n', computes chunk size, chooses DATA or LAST
+            DATA_CHUNKED_DATA,     // read exactly chunk_size bytes
+            DATA_CHUNKED_DATA_CR,  // expect '\r'
+            DATA_CHUNKED_DATA_LF,  // expect '\n'
+            DATA_CHUNK_DONE,       // reset counters and go back to DATA_CHUNKED_SIZE
+            DATA_CHUNKED_LAST_CR,  // expect '\r' after 0-size line (or after size CRLF => last)
+            DATA_CHUNKED_LAST_LF,  // expect '\n', then trailers or done
+            DATA_DONE,             // end-of-message check (trailers unsupported or validated)
 
             TRAILER_KEY,
             TRAILER_VALUE,
@@ -51,11 +51,20 @@ namespace usub::unet::http::v1 {
             FAILED
         };
 
+        enum class AfterHeaders : std::uint8_t { COMPLETE, CHUNKED, CONTENT_LENGTH, UNTIL_CLOSE };
         struct ParserContext {
             STATE state{STATE::STATUS_VERSION};
 
+            AfterHeaders after_headers{AfterHeaders::COMPLETE};
+
+
             std::pair<std::string, std::string> kv_buffer{};
             std::size_t current_state_size{0};
+            std::size_t headers_size{0};
+
+
+            std::size_t body_bytes_read{0};
+            std::size_t body_read_size{};
         };
         ResponseParser() = default;
         ~ResponseParser() = default;
