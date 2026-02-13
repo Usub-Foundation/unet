@@ -1,30 +1,44 @@
 #pragma once
+#include <array>
+#include <cstdint>
+#include <expected>
+#include <optional>
+#include <string>
+#include <string_view>
 
+
+#include "unet/http/error.hpp"
+#include "unet/http/response.hpp"
 
 namespace usub::unet::http::v1 {
 
     class ResponseParser {
     public:
         enum class STATE : std::uint8_t {
-            STATUS_LINE,
+            STATUS_VERSION,  // parse "HTTP/1.1" token until SP
+            STATUS_CODE,     // parse 3 digits until SP
+            STATUS_REASON,   // parse reason phrase until CR
+            STATUS_LINE_CRLF,// expect '\n' after '\r',// parses entire: HTTP/x.y SP ddd SP reason CRLF (in one state)
 
-            HEADER_KEY,
-            HEADER_VALUE,
-            HEADER_CR,
-            HEADERS_CRLF,
-            HEADERS_VALIDATION,
-            HEADERS_DONE,
+            HEADER_KEY,        // field-name (tchar+), stops on ':'
+            HEADER_VALUE,      // optional OWS + field-value until CR
+            HEADER_CR,         // expects '\n' (you already do CR->LF split in request parser)
+            HEADER_LF,         // commit header, decide next: next header or end-of-headers
+            HEADERS_CRLF,      // consumes final '\n' after the empty-line '\r'
+            HEADERS_VALIDATION,// compute body framing mode, validate TE/CL rules, status-code rules
+            HEADERS_DONE,      // middleware hook like your request parser (optional but consistent)
 
-            BODY_CONTENT_LENGTH,
-            BODY_CHUNKED_SIZE,
-            BODY_CHUNKED_SIZE_CRLF,
-            BODY_CHUNKED_DATA,
-            BODY_CHUNKED_DATA_CR,
-            BODY_CHUNKED_DATA_LF,
-            BODY_CHUNK_DONE,
-            BODY_CHUNKED_LAST_CR,
-            BODY_CHUNKED_LAST_LF,
-            BODY_DONE,
+            BODY_CONTENT_LENGTH,   // read exactly Content-Length bytes (0 => COMPLETE)
+            BODY_CHUNKED_SIZE,     // read hex digits until '\r' (optionally ignore extensions)
+            BODY_CHUNKED_SIZE_CRLF,// expects '\n', computes chunk size, chooses DATA or LAST
+            BODY_CHUNKED_DATA,     // read exactly chunk_size bytes
+            BODY_CHUNKED_DATA_CR,  // expect '\r'
+            BODY_CHUNKED_DATA_LF,  // expect '\n'
+            BODY_CHUNK_DONE,       // reset counters and go back to BODY_CHUNKED_SIZE
+            BODY_CHUNKED_LAST_CR,  // expect '\r' after 0-size line (or after size CRLF => last)
+            BODY_CHUNKED_LAST_LF,  // expect '\n', then trailers or done
+            BODY_DONE,             // end-of-message check (trailers unsupported or validated)
+
             TRAILER_KEY,
             TRAILER_VALUE,
             TRAILER_CR,
@@ -38,15 +52,10 @@ namespace usub::unet::http::v1 {
         };
 
         struct ParserContext {
-            STATE state{STATE::STATUS_LINE};
+            STATE state{STATE::STATUS_VERSION};
 
             std::pair<std::string, std::string> kv_buffer{};
             std::size_t current_state_size{0};
-
-
-            std::uint8_t status_line_phase{0};
-            std::uint8_t status_code_digits{0};
-            std::uint16_t status_code_value{0};
         };
         ResponseParser() = default;
         ~ResponseParser() = default;

@@ -1,10 +1,5 @@
-#include <expected>
-#include <optional>
-#include <string_view>
-
-#include "unet/http/error.hpp"
-#include "unet/http/response.hpp"
 #include "unet/http/v1/response_parser.hpp"
+
 
 namespace usub::unet::http::v1 {
 
@@ -178,147 +173,141 @@ namespace usub::unet::http::v1 {
 
         using Status = usub::unet::http::STATUS_CODE;
 
-        // TODO future reimplementation
         auto fail = [&](Status status, std::string_view message) -> std::expected<void, ParseError> {
             ParseError err{};
             err.code = ParseError::CODE::GENERIC_ERROR;
             err.expected_status = status;
             err.message = std::string(message);
-            //TODO: Rethink
-            // std::size_t remaining = static_cast<std::size_t>(e - it);
-            // std::size_t copy_len = remaining < err.tail.size() ? remaining : err.tail.size();
-            // std::memset(err.tail.data(), 0, err.tail.size());
-            // if (copy_len > 0) {
-            //     std::memcpy(err.tail.data(), it, copy_len);
-            // }
             state = STATE::FAILED;
-            // begin = it;
             return std::unexpected(err);
         };
 
 
         while (begin != end) {
             switch (state) {
-
-                case STATE::STATUS_LINE: {
+                case STATE::STATUS_VERSION: {
                     auto &ver_buf = ctx.kv_buffer.first;
+                    while (begin != end) {
+                        const char ch = *begin;
+
+                        if (ver_buf.empty() && ch >= '0' && ch <= '9') {
+
+                            ctx.current_state_size = 0;
+                            state = STATE::STATUS_CODE;
+                            break;
+                        }
+
+                        if (ch == ' ') {
+                            if (ver_buf.empty()) {
+                                return fail(Status::BAD_REQUEST, "Empty HTTP version in status line");
+                            }
+
+                            if (ver_buf == "HTTP/1.1") {
+                                response.metadata.version = VERSION::HTTP_1_1;
+                            } else if (ver_buf == "HTTP/1.0") {
+                                response.metadata.version = VERSION::HTTP_1_0;
+                            } else {
+                                return fail(Status::BAD_REQUEST, "Unknown HTTP version in status line");
+                            }
+
+                            ++begin;
+                            ver_buf.clear();
+                            ctx.current_state_size = 0;
+                            state = STATE::STATUS_CODE;
+                            break;
+                        }
+
+                        if (ch == '\r' || ch == '\n') {
+                            return fail(Status::BAD_REQUEST, "Malformed status line (version not followed by SP)");
+                        }
+
+                        if (!is_version(static_cast<unsigned char>(ch))) {
+                            return fail(Status::BAD_REQUEST, "Invalid character in HTTP version");
+                        }
+
+                        ver_buf.push_back(ch);
+                        ++begin;
+
+                        if (ver_buf.size() > 16) { return fail(Status::BAD_REQUEST, "HTTP version too large"); }
+                    }
+                    break;
+                }
+
+                case STATE::STATUS_CODE: {
+
+                    if (ctx.current_state_size == 0) { response.metadata.status_code = 0; }
+
+                    while (begin != end) {
+                        const char ch = *begin;
+
+                        if (ch >= '0' && ch <= '9') {
+                            if (ctx.current_state_size >= 3) {//legacy response without HTTP-version token
+                                return fail(Status::BAD_REQUEST, "Status code too long");
+                            }
+
+                            auto &code = response.metadata.status_code;// 0..999
+                            code = static_cast<std::uint16_t>(code * 10u + static_cast<unsigned>(ch - '0'));
+
+                            if (code >= 1000u) { return fail(Status::BAD_REQUEST, "Status code out of range"); }
+
+                            ++ctx.current_state_size;
+                            ++begin;
+                            continue;
+                        }
+
+                        if (ch == ' ') {
+                            if (ctx.current_state_size != 3) {
+                                return fail(Status::BAD_REQUEST, "Status code must be 3 digits");
+                            }
+
+                            ++begin;
+                            ctx.current_state_size = 0;
+                            state = STATE::STATUS_REASON;
+                            break;
+                        }
+
+                        return fail(Status::BAD_REQUEST, "Invalid status code (expected digit or SP)");
+                    }
+
+                    break;
+                }
+
+                case STATE::STATUS_REASON: {
                     auto &reason = ctx.kv_buffer.second;
 
                     while (begin != end) {
                         const char ch = *begin;
 
-                        switch (ctx.status_line_phase) {
-
-                            case 0: {
-
-                                if (ch == ' ') {
-                                    if (ver_buf.empty()) {
-                                        return fail(Status::BAD_REQUEST, "Empty HTTP version in status line");
-                                    }
-
-                                    if (ver_buf == "HTTP/1.1") {
-                                        response.metadata.version = VERSION::HTTP_1_1;
-                                    } else if (ver_buf == "HTTP/1.0") {
-                                        response.metadata.version = VERSION::HTTP_1_0;
-                                    } else {
-                                        return fail(Status::BAD_REQUEST, "Unknown HTTP version in status line");
-                                    }
-
-                                    ++begin;
-                                    ctx.status_line_phase = 2;
-                                    ctx.status_code_digits = 0;
-                                    ctx.status_code_value = 0;
-                                    break;
-                                }
-
-                                if (ch == '\r' || ch == '\n') {
-                                    return fail(Status::BAD_REQUEST,
-                                                "Malformed status line (version not followed by SP)");
-                                }
-
-                                if (!is_version(static_cast<unsigned char>(ch))) {
-                                    return fail(Status::BAD_REQUEST, "Invalid character in HTTP version");
-                                }
-
-                                ver_buf.push_back(ch);
-                                ++begin;
-
-                                if (ver_buf.size() > 16) { return fail(Status::BAD_REQUEST, "HTTP version too large"); }
-                                break;
-                            }
-
-                            case 2: {
-                                if (ch < '0' || ch > '9') {
-                                    return fail(Status::BAD_REQUEST, "Invalid status code (expected digit)");
-                                }
-
-                                ctx.status_code_value =
-                                        static_cast<std::uint16_t>(ctx.status_code_value * 10 + (ch - '0'));
-                                ++ctx.status_code_digits;
-                                ++begin;
-
-                                if (ctx.status_code_digits == 3) {
-                                    response.metadata.status_code =
-                                            static_cast<usub::unet::http::STATUS_CODE>(ctx.status_code_value);
-
-                                    ctx.status_line_phase = 3;
-                                }
-                                break;
-                            }
-
-                            case 3: {
-                                if (ch != ' ') { return fail(Status::BAD_REQUEST, "Missing SP after status code"); }
-                                ++begin;
-                                ctx.status_line_phase = 4;
-                                break;
-                            }
-
-                            case 4: {
-                                if (ch == '\r') {
-                                    ++begin;
-                                    ctx.status_line_phase = 5;
-                                    break;
-                                }
-
-
-                                if (!is_vchar_or_obs(static_cast<unsigned char>(ch))) {
-                                    return fail(Status::BAD_REQUEST, "Invalid character in reason phrase");
-                                }
-
-                                reason.push_back(ch);
-                                ++begin;
-
-                                if (reason.size() > 1024) {
-                                    return fail(Status::BAD_REQUEST, "Reason phrase too large");
-                                }
-                                break;
-                            }
-
-                            case 5: {
-                                if (ch != '\n') {
-                                    return fail(Status::BAD_REQUEST, "Missing LF after CR in status line");
-                                }
-                                ++begin;
-
-                                response.metadata.status_code = std::move(reason);
-
-                                ver_buf.clear();
-                                reason.clear();
-
-                                ctx.status_line_phase = 0;
-                                ctx.status_code_digits = 0;
-                                ctx.status_code_value = 0;
-
-                                state = STATE::HEADER_KEY;
-                                return {};
-                            }
-
-                            default:
-                                return fail(Status::BAD_REQUEST, "Internal error: invalid status line phase");
+                        if (ch == '\r') {
+                            ++begin;// consume CR
+                            state = STATE::STATUS_LINE_CRLF;
+                            break;
                         }
-                    }
 
-                    return {};
+                        if (!is_vchar_or_obs(static_cast<unsigned char>(ch))) {
+                            return fail(Status::BAD_REQUEST, "Invalid character in reason phrase");
+                        }
+
+                        reason.push_back(ch);
+                        ++begin;
+
+                        if (reason.size() > 1024) { return fail(Status::BAD_REQUEST, "Reason phrase too large"); }
+                    }
+                    break;
+                }
+
+                case STATE::STATUS_LINE_CRLF: {
+                    if (begin == end) { return {}; }
+
+                    if (*begin != '\n') { return fail(Status::BAD_REQUEST, "Missing LF after CR in status line"); }
+                    ++begin;
+
+                    response.metadata.status_message = std::move(ctx.kv_buffer.second);
+                    ctx.kv_buffer.second.clear();
+
+                    ctx.current_state_size = 0;
+                    state = STATE::HEADER_KEY;
+                    break;
                 }
 
                 case STATE::HEADER_KEY: {
@@ -346,14 +335,16 @@ namespace usub::unet::http::v1 {
                 }
 
                 case STATE::HEADERS_DONE: {
-                    state = this->context_.post_header_middleware_state;
+                    // state = this->context_.post_header_middleware_state;
                     break;
                 }
 
+                // ---- Body: Content-Length
                 case STATE::BODY_CONTENT_LENGTH: {
                     break;
                 }
 
+                // ---- Body: Chunked
                 case STATE::BODY_CHUNKED_SIZE: {
                     break;
                 }
@@ -390,6 +381,7 @@ namespace usub::unet::http::v1 {
                     break;
                 }
 
+                // ---- Optional trailers
                 case STATE::TRAILER_KEY: {
                     break;
                 }
@@ -410,12 +402,13 @@ namespace usub::unet::http::v1 {
                     break;
                 }
 
+                // ---- Until-close body framing
                 case STATE::BODY_UNTIL_CLOSE: {
                     break;
                 }
 
                 case STATE::COMPLETE:
-                    state = STATE::STATUS_LINE;
+                    state = STATE::STATUS_VERSION;
                     break;
 
                 case STATE::FAILED:
@@ -426,6 +419,7 @@ namespace usub::unet::http::v1 {
                     return fail(Status::BAD_REQUEST, "Invalid parser state");
             }
         }
+        return {};
     }
 
 
