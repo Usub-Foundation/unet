@@ -20,88 +20,17 @@ namespace usub::unet::http {
         ServerSession() = delete;
         ~ServerSession() = default;
 
-        usub::uvent::task::Awaitable<void> on_read(std::string_view data,
-                                                   usub::unet::core::stream::Transport &transport) {
+        usub::uvent::task::Awaitable<SessionAction> onBytes(std::string_view data,
+                                                            usub::unet::core::stream::Transport &transport) {
             this->callbacks_.send = [&](std::string_view data) -> usub::uvent::task::Awaitable<void> {
                 co_await this->send(transport, data);
                 co_return;
             };
             co_await this->server_stream_.process(data, this->callbacks_);
-            co_return;
+            co_return SessionAction{.kind = SessionAction::Kind::Continue};
         }
 
-
-        usub::uvent::task::Awaitable<void> on_read_old(std::string_view data,
-                                                       usub::unet::core::stream::Transport &transport) {
-            //     std::string_view::const_iterator begin = data.begin();
-            //     const std::string_view::const_iterator end = data.end();
-            //     auto &state = this->request_reader_.getContext().state;
-
-            // continue_parse:
-            //     if (begin == end) { co_return; }
-            //     auto result = this->request_reader_.parse(this->request_, begin, end);
-
-            //     if (!result) {
-            //         this->response_.metadata.status_code = result.error().expected_status;
-            //         state = v1::RequestParser::STATE::FAILED;
-            //     }
-
-            //     if (!this->current_route_ && state == v1::RequestParser::STATE::HEADERS_DONE) {
-            //         this->response_.metadata.version = this->request_.metadata.version;
-            //         auto match = this->router_->match(this->request_);
-            //         if (!match) {
-            //             state = v1::RequestParser::STATE::FAILED;
-            //             // TODO: Status code & message
-            //             this->response_.metadata.status_code = match.error();
-            //         } else {
-            //             this->current_route_ = match.value();
-            //         }
-            //     }
-
-            //     switch (state) {
-            //         case v1::RequestParser::STATE::HEADERS_DONE:
-            //             [[fallthrough]];
-            //         case v1::RequestParser::STATE::TRAILERS_DONE: {
-            //             auto middleware_result = this->invoke_middleware(MIDDLEWARE_PHASE::HEADER, request_, response_);
-            //             if (!middleware_result) { break; }
-            //             state = this->request_reader_.getContext().post_header_middleware_state;
-            //             if (state != v1::RequestParser::STATE::COMPLETE) {
-            //                 goto continue_parse;
-            //             } else {
-            //                 goto complete;
-            //             }
-            //             break;
-            //         }
-            //         case v1::RequestParser::STATE::DATA_CHUNK_DONE: {
-            //             auto middleware_result = this->invoke_middleware(MIDDLEWARE_PHASE::BODY, request_, response_);
-            //             if (!middleware_result) { break; }
-            //             goto continue_parse;
-            //             break;
-            //         }
-            //         case v1::RequestParser::STATE::COMPLETE: {
-            //         complete:
-            //             auto handler = this->current_route_->handler;
-            //             co_await handler(request_, response_);
-
-            //             break;
-            //         }
-            //         case v1::RequestParser::STATE::FAILED:
-            //             this->router_->error("log", this->request_, this->response_);
-            //             this->router_->error(std::to_string(this->response_.metadata.status_code), this->request_,
-            //                                  this->response_);
-            //             break;
-            //         default:
-            //             // any other state
-            //             goto end;
-            //             break;
-            //     }
-            // send_body:
-            //     co_await this->write_response(transport);
-            // end:
-            //     co_return;
-            co_return;
-        };
-        usub::uvent::task::Awaitable<void> on_close() {
+        usub::uvent::task::Awaitable<void> onClose() {
             // if (this->current_route_) {
             //     auto &context = this->request_reader_.getContext();
             //     context.state = v1::RequestParser::STATE::FAILED;

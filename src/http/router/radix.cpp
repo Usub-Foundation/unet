@@ -213,6 +213,13 @@ namespace usub::unet::http::router {
         return *rawPtr;
     }
 
+    Route &Radix::addRoute(std::string_view method, const std::string &pathPattern,
+                           std::function<FunctionType> function,
+                           const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
+        std::set<std::string> method_set{std::string(method)};
+        return this->addRoute(method_set, pathPattern, std::move(function), constraints);
+    }
+
     std::expected<Route *, STATUS_CODE> Radix::match(usub::unet::http::Request &request,
                                                      std::string *error_description) {
         const std::string path = request.metadata.uri.path;
@@ -303,17 +310,17 @@ namespace usub::unet::http::router {
         }
     }
 
-    Route &Radix::addHandler(std::string_view method, const std::string &pathPattern,
-                             std::function<FunctionType> function) {
-        std::set<std::string> method_set{std::string(method)};
-        return addRoute(method_set, pathPattern, std::move(function));
-    }
+    // Route &Radix::addHandler(std::string_view method, const std::string &pathPattern,
+    //                          std::function<FunctionType> function) {
+    //     std::set<std::string> method_set{std::string(method)};
+    //     return addRoute(method_set, pathPattern, std::move(function));
+    // }
 
-    Route &Radix::addHandler(const std::set<std::string> &method, const std::string &pathPattern,
-                             std::function<FunctionType> function,
-                             std::unordered_map<std::string_view, const param_constraint *> &&constraints) {
-        return addRoute(method, pathPattern, std::move(function), constraints);
-    }
+    // Route &Radix::addHandler(const std::set<std::string> &method, const std::string &pathPattern,
+    //                          std::function<FunctionType> function,
+    //                          std::unordered_map<std::string_view, const param_constraint *> &&constraints) {
+    //     return addRoute(method, pathPattern, std::move(function), constraints);
+    // }
 
     Radix &Radix::addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn) {
         this->error_handlers_map.emplace(level, error_handler_fn);
