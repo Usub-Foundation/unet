@@ -38,7 +38,7 @@ file(GLOB_RECURSE UNET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 list(FILTER UNET_HEADERS EXCLUDE REGEX "/include/unet/http/v2/")
 list(FILTER UNET_SOURCES EXCLUDE REGEX "/src/http/v2/")
-list(FILTER UNET_SOURCES EXCLUDE REGEX "/src/http/v1/wire")
+
 # list(APPEND UNET_SOURCES
 #     "${CMAKE_CURRENT_SOURCE_DIR}/src/http/v1/request_serializer.cpp"
 #     "${CMAKE_CURRENT_SOURCE_DIR}/src/http/v1/response_parser.cpp"

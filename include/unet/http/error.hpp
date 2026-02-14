@@ -3,14 +3,12 @@
 
 #include <string>
 
-#include "unet/http/message.hpp"
+#include "unet/http/core/message.hpp"
 
 namespace usub::unet::http {
 
     struct ParseError {
-        enum class CODE {
-            GENERIC_ERROR
-        };
+        enum class CODE { GENERIC_ERROR };
 
         CODE code;
         STATUS_CODE expected_status;

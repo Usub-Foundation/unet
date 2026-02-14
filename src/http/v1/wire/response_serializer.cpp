@@ -1,4 +1,4 @@
-#include "unet/http/v1/response_serializer.hpp"
+#include "unet/http/v1/wire/response_serializer.hpp"
 
 namespace usub::unet::http::v1 {
     ResponseSerializer::SerializerContext &ResponseSerializer::getContext() { return this->context_; }
@@ -12,9 +12,7 @@ namespace usub::unet::http::v1 {
         rv.append(std::to_string(code));
         rv.append(" ");
         std::string msg = "Unknown";
-        if (code < status_messages.size() && !status_messages[code].empty()) {
-            msg = status_messages[code];
-        }
+        if (code < status_messages.size() && !status_messages[code].empty()) { msg = status_messages[code]; }
         if (response.metadata.status_message && !response.metadata.status_message->empty()) {
             msg = *response.metadata.status_message;
         }

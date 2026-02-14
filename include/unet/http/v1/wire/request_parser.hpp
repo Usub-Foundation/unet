@@ -10,8 +10,10 @@
 #include <string_view>
 #include <utility>
 
+#include "unet/http/core/char_table.hpp"
+#include "unet/http/core/parse_step.hpp"
+#include "unet/http/core/request.hpp"
 #include "unet/http/error.hpp"
-#include "unet/http/request.hpp"
 
 namespace usub::unet::http::v1 {
 
@@ -36,7 +38,7 @@ namespace usub::unet::http::v1 {
             HEADER_LF,
             HEADERS_CRLF,
             HEADERS_VALIDATION,
-            HEADERS_DONE,
+            // HEADERS_DONE,
             DATA_CONTENT_LENGTH,
             DATA_CHUNKED_SIZE,
             DATA_CHUNKED_SIZE_CRLF,
@@ -58,8 +60,7 @@ namespace usub::unet::http::v1 {
 
         struct ParserContext {
             STATE state{STATE::METHOD_TOKEN};
-            STATE post_header_middleware_state{
-                    STATE::METHOD_TOKEN};// State after we invoke middleware, to avoid reparse
+
             std::pair<std::string, std::string> kv_buffer{};
             std::size_t headers_size{0};
 
@@ -78,8 +79,8 @@ namespace usub::unet::http::v1 {
         // Tries to parse full request
         static std::expected<Request, ParseError> parse(const std::string_view raw_request);
 
-        std::expected<void, ParseError> parse(Request &request, std::string_view::const_iterator &begin,
-                                              const std::string_view::const_iterator end);
+        std::expected<ParseStep, ParseError> step(Request &request, std::string_view::const_iterator &begin,
+                                                  const std::string_view::const_iterator end);
 
         ParserContext &getContext();
 

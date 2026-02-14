@@ -7,12 +7,14 @@
 
 
 #include "unet/core/acceptor.hpp"
+#include "unet/core/config.hpp"
 #include "unet/core/streams/plaintext.hpp"
-#include "unet/http/request.hpp"
-#include "unet/http/response.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
 #include "unet/http/router/radix.hpp"
 #include "unet/http/session.hpp"
 #include "unet/http/v1/server_session.hpp"
+
 // #include "unet/http/v2/server_session.hpp"
 
 
@@ -70,29 +72,29 @@ namespace usub::unet::http {
     };
 
 
-    struct ServerConfig_idea {
-        int uvent_threads{4};
+    // struct ServerConfig_idea {
+    //     int uvent_threads{4};
 
-        struct Connection {
-            std::string ip_addres;
-            std::uint16_t port;
-            std::uint64_t backlog;
-            enum class IPV { IPV4, IPV6 };
-            IPV ip_version;
-            enum class SocketType { TCP, UDP };
-            SocketType socket_type;
+    //     struct Connection {
+    //         std::string ip_addres;
+    //         std::uint16_t port;
+    //         std::uint64_t backlog;
+    //         enum class IPV { IPV4, IPV6 };
+    //         IPV ip_version;
+    //         enum class SocketType { TCP, UDP };
+    //         SocketType socket_type;
 
-            bool ssl = false;
-        };
-    };
+    //         bool ssl = false;
+    //     };
+    // };
 
-    using ServerConfig = std::unordered_map<std::string, std::string>;
+    // using ServerConfig = std::unordered_map<std::string, std::string>;
 
     template<class RouterType, typename... Streams>
     class ServerImpl {
     public:
         //TODO: implement constructors
-        explicit ServerImpl(const ServerConfig &config)
+        explicit ServerImpl(const usub::unet::core::Config &config)
             : config_(config), router_(std::make_shared<RouterType>()),
               acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
             //TODO: for_each_thread
@@ -118,7 +120,7 @@ namespace usub::unet::http {
         }
 
     private:
-        ServerConfig config_;
+        usub::unet::core::Config config_;
         std::shared_ptr<RouterType> router_;
 
         template<class Socket, class Stream>
@@ -192,7 +194,7 @@ namespace usub::unet::http {
                 co_await this->runConnection(stream, std::move(socket));
             };
 
-            usub::uvent::system::co_spawn(acc.acceptLoop(std::move(on_connection)));
+            usub::uvent::system::co_spawn(acc.acceptLoop(std::move(on_connection), this->config_));
             // usub::uvent::system::co_spawn(acc.template acceptLoop<Dispatcher<RouterType>>(router_));
         }
     };

@@ -3,13 +3,12 @@
 #include <memory>
 #include <string_view>
 
-#include "unet/http/request.hpp"
-#include "unet/http/response.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
 #include "unet/http/router/route.hpp"
 #include "unet/http/session.hpp"
-#include "unet/http/v1/ingress_session.hpp"
-#include "unet/http/v1/request_parser.hpp"
-#include "unet/http/v1/response_serializer.hpp"
+#include "unet/http/v1/wire/request_parser.hpp"
+#include "unet/http/v1/wire/response_serializer.hpp"
 
 namespace usub::unet::http {
 
@@ -22,12 +21,74 @@ namespace usub::unet::http {
 
         usub::uvent::task::Awaitable<SessionAction> onBytes(std::string_view data,
                                                             usub::unet::core::stream::Transport &transport) {
-            this->callbacks_.send = [&](std::string_view data) -> usub::uvent::task::Awaitable<void> {
-                co_await this->send(transport, data);
-                co_return;
-            };
-            co_await this->server_stream_.process(data, this->callbacks_);
-            co_return SessionAction{.kind = SessionAction::Kind::Continue};
+            std::string_view::const_iterator begin = data.begin();
+            const std::string_view::const_iterator end = data.end();
+            auto &state = this->request_reader_.getContext().state;
+
+        continue_parse:
+            if (begin == end) { co_return {}; }
+            auto result = this->request_reader_.step(this->request_, begin, end);
+
+            if (!result) {
+                this->response_.metadata.status_code = result.error().expected_status;
+                this->router_->error("log", this->request_, this->response_);
+                this->router_->error(std::to_string(this->response_.metadata.status_code), this->request_,
+                                     this->response_);
+            }
+
+            switch (result.value().kind) {
+                case STEP::CONTINUE: {
+                    goto continue_parse;
+                    co_return {};
+                }
+                case STEP::HEADERS: {
+                    this->response_.metadata.version = this->request_.metadata.version;
+                    auto match = this->router_->match(this->request_);
+                    if (!match) {
+                        state = v1::RequestParser::STATE::FAILED;
+                        // TODO: Status code & message
+                        this->response_.metadata.status_code = match.error();
+                        this->router_->error("log", this->request_, this->response_);
+                        this->router_->error(std::to_string(this->response_.metadata.status_code), this->request_,
+                                             this->response_);
+                        break;
+                    }
+                    this->current_route_ = match.value();
+                    auto middleware_result =
+                            this->router_->getMiddlewareChain().execute(MIDDLEWARE_PHASE::HEADER, this->request_,
+                                                                        this->response_)
+                                    ? this->current_route_->middleware_chain.execute(MIDDLEWARE_PHASE::HEADER,
+                                                                                     this->request_, this->response_)
+                                    : false;
+                    if (!middleware_result) { break; }
+                    if (result.value().complete) { goto complete; }
+                    goto continue_parse;
+                }
+                case STEP::BODY: {
+                    auto middleware_result = this->router_->getMiddlewareChain().execute(
+                                                     MIDDLEWARE_PHASE::BODY, this->request_, this->response_)
+                                                     ? this->current_route_->middleware_chain.execute(
+                                                               MIDDLEWARE_PHASE::BODY, this->request_, this->response_)
+                                                     : false;
+                    if (!middleware_result) { break; }
+                    goto continue_parse;
+                    break;
+                }
+                case STEP::COMPLETE: {
+                complete:
+                    auto handler = this->current_route_->handler;
+                    co_await handler(this->request_, this->response_);
+                    break;
+                }
+            }
+
+        send_body:
+            // co_await this->write_response(transport);
+            co_await transport.send(this->response_writer_.serialize(this->response_));
+            this->response_ = {};
+            this->request_ = {};
+        end:
+            co_return {};
         }
 
         usub::uvent::task::Awaitable<void> onClose() {
@@ -47,74 +108,19 @@ namespace usub::unet::http {
 
 
     private:
-        v1::IngressSession server_stream_;
+        Request request_{};
+        Response response_{};
+        v1::RequestParser request_reader_{};
+        v1::ResponseSerializer response_writer_{};
         std::shared_ptr<RouterType> router_;
         router::Route *current_route_;
-
-        std::expected<router::Route *, STATUS_CODE> matchRoute(Request &request) {
-            auto match = this->router_->match(request);
-            if (!match) { return match; }
-            this->current_route_ = match.value();
-            return match;
-        }
-
-        bool invokeMiddleware(const MIDDLEWARE_PHASE &phase, Request &request, Response &response) {
-            return this->router_->getMiddlewareChain().execute(phase, request, response)
-                           ? this->current_route_->middleware_chain.execute(phase, request, response)
-                           : false;
-        }
-
-        usub::uvent::task::Awaitable<void> invokeHandler(Request &request, Response &response) {
-            if (this->current_route_) {
-                auto handler = this->current_route_->handler;
-                co_await handler(request, response);
-                co_return;
-            }
-            co_return;
-        }
-
-        bool setRoute(Request &request) {
-            this->response_.metadata.version = this->request_.metadata.version;
-            auto match = this->router_->match(this->request_);
-            if (!match) {
-                // state = v1::RequestParser::STATE::FAILED;
-                // TODO: Status code & message
-                this->response_.metadata.status_code = match.error();
-                return false;
-            }
-            this->current_route_ = match.value();
-            return true;
-        }
-
-        bool invokeErrorHandler(const std::string level, Request &request, Response &response) {
-            this->router_->error(level, request, response);
-            return true;
-        }
 
         usub::uvent::task::Awaitable<void> send(usub::unet::core::stream::Transport &transport, std::string_view data) {
             co_await transport.send(data);
             co_return;
         }
 
-        AsyncCallback callbacks_{
-                .on_headers_done = [this](Request &request, Response &response) -> bool {
-                    return this->invokeMiddleware(MIDDLEWARE_PHASE::HEADER, request, response);
-                },
-                .on_body_chunk_done = [this](Request &request, Response &response) -> bool {
-                    return this->invokeMiddleware(MIDDLEWARE_PHASE::BODY, request, response);
-                },
-                .on_error = [this](const std::string level, Request &request, Response &response) -> bool {
-                    return this->invokeErrorHandler(level, request, response);
-                },
-                .invoke_handler = [this](Request &request, Response &response) -> usub::uvent::task::Awaitable<void> {
-                    co_await this->invokeHandler(request, response);
-                },
-                .set_route = [this](Request &request) -> std::expected<router::Route *, STATUS_CODE> {
-                    return this->matchRoute(request);
-                },
-
-        };
-    };
+    };// namespace usub::unet::http
 
     template<class RouterType>
     using Http1Session = ServerSession<VERSION::HTTP_1_1, RouterType>;

@@ -12,8 +12,8 @@
 #include <utility>
 #include <vector>
 
-#include "unet/http/request.hpp"
-#include "unet/http/response.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
 #include "unet/http/router/route.hpp"
 #include "unet/http/session.hpp"
 #include "unet/http/v2/connection.hpp"

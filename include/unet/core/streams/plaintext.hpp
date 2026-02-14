@@ -1,10 +1,12 @@
 #pragma once
 
+#include <limits>
 #include <type_traits>
 #include <utility>
 
 #include <uvent/Uvent.h>
 
+#include "unet/core/config.hpp"
 #include "unet/core/streams/stream.hpp"
 
 namespace usub::unet::core {
@@ -74,11 +76,36 @@ namespace usub::unet::core {
         ~Acceptor() = default;
 
         template<class OnConnection>
-        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection) {
-            usub::uvent::net::TCPServerSocket server_socket{"0.0.0.0", 22813,
-                                                            50,// backlog
-                                                            usub::uvent::utils::net::IPV::IPV4,
-                                                            usub::uvent::utils::net::TCP};
+        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection, Config &config) {
+            const Config::Object empty_section{};
+            const Config::Object *section_ptr = config.getObject("HTTP.PlainTextStream");
+            const Config::Object &section = section_ptr ? *section_ptr : empty_section;
+
+            std::string host = config.getString(section, "host", "127.0.0.1");
+            const std::uint64_t raw_port = config.getUInt(section, "port", 80);
+            const std::uint16_t port =
+                    (raw_port <= static_cast<std::uint64_t>(std::numeric_limits<std::uint16_t>::max()))
+                            ? static_cast<std::uint16_t>(raw_port)
+                            : static_cast<std::uint16_t>(80);
+
+            std::int64_t backlog_cfg = config.getInt(section, "backlog", 50);
+            if (backlog_cfg <= 0) { backlog_cfg = 50; }
+            const int backlog = (backlog_cfg > static_cast<std::int64_t>(std::numeric_limits<int>::max()))
+                                        ? std::numeric_limits<int>::max()
+                                        : static_cast<int>(backlog_cfg);
+
+            const std::int64_t version = config.getInt(section, "version", 4);
+            const auto ip_version =
+                    (version == 6) ? usub::uvent::utils::net::IPV::IPV6 : usub::uvent::utils::net::IPV::IPV4;
+
+            std::string tcp = config.getString(section, "tcp", "tcp");
+            for (char &ch: tcp) {
+                if (ch >= 'A' && ch <= 'Z') { ch = static_cast<char>(ch - 'A' + 'a'); }
+            }
+            const auto socket_type = (tcp == "udp") ? usub::uvent::utils::net::UDP : usub::uvent::utils::net::TCP;
+
+            usub::uvent::net::TCPServerSocket server_socket{host, static_cast<int>(port), backlog, ip_version,
+                                                            socket_type};
             stream::PlainText stream;
 
             for (;;) {

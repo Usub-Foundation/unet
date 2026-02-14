@@ -8,9 +8,10 @@
 #include <unordered_map>
 
 
+#include "unet/http/core/message.hpp"
 #include "unet/http/header.hpp"
-#include "unet/http/message.hpp"
 #include "unet/uri/uri.hpp"
+
 
 namespace usub::unet::http {
 
@@ -31,8 +32,6 @@ namespace usub::unet::http {
 
         std::unordered_map<std::string, std::string> uri_params{};
         std::any user_data{};// A place to store content between middlewares
-
-        MessagePolicy policy{};// keep it last for easier initialization
 
         template<typename ReturnType = std::string>
         ReturnType getQueryAs() {

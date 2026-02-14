@@ -14,10 +14,10 @@
 
 #include <uvent/Uvent.h>
 
-#include "unet/http/request.hpp"
-#include "unet/http/response.hpp"
-#include "unet/http/v1/request_serializer.hpp"
-#include "unet/http/v1/response_parser.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
+#include "unet/http/v1/wire/request_serializer.hpp"
+#include "unet/http/v1/wire/response_parser.hpp"
 
 namespace usub::unet::http {
     struct ClientError {
@@ -155,8 +155,7 @@ namespace usub::unet::http {
                                        static_cast<std::size_t>(read_size)};
 
                 if (read_until_close_mode) {
-                    if (chunk.size() > std::numeric_limits<std::size_t>::max() - response.body.size() ||
-                        response.body.size() + chunk.size() > response.policy.max_body_size) {
+                    if (chunk.size() > std::numeric_limits<std::size_t>::max() - response.body.size()) {
                         if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
                         co_return std::unexpected(ClientError{
                                 .code = ClientError::CODE::PARSE_FAILED,

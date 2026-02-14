@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -17,6 +18,7 @@
 #include <uvent/Uvent.h>
 
 #include "unet/core/acceptor.hpp"
+#include "unet/core/config.hpp"
 
 namespace usub::unet::core {
     namespace stream {
@@ -74,9 +76,11 @@ namespace usub::unet::core {
                 if (!handshake) { co_return -1; }
 
                 for (;;) {
-                    const int rc = ::SSL_read(session->ssl.get(), plain_buffer.data(), static_cast<int>(plain_buffer.size()));
+                    const int rc =
+                            ::SSL_read(session->ssl.get(), plain_buffer.data(), static_cast<int>(plain_buffer.size()));
                     if (rc > 0) {
-                        buffer.append(reinterpret_cast<const uint8_t *>(plain_buffer.data()), static_cast<std::size_t>(rc));
+                        buffer.append(reinterpret_cast<const uint8_t *>(plain_buffer.data()),
+                                      static_cast<std::size_t>(rc));
                         co_return static_cast<ssize_t>(rc);
                     }
 
@@ -122,8 +126,9 @@ namespace usub::unet::core {
                 std::size_t offset = 0;
                 while (offset < data.size()) {
                     const std::size_t remaining = data.size() - offset;
-                    const std::size_t to_write =
-                            remaining > static_cast<std::size_t>(INT_MAX) ? static_cast<std::size_t>(INT_MAX) : remaining;
+                    const std::size_t to_write = remaining > static_cast<std::size_t>(INT_MAX)
+                                                         ? static_cast<std::size_t>(INT_MAX)
+                                                         : remaining;
 
                     const int rc = ::SSL_write(session->ssl.get(), data.data() + offset, static_cast<int>(to_write));
                     if (rc > 0) {
@@ -333,7 +338,7 @@ namespace usub::unet::core {
             }
 
             usub::uvent::task::Awaitable<ssize_t> flushBioToSocket(Session &session,
-                                                                    usub::uvent::net::TCPClientSocket socket) {
+                                                                   usub::uvent::net::TCPClientSocket socket) {
                 std::array<char, kIoBufferSize> network_buffer{};
                 BIO *out_bio = ::SSL_get_wbio(session.ssl.get());
                 if (!out_bio) { co_return -1; }
@@ -355,7 +360,7 @@ namespace usub::unet::core {
             }
 
             usub::uvent::task::Awaitable<ssize_t> pumpSocketToBio(Session &session,
-                                                                   usub::uvent::net::TCPClientSocket socket) {
+                                                                  usub::uvent::net::TCPClientSocket socket) {
                 std::array<char, kIoBufferSize> network_buffer{};
                 const ssize_t rd = co_await socket.async_read(reinterpret_cast<uint8_t *>(network_buffer.data()),
                                                               network_buffer.size());
@@ -370,7 +375,7 @@ namespace usub::unet::core {
             }
 
             usub::uvent::task::Awaitable<bool> ensureHandshake(Session &session,
-                                                                usub::uvent::net::TCPClientSocket socket) {
+                                                               usub::uvent::net::TCPClientSocket socket) {
                 if (session.handshake_done) { co_return true; }
 
                 for (;;) {
@@ -411,12 +416,41 @@ namespace usub::unet::core {
         ~Acceptor() = default;
 
         template<class OnConnection>
-        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection) {
-            usub::uvent::net::TCPServerSocket server_socket{"0.0.0.0", 22814,
-                                                            50,// backlog
-                                                            usub::uvent::utils::net::IPV::IPV4,
-                                                            usub::uvent::utils::net::TCP};
-            stream::OpenSSLStream stream("key.pem", "cert.pem");
+        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection, Config &config) {
+            const Config::Object empty_section{};
+            const Config::Object *section_ptr = config.getObject("HTTP.OpenSSLStream");
+            const Config::Object &section = section_ptr ? *section_ptr : empty_section;
+
+            std::string host = config.getString(section, "host", "127.0.0.1");
+            const std::uint64_t raw_port = config.getUInt(section, "port", 443);
+            const std::uint16_t port =
+                    (raw_port <= static_cast<std::uint64_t>(std::numeric_limits<std::uint16_t>::max()))
+                            ? static_cast<std::uint16_t>(raw_port)
+                            : static_cast<std::uint16_t>(443);
+
+            std::int64_t backlog_cfg = config.getInt(section, "backlog", 50);
+            if (backlog_cfg <= 0) { backlog_cfg = 50; }
+            const int backlog = (backlog_cfg > static_cast<std::int64_t>(std::numeric_limits<int>::max()))
+                                        ? std::numeric_limits<int>::max()
+                                        : static_cast<int>(backlog_cfg);
+
+            const std::int64_t version = config.getInt(section, "version", 4);
+            const auto ip_version =
+                    (version == 6) ? usub::uvent::utils::net::IPV::IPV6 : usub::uvent::utils::net::IPV::IPV4;
+
+            std::string tcp = config.getString(section, "tcp", "tcp");
+            for (char &ch: tcp) {
+                if (ch >= 'A' && ch <= 'Z') { ch = static_cast<char>(ch - 'A' + 'a'); }
+            }
+            const auto socket_type = (tcp == "udp") ? usub::uvent::utils::net::UDP : usub::uvent::utils::net::TCP;
+
+            const std::string key_file = config.getString(section, "key", "key.pem");
+            const std::string cert_file = config.getString(section, "cert", "cert.pem");
+
+            usub::uvent::net::TCPServerSocket server_socket{host, static_cast<int>(port), backlog, ip_version,
+                                                            socket_type};
+
+            stream::OpenSSLStream stream(key_file, cert_file);
 
             for (;;) {
                 auto soc = co_await server_socket.async_accept();

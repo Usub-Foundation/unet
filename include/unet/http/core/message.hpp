@@ -177,18 +177,18 @@ namespace usub::unet::http {
         return arr;
     }();
 
-    enum class FRAMING_POLICY : uint8_t {
-        ALL = 0,
-        CONTENT_LENGTH_ONLY = 1,
-        CHUNKED_ONLY = 2,
-    };
+    // enum class FRAMING_POLICY : uint8_t {
+    //     ALL = 0,
+    //     CONTENT_LENGTH_ONLY = 1,
+    //     CHUNKED_ONLY = 2,
+    // };
 
-    struct MessagePolicy {
-        static const FRAMING_POLICY framing =
-                FRAMING_POLICY::ALL;             // Allow both chunked and content-length // NO SUPPORT YET
-        static const bool allow_trailers = false;// Disallow trailers for now // NO SUPPORT FOR TRAILERS YET
-        std::size_t max_body_size = 8 * 1024 * 1024;
-    };
+    // struct MessagePolicy {
+    //     static const FRAMING_POLICY framing =
+    //             FRAMING_POLICY::ALL;             // Allow both chunked and content-length // NO SUPPORT YET
+    //     static const bool allow_trailers = false;// Disallow trailers for now // NO SUPPORT FOR TRAILERS YET
+    //     std::size_t max_body_size = 8 * 1024 * 1024;
+    // };
 
     enum class VERSION : uint8_t {
         HTTP_0_9 = 9,

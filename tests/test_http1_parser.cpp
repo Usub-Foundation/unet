@@ -1,14 +1,14 @@
 #include <cassert>
 #include <cstddef>
-#include <expected>
 #include <iostream>
 #include <string>
 #include <string_view>
 
-#include "unet/http/v1/request_parser.hpp"
+#include "unet/http/v1/wire/request_parser.hpp"
 
 using usub::unet::http::ParseError;
 using usub::unet::http::STATUS_CODE;
+using usub::unet::http::STEP;
 using usub::unet::http::VERSION;
 using usub::unet::http::v1::RequestParser;
 using State = usub::unet::http::v1::RequestParser::STATE;
@@ -19,10 +19,10 @@ namespace {
     struct ParseHarness {
         explicit ParseHarness(std::string input) : data(std::move(input)), view(data), begin(view.begin()) {}
 
-        std::expected<void, ParseError> parse_to(std::size_t end_index) {
+        std::expected<usub::unet::http::ParseStep, ParseError> step_to(std::size_t end_index) {
             assert(end_index <= view.size());
             auto end = view.begin() + static_cast<std::ptrdiff_t>(end_index);
-            return parser.parse(request, begin, end);
+            return parser.step(request, begin, end);
         }
 
         std::string data;
@@ -51,7 +51,7 @@ namespace {
         int iters = 0;
 
         while (true) {
-            auto result = parser.parse(request, begin, end);
+            auto result = parser.step(request, begin, end);
             const auto st = parser.getContext().state;
 
             if (!result) {
@@ -61,7 +61,7 @@ namespace {
                 return;
             }
 
-            if (st == State::COMPLETE) {
+            if (result->kind == STEP::COMPLETE || st == State::COMPLETE) {
                 // Parser accepted what should have been rejected
                 assert(false && "Parser reached COMPLETE but error was expected");
                 return;
@@ -96,7 +96,7 @@ namespace {
         int iters = 0;
 
         while (true) {
-            auto result = parser.parse(request, begin, end);
+            auto result = parser.step(request, begin, end);
             const auto st = parser.getContext().state;
 
             if (!result) {
@@ -105,7 +105,7 @@ namespace {
                 return;
             }
 
-            if (st == State::COMPLETE) {
+            if (result->kind == STEP::COMPLETE || st == State::COMPLETE) {
                 assert(false && "Parser reached COMPLETE but error was expected");
                 return;
             }
@@ -135,13 +135,15 @@ namespace {
         std::size_t line_end = data.find("\r\n");
         assert(line_end != std::string::npos);
 
-        auto result = harness.parse_to(line_end + 1);
+        auto result = harness.step_to(line_end + 1);
         assert(result);
         assert(harness.parser.getContext().state == State::REQUEST_LINE_CRLF);
+        assert(result->kind == STEP::CONTINUE);
 
-        result = harness.parse_to(data.size());
+        result = harness.step_to(data.size());
         assert(result);
-        assert(harness.parser.getContext().state == State::HEADERS_DONE);
+        assert(harness.parser.getContext().state == State::COMPLETE);
+        assert(result->complete);
 
         assert(harness.request.metadata.method_token == "GET");
         assert(harness.request.metadata.uri.path == "/path");
@@ -167,17 +169,20 @@ namespace {
         ParseHarness harness(data);
         std::size_t header_end = header_end_index(data);
 
-        auto result = harness.parse_to(header_end);
-        assert(result);
-        assert(harness.parser.getContext().state == State::HEADERS_DONE);
-
-        result = harness.parse_to(header_end + 2);
+        auto result = harness.step_to(header_end);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CONTENT_LENGTH);
+        assert(result->kind == STEP::CONTINUE);
+        assert(!result->complete);
 
-        result = harness.parse_to(data.size());
+        result = harness.step_to(header_end + 2);
         assert(result);
-        assert(harness.parser.getContext().state == State::COMPLETE);
+        assert(harness.parser.getContext().state == State::DATA_CONTENT_LENGTH);
+        assert(result->kind == STEP::CONTINUE);
+
+        result = harness.step_to(data.size());
+        assert(result);
+        assert(result->kind == STEP::COMPLETE);
         assert(harness.request.body == "Hello");
     }
 
@@ -192,29 +197,35 @@ namespace {
         ParseHarness harness(data);
         std::size_t header_end = header_end_index(data);
 
-        auto result = harness.parse_to(header_end);
+        auto result = harness.step_to(header_end);
         assert(result);
-        assert(harness.parser.getContext().state == State::HEADERS_DONE);
+        assert(harness.parser.getContext().state == State::DATA_CHUNKED_SIZE);
+        assert(result->kind == STEP::CONTINUE);
 
-        result = harness.parse_to(header_end + 2);
+        result = harness.step_to(header_end + 2);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CHUNKED_SIZE_CRLF);
+        assert(result->kind == STEP::CONTINUE);
 
-        result = harness.parse_to(header_end + 3);
+        result = harness.step_to(header_end + 3);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CHUNKED_DATA);
+        assert(result->kind == STEP::CONTINUE);
 
-        result = harness.parse_to(header_end + 3 + 5);
+        result = harness.step_to(header_end + 3 + 5);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CHUNKED_DATA_CR);
+        assert(result->kind == STEP::CONTINUE);
 
-        result = harness.parse_to(header_end + 3 + 5 + 1);
+        result = harness.step_to(header_end + 3 + 5 + 1);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CHUNKED_DATA_LF);
+        assert(result->kind == STEP::CONTINUE);
 
-        result = harness.parse_to(header_end + 3 + 5 + 2);
+        result = harness.step_to(header_end + 3 + 5 + 2);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CHUNK_DONE);
+        assert(result->kind == STEP::BODY);
     }
 
     void test_chunked_last_and_data_done() {
@@ -227,8 +238,9 @@ namespace {
             std::string_view view(data);
             auto begin = view.begin();
             auto end = view.end();
-            auto result = parser.parse(request, begin, end);
+            auto result = parser.step(request, begin, end);
             assert(result);
+            assert(result->kind == STEP::COMPLETE);
             assert(parser.getContext().state == State::DATA_DONE);
         }
 
@@ -241,7 +253,7 @@ namespace {
             std::string_view view(data);
             auto begin = view.begin();
             auto end = view.end();
-            auto result = parser.parse(request, begin, end);
+            auto result = parser.step(request, begin, end);
             assert(!result);
             assert(result.error().expected_status == STATUS_CODE::BAD_REQUEST);
         }
@@ -298,16 +310,6 @@ namespace {
                      "\r\n"
                      "Hello",
                      STATUS_CODE::BAD_REQUEST);
-
-        {
-            Request request;
-            request.policy.max_body_size = 2;
-            expect_error_with_request("POST / HTTP/1.1\r\n"
-                                      "Content-Length: 5\r\n"
-                                      "\r\n"
-                                      "Hello",
-                                      request, STATUS_CODE::BAD_REQUEST);
-        }
     }
 
 }// namespace

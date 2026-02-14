@@ -5,8 +5,8 @@
 #include <queue>
 #include <utility>
 
-#include "unet/http/request.hpp"
-#include "unet/http/response.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
 #include "unet/http/v2/error.hpp"
 #include "unet/http/v2/frames.hpp"
 #include "unet/http/v2/request_parser.hpp"

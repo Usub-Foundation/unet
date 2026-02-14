@@ -5,8 +5,8 @@
 #include <uvent/Uvent.h>
 #include <vector>
 
-#include "unet/http/request.hpp"
-#include "unet/http/response.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
 
 namespace usub::unet::http {
 
