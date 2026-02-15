@@ -1,111 +1,85 @@
-# Server Configuration Guide
+# Configuration
 
-## Overview
+Current server configuration is passed as a `usub::unet::core::Config` object.
 
-A configuration file consists of:
+The old `[server]` + `[[listener]]` shape used in legacy docs/examples is not the active shape for the current HTTP server implementation.
 
-* A single `[server]` section with process‐wide parameters.
-* An ordered list of `[[listener]]` blocks.
-  **Order matters**: the first listener config is bound to the first stream handler template parameter, the second to the second stream handler, and so on.
+## Active Config Sections
 
-```toml
-[server]
-threads = 4
-backlog = 128
+### `HTTP.PlainTextStream`
 
-[[listener]]            # listener[0]
-port = 25565
-ssl  = false
+Recognized keys:
 
-[[listener]]            # listener[1]
-port      = 8443
-ssl       = true
-key_file  = "key.pem"
-cert_file = "cert.pem"
-```
+- `host` (string, default `127.0.0.1`)
+- `port` (uint, default `22813`)
+- `backlog` (int, default `50`)
+- `version` (int, `4` or `6`, default `4`)
+- `tcp` (string, `tcp` or `udp`, default `tcp`)
 
----
+### `HTTP.OpenSSLStream`
 
-## Mapping config → server type
+Recognized keys:
 
-Your server type determines how many listeners you must declare and in what order they are interpreted.
+- `host` (string, default `127.0.0.1`)
+- `port` (uint, default `443`)
+- `backlog` (int, default `50`)
+- `version` (int, `4` or `6`, default `4`)
+- `tcp` (string, `tcp` or `udp`, default `tcp`)
+- `key` (string path, default `key.pem`)
+- `cert` (string path, default `cert.pem`)
 
-### 1) Plain HTTP only
+## Minimal Programmatic Config Example
 
 ```cpp
-using Server = usub::server::ServerImpl<
-    protocols::http::HTTPEndpointHandler,
-    usub::server::PlainHTTPStreamHandler
->;
+#include <unet/core/config.hpp>
+
+using Cfg = usub::unet::core::Config;
+
+static Cfg::Value s(std::string v) { Cfg::Value x; x.data = std::move(v); return x; }
+static Cfg::Value u(std::uint64_t v) { Cfg::Value x; x.data = v; return x; }
+static Cfg::Value o(Cfg::Object v) { Cfg::Value x; x.data = std::move(v); return x; }
+
+Cfg makeConfig() {
+    Cfg cfg;
+
+    Cfg::Object plain;
+    plain.emplace("host", s("127.0.0.1"));
+    plain.emplace("port", u(8080));
+    plain.emplace("backlog", u(128));
+    plain.emplace("version", u(4));
+    plain.emplace("tcp", s("tcp"));
+
+    Cfg::Object tls;
+    tls.emplace("host", s("0.0.0.0"));
+    tls.emplace("port", u(8443));
+    tls.emplace("backlog", u(128));
+    tls.emplace("version", u(4));
+    tls.emplace("tcp", s("tcp"));
+    tls.emplace("key", s("server.key"));
+    tls.emplace("cert", s("server.crt"));
+
+    Cfg::Object http;
+    http.emplace("PlainTextStream", o(std::move(plain)));
+    http.emplace("OpenSSLStream", o(std::move(tls)));
+
+    cfg.root.emplace("HTTP", o(std::move(http)));
+    return cfg;
+}
 ```
 
-* **Stream handler parameters**: `PlainHTTPStreamHandler` → **1 listener required**
-* **Expected listener layout**:
-
-  * `listener[0]` → plain TCP (must be `ssl = false`)
-
-**Minimal config**
-
-```toml
-[server]
-threads = 4
-backlog = 128
-
-[[listener]]            # binds to PlainHTTPStreamHandler
-port = 8080
-ssl  = false
-```
-
-### 2) Mixed (Plain + TLS)
+## Use With Server
 
 ```cpp
-using MixedServerRadix = usub::server::Server<
-    protocols::http::HTTPEndpointHandler,
-    usub::server::PlainHTTPStreamHandler,
-    usub::server::TLSHTTPStreamHandler
->;
+usub::unet::core::Config cfg = makeConfig();
+usub::unet::http::ServerImpl<
+    usub::unet::http::router::Radix,
+    usub::unet::core::stream::PlainText,
+    usub::unet::core::stream::OpenSSLStream
+> server{cfg};
 ```
 
-* **Stream handler parameters**: `PlainHTTPStreamHandler`, `TLSHTTPStreamHandler` → **2 listeners required**
-* **Expected listener layout**:
+## Notes
 
-  * `listener[0]` → plain TCP (must be `ssl = false`)
-  * `listener[1]` → TLS (must be `ssl = true`, with key/cert)
-
-**Typical config**
-
-```toml
-[server]
-threads = 4
-backlog = 256
-
-[[listener]]            # binds to PlainHTTPStreamHandler
-port = 80
-ssl  = false
-
-[[listener]]            # binds to TLSHTTPStreamHandler
-port      = 443
-ssl       = true
-key_file  = "/etc/ssl/private/server.key"
-cert_file = "/etc/ssl/certs/server.crt"
-```
-
-> If you swap the two `[[listener]]` blocks, you change which handler handles each port, Keep the order consistent with your server type.
-
----
-
-## Reference
-
-### `[server]`
-
-* `threads` *(int, ≥1)* — size of the worker thread pool.
-* `backlog` *(int, ≥0)* — listen backlog passed to the OS.
-
-### `[[listener]]`
-
-* `port` *(int, 1–65535)* — TCP port to bind.
-* `ssl` *(bool)* — `false` for plain TCP; `true` for TLS. 
-* `key_file` *(string, required when `ssl=true`)* — path to the private key.
-* `cert_file` *(string, required when `ssl=true`)* — path to the certificate chain (server cert first).
-
----
+- Missing keys are defaulted by each acceptor implementation.
+- Values are read with `Config::getString/getUInt/getInt` helpers.
+- Dotted paths are resolved as nested objects (for example `HTTP.PlainTextStream`).

@@ -1,80 +1,58 @@
 # Quick Start
 
-This guide shows how to build and run a simple **Webserver** instance.
+This page shows the shortest working server flow with the current API.
 
-## Minimal Example
-
-Create a `config.toml`:
-
-```toml
-[server]
-threads  = 4
-backlog  = 128
-
-[[listener]]
-port = 25565
-ssl  = false
-```
-
-For description of each param you can see: [config](config.md)
-
-Create a `main.cpp`:
+## 1. Minimal HTTP Server
 
 ```cpp
-#include "server/server.h"
-#include "Protocols/HTTP/Message.h"
-#include <iostream>
+#include <uvent/Uvent.h>
+#include <unet/http.hpp>
 
-using namespace usub::server;
+using usub::unet::http::Request;
+using usub::unet::http::Response;
 
-ServerHandler handlerFunction(protocols::http::Request &request,
-                     protocols::http::Response &response) {
-    std::cout << "Matched: " << request.getURL() << std::endl;
-    response.setStatus(200)
-            .setMessage("OK")
-            .addHeader("Content-Type", "text/plain")
-            .setBody("Hello World from Webserver!\n");
+usub::uvent::task::Awaitable<void> hello(Request&, Response& res) {
+    res.setStatus(usub::unet::http::STATUS_CODE::OK)
+       .addHeader("content-type", "text/plain")
+       .setBody("Hello from unet\n");
     co_return;
 }
 
 int main() {
-    Server server("config.toml");
+    usub::Uvent runtime{4};
 
-    // Register a simple route
-    server.handle({"GET"}, "/hello", handlerFunction);
+    usub::unet::http::ServerRadix server;
+    server.handle("GET", "/hello", hello);
 
-    // Run server loop
-    server.run();
+    runtime.run();
+    return 0;
 }
 ```
 
-## Run
+Default `ServerRadix` listener config (when no explicit config is provided):
 
-Compile and run:
+- Host: `127.0.0.1`
+- Port: `22813`
+- Backlog: `50`
 
-```bash
-g++ -std=c++23 main.cpp -Iinclude -Lbuild -lwebserver -o demo
-./demo
-```
-
-## Test
-
-Send a request using curl:
+## 2. Build
 
 ```bash
-curl -v http://127.0.0.1:8111/hello
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j
 ```
 
-Expected output:
+## 3. Test
 
+```bash
+curl -i http://127.0.0.1:22813/hello
 ```
-Hello World from Webserver!
-```
 
----
+Expected status: `200 OK`
 
-## Next Steps
+## 4. Next Steps
 
-- Learn how to work with [requests/responses](request-response.md)
-- Learn how to add [middleware](middlewares.md).
-
+- [Configuration](config.md)
+- [Routing](routing.md)
+- [Middlewares](middlewares.md)
+- [Request and Response](request-response.md)

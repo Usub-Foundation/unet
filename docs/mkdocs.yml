@@ -1,21 +1,17 @@
-site_name: Webserver Documentation
-docs_dir: .
-site_dir: ../site 
-site_description: Fast&Versitile HTTP Library 
+site_name: unet Documentation
+site_description: HTTP/1-focused documentation for the unet C++ networking library
 site_url: https://usub-development.github.io/unet/
 repo_url: https://github.com/Usub-development/unet/
 repo_name: Usub-development/unet
 edit_uri: edit/main/docs/
 
+docs_dir: .
+site_dir: ../site
+
 theme:
   name: material
+  language: en
   palette:
-    # Palette toggle for automatic mode
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
-    # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: blue
@@ -23,65 +19,62 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: blue
       accent: blue
       toggle:
         icon: material/brightness-4
-        name: Switch to system preference
+        name: Switch to light mode
   features:
     - navigation.tabs
     - navigation.sections
     - navigation.expand
-    - navigation.path
     - navigation.top
-    - search.highlight
-    - search.share
-    - content.action.edit
-    - content.action.view
     - content.code.copy
-    - content.code.annotate
+    - search.highlight
 
 plugins:
   - search
-  - autorefs
 
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.details
   - admonition
   - attr_list
   - md_in_html
   - toc:
       permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
 
 nav:
- - Home: 
-   - About: index.md
-   - Contributing: contributing.md
-   - Roadmap: roadmap.md
- - Getting Started:
-   - Installation: installation.md
-   - Quick Start: quick-start.md
-   - Add a Middleware: middlewares.md
-   - Work with Requests/Responses: request-response.md
+  - Home:
+      - Overview: index.md
+      - Quick Start: quick-start.md
+      - Installation: installation.md
+      - Architecture: architecture.md
+      - Configuration: config.md
+      - Roadmap: roadmap.md
+      - Contributing: contributing.md
+  - HTTP:
+      - Routing: routing.md
+      - Writing Custom Routers: custom-router.md
+      - Middlewares: middlewares.md
+      - Request and Response: request-response.md
+      - Handlers: handler.md
+      - Client API: client.md
+      - Multipart Form Data: multipart-form-data.md
+      - Parsing: parsing.md
+      - Experimental Parse Error Notes: Experimental/parse_error_handling.md
+
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/Usub-development/unet/
       name: GitHub Repository
-    - icon: fontawesome/solid/star
-      link: https://github.com/Usub-development/unet/stargazers
-      name: Star on GitHub
 
-copyright: Copyright &copy; 2025 Usub-development, Ilya Repnev (StormLord07)
+copyright: Copyright (c) 2026 Usub-development

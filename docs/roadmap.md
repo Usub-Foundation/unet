@@ -1,35 +1,24 @@
 # Roadmap
 
-Webserver is under active development. Our goal is to provide a modern, efficient, and extensible C++ framework for building network applications.
+## Near-Term
 
----
+- tighten HTTP/1 parser edge-case coverage
+- improve middleware phase consistency (including response phase execution)
+- simplify server configuration ergonomics
+- improve test determinism and quality
 
-## Completed
-- HTTP/1.0 and HTTP/1.1 support
-- Event loop powered by [Uvent](https://github.com/Usub-development/uvent)
-- Basic router and middleware system
-- RFC-compliant header parsing
-- TLS/SSL integration (OpenSSL)
+## Mid-Term
 
-## In Progress
-- Improved request/response state machines
-- Extended test coverage
-- Developer documentation and examples
-- Windows support
+- stronger client coverage (timeouts, malformed responses, TLS edges)
+- clearer public API docs around route constraints and handler overloads
+- packaging and CMake polish
 
-## Planned
-- **HTTP/2** support (multiplexed streams, HPACK header compression)
-- **HTTP/3** support (QUIC transport, QPACK)
-- Websocket and other protocols upgrading handling
-- Streaming responses and chunked uploads
-- Pluggable logging
-- Benchmarks and performance comparison against other frameworks
-- Chunked streaming support
+## Long-Term
 
-## Ideas
+- protocol expansion after HTTP/1 core stability
+- benchmark and profiling documentation
 
----
+## Out Of Scope In This Cycle
 
-Ask us a question on [GitHub](https://github.com/Usub-development/webserver/discussions).
-Found a bug? Have a suggestion? Help us track it by opening an [Issue](https://github.com/Usub-development/webserver/issues)
-Contributions are welcome — check out our [Contributing Guide](contributing.md).
+- documenting unfinished HTTP/2 internals
+- expanding docs for non-HTTP experimental modules
