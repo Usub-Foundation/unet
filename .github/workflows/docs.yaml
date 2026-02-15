@@ -21,7 +21,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout current branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -53,15 +53,37 @@ jobs:
           EDIT_URI: ${{ steps.branch.outputs.edit_uri }}
         run: mkdocs build --clean -f 'docs/mkdocs.yml'
 
+      - name: Move branch docs output
+        run: mv site site-branch
+
+      - name: Checkout main branch docs source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-src
+
+      - name: Build main documentation for site root
+        env:
+          SITE_URL: https://usub-development.github.io/unet/
+          EDIT_URI: edit/main/docs/
+        run: mkdocs build --clean -f 'main-src/docs/mkdocs.yml'
+
+      - name: Assemble deploy payload
+        run: |
+          mkdir -p deploy
+          cp -a main-src/site/. deploy/
+          mkdir -p "deploy/${{ steps.branch.outputs.safe_branch }}"
+          cp -a site-branch/. "deploy/${{ steps.branch.outputs.safe_branch }}/"
+
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./site
-          destination_dir: ${{ steps.branch.outputs.safe_branch }}
+          publish_dir: ./deploy
           keep_files: true
 
       - name: Publish deployment URL
         run: |
+          echo "Main docs deployed to https://usub-development.github.io/unet/" >> "${GITHUB_STEP_SUMMARY}"
           echo "Branch docs deployed to https://usub-development.github.io/unet/${{ steps.branch.outputs.safe_branch }}/" >> "${GITHUB_STEP_SUMMARY}"
