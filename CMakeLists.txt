@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22..3.29) #3.24
-project(server VERSION 1.0.0)
+project(unet VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -fpic")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
+option(UNET_USE_UJSON "Enable ujson support (getAsJson<T>)" OFF)
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" CACHE STRING "Debug flags" FORCE)
 #set(CMAKE_C_FLAGS_DEBUG "-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" CACHE STRING "Debug flags" FORCE)
 #set(CMAKE_EXE_LINKER_FLAGS_DEBUG "-fsanitize=address,undefined" CACHE STRING "Linker flags" FORCE)
@@ -27,7 +28,6 @@ FetchContent_Declare(
     uvent 
     GIT_REPOSITORY https://github.com/Usub-development/uvent.git
     GIT_TAG main
-    # FIND_PACKAGE_ARGS
 )
 
 FetchContent_MakeAvailable(uvent)
@@ -78,13 +78,18 @@ configure_package_config_file(
     INSTALL_DESTINATION lib/cmake/unet
 )
 
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/unetConfig.cmake
+    DESTINATION lib/cmake/unet
+)
+
 install(TARGETS unet
-    EXPORT serverTargets
+    EXPORT unetTargets
     #LIBRARY DESTINATION lib
     #ARCHIVE DESTINATION lib
     #RUNTIME DESTINATION bin
-    PUBLIC_HEADER DESTINATION include/server
-    INCLUDES DESTINATION include/server
+    PUBLIC_HEADER DESTINATION include/unet
+    INCLUDES DESTINATION include/unet
 )
 
 foreach(header ${UNET_HEADERS})
@@ -93,8 +98,8 @@ foreach(header ${UNET_HEADERS})
     install(FILES ${header} DESTINATION include/${header_relative_path})
 endforeach()
 
-install(EXPORT serverTargets
-    FILE unetConfig.cmake
+install(EXPORT unetTargets
+    FILE unetTargets.cmake
     NAMESPACE usub::
     DESTINATION lib/cmake/unet
 )
