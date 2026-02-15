@@ -51,7 +51,7 @@ jobs:
         env:
           SITE_URL: ${{ steps.branch.outputs.site_url }}
           EDIT_URI: ${{ steps.branch.outputs.edit_uri }}
-        run: mkdocs build --clean -f 'docs/mkdocs.yml' --site-dir site
+        run: mkdocs build --clean -f 'docs/mkdocs.yml'
 
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v4
