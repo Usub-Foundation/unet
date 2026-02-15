@@ -47,10 +47,14 @@ namespace {
         }
     };
 
-    Request build_get_request() {
+    Request build_get_request(std::string_view scheme, std::string_view host, std::uint16_t port) {
         Request request{};
         request.metadata.method_token = "GET";
         request.metadata.version = VERSION::HTTP_1_1;
+        request.metadata.uri.scheme = std::string(scheme);
+        request.metadata.uri.authority.host = std::string(host);
+        request.metadata.uri.authority.port = port;
+        request.metadata.authority = std::string(host);
         request.metadata.uri.path = "/";
         request.headers.addHeader("user-agent"sv, "unet-test/1.0"sv);
         request.headers.addHeader("accept"sv, "*/*"sv);
@@ -62,12 +66,8 @@ namespace {
 
         ClientRequestOptions plain_options{};
         plain_options.connect_timeout = std::chrono::milliseconds{4000};
-        plain_options.close_after_response = true;
-        plain_options.host_header = "example.com";
 
-        auto plain_result =
-                co_await client.request<usub::unet::core::stream::PlainText>("example.com", 80, build_get_request(),
-                                                                             plain_options);
+        auto plain_result = co_await client.request(build_get_request("http", "example.com", 80), plain_options);
         if (!plain_result) {
             state.fail("plain client request failed: " + plain_result.error().message);
             co_return;
@@ -90,12 +90,8 @@ namespace {
 
         ClientRequestOptions tls_options{};
         tls_options.connect_timeout = std::chrono::milliseconds{4000};
-        tls_options.close_after_response = true;
-        tls_options.host_header = "example.com";
 
-        auto tls_result =
-                co_await client.request<usub::unet::core::stream::OpenSSLStream>("example.com", 443, build_get_request(),
-                                                                                  tls_options);
+        auto tls_result = co_await client.request(build_get_request("https", "example.com", 443), tls_options);
         if (!tls_result) {
             state.fail("tls client request failed: " + tls_result.error().message);
             co_return;
@@ -130,7 +126,8 @@ int main() {
         return 1;
     }
 
-    if (!state.finished.load(std::memory_order_acquire) || !state.plain_status.has_value() || !state.tls_status.has_value()) {
+    if (!state.finished.load(std::memory_order_acquire) || !state.plain_status.has_value() ||
+        !state.tls_status.has_value()) {
         std::cerr << "http client example test failed: timeout waiting for plain+tls responses\n";
         return 1;
     }

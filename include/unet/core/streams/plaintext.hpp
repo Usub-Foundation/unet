@@ -82,11 +82,11 @@ namespace usub::unet::core {
             const Config::Object &section = section_ptr ? *section_ptr : empty_section;
 
             std::string host = config.getString(section, "host", "127.0.0.1");
-            const std::uint64_t raw_port = config.getUInt(section, "port", 80);
+            const std::uint64_t raw_port = config.getUInt(section, "port", 22813);
             const std::uint16_t port =
                     (raw_port <= static_cast<std::uint64_t>(std::numeric_limits<std::uint16_t>::max()))
                             ? static_cast<std::uint16_t>(raw_port)
-                            : static_cast<std::uint16_t>(80);
+                            : static_cast<std::uint16_t>(22813);
 
             std::int64_t backlog_cfg = config.getInt(section, "backlog", 50);
             if (backlog_cfg <= 0) { backlog_cfg = 50; }

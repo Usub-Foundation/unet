@@ -37,16 +37,22 @@ namespace usub::unet::http {
 
     struct ClientRequestOptions {
         std::chrono::milliseconds connect_timeout{std::chrono::milliseconds{3000}};
-        bool close_after_response{true};
-        std::optional<std::string> host_header{};
     };
 
     template<typename... Streams>
     class ClientImpl {
     public:
+        template<typename T, typename = void>
+        struct has_ssl_tag : std::false_type {};
+
+        template<typename T>
+        struct has_ssl_tag<T, std::void_t<decltype(T::ssl)>> : std::bool_constant<static_cast<bool>(T::ssl)> {};
+
         ClientImpl() = default;
         explicit ClientImpl(Streams... streams) : streams_(std::move(streams)...) {}
         ~ClientImpl() = default;
+
+        static constexpr bool has_ssl_stream = (has_ssl_tag<Streams>::value || ...);
 
         template<typename Stream>
         Stream &stream() {
@@ -55,65 +61,104 @@ namespace usub::unet::http {
             return std::get<Stream>(this->streams_);
         }
 
-        template<typename Stream>
-        usub::uvent::task::Awaitable<std::expected<Response, ClientError>>
-        request(const std::string &host, std::uint16_t port, Request request,
-                const ClientRequestOptions &options = ClientRequestOptions{}) {
-            static_assert((std::is_same_v<Stream, Streams> || ...),
-                          "Requested stream is not part of this ClientImpl specialization");
-            auto &stream_instance = std::get<Stream>(this->streams_);
-            auto response = co_await this->requestWithStream(stream_instance, host, port, std::move(request), options);
-            co_return response;
-        }
 
         usub::uvent::task::Awaitable<std::expected<Response, ClientError>>
-        request(const std::string &host, std::uint16_t port, Request request,
-                const ClientRequestOptions &options = ClientRequestOptions{})
-            requires(sizeof...(Streams) > 0)
-        {
-            using DefaultStream = std::tuple_element_t<0, std::tuple<Streams...>>;
-            auto response = co_await this->request<DefaultStream>(host, port, std::move(request), options);
-            co_return response;
+        request(Request request, const ClientRequestOptions &options = ClientRequestOptions{}) {
+            if (request.metadata.uri.scheme.empty()) {
+                if constexpr (has_ssl_stream) {
+                    request.metadata.uri.scheme = "https";
+                } else {
+                    request.metadata.uri.scheme = "http";
+                }
+            }
+
+            if (request.metadata.authority.empty()) {
+                co_return std::unexpected(ClientError{
+                        .code = ClientError::CODE::INVALID_REQUEST,
+                        .message = "missing authority field reuqest.metadata.authority.empty() == true",
+                });
+            }
+
+            if (request.metadata.uri.scheme == "https") {
+                using SslStream = typename first_stream_by_ssl<true, Streams...>::type;
+                if constexpr (!std::is_void_v<SslStream>) {
+                    auto &stream_instance = std::get<SslStream>(this->streams_);
+                    auto response = co_await this->requestWithStream(stream_instance, std::move(request), options);
+                    co_return response;
+                } else {
+                    using PlainStream = typename first_stream_by_ssl<false, Streams...>::type;
+                    if constexpr (!std::is_void_v<PlainStream>) {
+                        auto &stream_instance = std::get<PlainStream>(this->streams_);
+                        auto response = co_await this->requestWithStream(stream_instance, std::move(request), options);
+                        co_return response;
+                    }
+                }
+            } else if (request.metadata.uri.scheme == "http") {
+                using PlainStream = typename first_stream_by_ssl<false, Streams...>::type;
+                if constexpr (!std::is_void_v<PlainStream>) {
+                    auto &stream_instance = std::get<PlainStream>(this->streams_);
+                    auto response = co_await this->requestWithStream(stream_instance, std::move(request), options);
+                    co_return response;
+                }
+            }
+
+            co_return std::unexpected(ClientError{
+                    .code = ClientError::CODE::INVALID_REQUEST,
+                    .message = "no compatible stream for scheme: " + request.metadata.uri.scheme,
+            });
         }
 
     private:
+        template<typename T, typename = void>
+        struct stream_is_ssl : std::false_type {};
+
+        template<typename T>
+        struct stream_is_ssl<T, std::void_t<decltype(T::ssl)>> : std::bool_constant<static_cast<bool>(T::ssl)> {};
+
+        template<bool WantSsl, typename... Ts>
+        struct first_stream_by_ssl {
+            using type = void;
+        };
+
+        template<bool WantSsl, typename T, typename... Ts>
+        struct first_stream_by_ssl<WantSsl, T, Ts...> {
+            using type = std::conditional_t<stream_is_ssl<T>::value == WantSsl, T,
+                                            typename first_stream_by_ssl<WantSsl, Ts...>::type>;
+        };
+
         template<typename Stream>
         usub::uvent::task::Awaitable<std::expected<Response, ClientError>>
-        requestWithStream(Stream &stream_instance, const std::string &host, std::uint16_t port, Request request,
-                          const ClientRequestOptions &options) {
-            if (request.metadata.method_token.empty()) {
-                co_return std::unexpected(
-                        ClientError{.code = ClientError::CODE::INVALID_REQUEST, .message = "Missing request method"});
-            }
+        requestWithStream(Stream &stream_instance, Request request, const ClientRequestOptions &options) {
+            if (request.metadata.method_token.empty()) { request.metadata.method_token = "GET"; }
 
             if (request.metadata.version != VERSION::HTTP_1_0 && request.metadata.version != VERSION::HTTP_1_1) {
                 request.metadata.version = VERSION::HTTP_1_1;
             }
-            if (request.metadata.uri.path.empty() && request.metadata.authority.empty()) {
-                request.metadata.uri.path = "/";
-            }
+            if (request.metadata.uri.path.empty()) { request.metadata.uri.path = "/"; }
 
             if (!request.headers.contains("host")) {
-                std::string host_value = options.host_header.value_or(host);
-                if (host_value.empty() && !request.metadata.authority.empty()) {
-                    host_value = request.metadata.authority;
+                if (!request.metadata.uri.authority.host.empty()) {
+                    request.headers.addHeader("host", request.metadata.authority);
                 }
-                if (host_value.empty() && !request.metadata.uri.authority.host.empty()) {
-                    host_value = request.metadata.uri.authority.host;
-                }
-                if (!host_value.empty() && port != 80 && port != 443) {
-                    host_value.push_back(':');
-                    host_value.append(std::to_string(port));
-                }
-                if (!host_value.empty()) { request.headers.addHeader("host", host_value); }
             }
 
             const std::string serialized = v1::RequestSerializer::serialize(request);
 
             usub::uvent::net::TCPClientSocket socket{};
-            std::string host_copy = host;
-            std::string port_copy = std::to_string(port);
-            auto connect_error = co_await socket.async_connect(host_copy, port_copy, options.connect_timeout);
+            std::uint16_t port{};
+
+            if constexpr (stream_is_ssl<Stream>::value) {
+                port = 443;
+            } else {
+                port = 80;
+            }
+
+            std::string connect_host = request.metadata.uri.authority.host;
+            const std::uint16_t connect_port_num =
+                    request.metadata.uri.authority.port == 0 ? port : request.metadata.uri.authority.port;
+            std::string connect_port = std::to_string(connect_port_num);
+
+            auto connect_error = co_await socket.async_connect(connect_host, connect_port, options.connect_timeout);
             if (connect_error.has_value()) {
                 co_return std::unexpected(ClientError{
                         .code = ClientError::CODE::CONNECT_FAILED,
@@ -132,7 +177,7 @@ namespace usub::unet::http {
                 const ssize_t read_size = co_await stream_instance.read(socket, buffer);
 
                 if (read_size < 0) {
-                    if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
+                    co_await stream_instance.shutdown(socket);
                     co_return std::unexpected(ClientError{
                             .code = ClientError::CODE::READ_FAILED,
                             .message = "read failed",
@@ -144,7 +189,7 @@ namespace usub::unet::http {
                         parser.getContext().state == v1::ResponseParser::STATE::BODY_UNTIL_CLOSE) {
                         break;
                     }
-                    if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
+                    // if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
                     co_return std::unexpected(ClientError{
                             .code = ClientError::CODE::PARSE_FAILED,
                             .message = "connection closed before response was complete",
@@ -156,7 +201,7 @@ namespace usub::unet::http {
 
                 if (read_until_close_mode) {
                     if (chunk.size() > std::numeric_limits<std::size_t>::max() - response.body.size()) {
-                        if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
+                        // if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
                         co_return std::unexpected(ClientError{
                                 .code = ClientError::CODE::PARSE_FAILED,
                                 .message = "response body exceeded max size in until-close mode",
@@ -170,7 +215,7 @@ namespace usub::unet::http {
                 const auto end = chunk.end();
                 auto parsed = parser.parse(response, begin, end);
                 if (!parsed) {
-                    if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
+                    // if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
                     co_return std::unexpected(ClientError{
                             .code = ClientError::CODE::PARSE_FAILED,
                             .message = parsed.error().message,
@@ -188,7 +233,7 @@ namespace usub::unet::http {
                 if (ctx.state == v1::ResponseParser::STATE::COMPLETE) { break; }
             }
 
-            if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
+            // if (options.close_after_response) { co_await stream_instance.shutdown(socket); }
             co_return response;
         }
 

@@ -43,6 +43,17 @@ ServerHandler handlerFunction(usub::unet::http::Request &request, usub::unet::ht
     co_return;
 }
 
+ServerHandler handlerFunctionWithUriParams(usub::unet::http::Request &request, usub::unet::http::Response &response,
+                                           const usub::unet::http::router::RadixMatch::UriParams &uri_params) {
+    (void) request;
+
+    const auto id_it = uri_params.find("id");
+    const std::string id = (id_it != uri_params.end()) ? id_it->second : "missing";
+
+    response.setStatus(200).addHeader("Content-Type", "text/plain").setBody("user_id=" + id + "\n");
+    co_return;
+}
+
 void logErrorHandler(const usub::unet::http::Request &request, usub::unet::http::Response &response) { return; };
 void notFoundErrorHandler(const usub::unet::http::Request &request, usub::unet::http::Response &response) { return; };
 
@@ -54,6 +65,7 @@ int main() {
     server.handle("GET", "/path", handlerFunction)
             .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle)
             .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle);
+    server.handle("GET", "/users/{id}", handlerFunctionWithUriParams);
     usub::Uvent uvent{4};
     uvent.run();
     // server.run();

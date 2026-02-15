@@ -1,11 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string_view>
 
 #include "unet/http/core/request.hpp"
 #include "unet/http/core/response.hpp"
-#include "unet/http/router/route.hpp"
 #include "unet/http/session.hpp"
 #include "unet/http/v1/wire/request_parser.hpp"
 #include "unet/http/v1/wire/response_serializer.hpp"
@@ -53,12 +53,12 @@ namespace usub::unet::http {
                                              this->response_);
                         break;
                     }
-                    this->current_route_ = match.value();
+                    this->current_match_ = std::move(match.value());
                     auto middleware_result =
                             this->router_->getMiddlewareChain().execute(MIDDLEWARE_PHASE::HEADER, this->request_,
                                                                         this->response_)
-                                    ? this->current_route_->middleware_chain.execute(MIDDLEWARE_PHASE::HEADER,
-                                                                                     this->request_, this->response_)
+                                    ? this->router_->runRouteMiddleware(MIDDLEWARE_PHASE::HEADER, *this->current_match_,
+                                                                        this->request_, this->response_)
                                     : false;
                     if (!middleware_result) { break; }
                     if (result.value().complete) { goto complete; }
@@ -67,8 +67,9 @@ namespace usub::unet::http {
                 case STEP::BODY: {
                     auto middleware_result = this->router_->getMiddlewareChain().execute(
                                                      MIDDLEWARE_PHASE::BODY, this->request_, this->response_)
-                                                     ? this->current_route_->middleware_chain.execute(
-                                                               MIDDLEWARE_PHASE::BODY, this->request_, this->response_)
+                                                     ? this->router_->runRouteMiddleware(
+                                                               MIDDLEWARE_PHASE::BODY, *this->current_match_,
+                                                               this->request_, this->response_)
                                                      : false;
                     if (!middleware_result) { break; }
                     goto continue_parse;
@@ -76,8 +77,9 @@ namespace usub::unet::http {
                 }
                 case STEP::COMPLETE: {
                 complete:
-                    auto handler = this->current_route_->handler;
-                    co_await handler(this->request_, this->response_);
+                    if (this->current_match_.has_value()) {
+                        co_await this->router_->invoke(*this->current_match_, this->request_, this->response_);
+                    }
                     break;
                 }
             }
@@ -87,6 +89,7 @@ namespace usub::unet::http {
             co_await transport.send(this->response_writer_.serialize(this->response_));
             this->response_ = {};
             this->request_ = {};
+            this->current_match_.reset();
         end:
             co_return {};
         }
@@ -99,7 +102,7 @@ namespace usub::unet::http {
             co_return;
         }
         usub::uvent::task::Awaitable<void> on_error(int error_code) {
-            if (this->current_route_) {
+            if (this->current_match_.has_value()) {
                 auto &context = this->request_reader_.getContext();
                 context.state = v1::RequestParser::STATE::FAILED;
             }
@@ -113,7 +116,7 @@ namespace usub::unet::http {
         v1::RequestParser request_reader_{};
         v1::ResponseSerializer response_writer_{};
         std::shared_ptr<RouterType> router_;
-        router::Route *current_route_;
+        std::optional<typename RouterType::MatchResult> current_match_{};
 
         usub::uvent::task::Awaitable<void> send(usub::unet::core::stream::Transport &transport, std::string_view data) {
             co_await transport.send(data);

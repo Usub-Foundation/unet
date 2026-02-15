@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <limits>
 #include <string>
-#include <unordered_map>
 
 
 #include "unet/http/core/message.hpp"
@@ -30,7 +29,6 @@ namespace usub::unet::http {
         usub::unet::header::Headers headers{};
         std::string body{};
 
-        std::unordered_map<std::string, std::string> uri_params{};
         std::any user_data{};// A place to store content between middlewares
 
         template<typename ReturnType = std::string>

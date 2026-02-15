@@ -111,7 +111,7 @@ namespace usub::unet::http::router {
     }
 
     void Radix::insert(RadixNode *node, const std::vector<Segment> &segs, std::size_t idx,
-                       std::unique_ptr<Route> &route, bool has_trailing_slash) {
+                       std::unique_ptr<RouteType> &route, bool has_trailing_slash) {
         if (idx == segs.size()) {
             node->route = std::move(route);
             node->trailing_slash = has_trailing_slash;
@@ -155,16 +155,18 @@ namespace usub::unet::http::router {
         insert(node->wildcard.get(), segs, segs.size(), route, has_trailing_slash);
     }
 
-    Route &Radix::addRoute(const std::set<std::string> &methods, const std::string &pattern,
-                           std::function<FunctionType> handler,
-                           const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
+    Radix::RouteType &Radix::addRoute(
+            const std::set<std::string> &methods, const std::string &pattern,
+            std::function<RadixRoute::HandlerFunctionType> handler,
+            const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
         std::vector<std::string> param_names;
         std::vector<Segment> segs = parseSegments(pattern, param_names);
 
         applyConstraints(segs, constraints);
-        auto routePtr = std::make_unique<Route>(methods, param_names, std::move(handler), methods.contains("*"));
+        auto routePtr =
+                std::make_unique<RouteType>(methods, param_names, std::move(handler), methods.contains("*"));
 
-        Route *rawPtr = routePtr.get();
+        RouteType *rawPtr = routePtr.get();
         const bool has_trailing_slash = !pattern.empty() && pattern.back() == '/';
         insert(root_.get(), segs, 0, routePtr, has_trailing_slash);
 
@@ -213,28 +215,39 @@ namespace usub::unet::http::router {
         return *rawPtr;
     }
 
-    Route &Radix::addRoute(std::string_view method, const std::string &pathPattern,
-                           std::function<FunctionType> function,
-                           const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
+    Radix::RouteType &Radix::addRoute(
+            std::string_view method, const std::string &pathPattern,
+            std::function<RadixRoute::HandlerFunctionType> function,
+            const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
         std::set<std::string> method_set{std::string(method)};
         return this->addRoute(method_set, pathPattern, std::move(function), constraints);
     }
 
-    std::expected<Route *, STATUS_CODE> Radix::match(usub::unet::http::Request &request,
-                                                     std::string *error_description) {
+    std::expected<Radix::MatchResult, STATUS_CODE> Radix::match(const Request &request, std::string *error_description) {
         const std::string path = request.metadata.uri.path;
 
         std::vector<std::string> segs = splitPath(path);
-        Route *routePtr = nullptr;
-        if (!matchIter(root_.get(), segs, request, routePtr, error_description) || !routePtr) {
+        MatchResult match{};
+        if (!matchIter(root_.get(), segs, request, match, error_description) || !match.route) {
             return std::unexpected(STATUS_CODE::NOT_FOUND);
         }
 
-        if (routePtr->accept_all_methods || routePtr->allowed_method_tokenns.contains(request.metadata.method_token)) {
-            return routePtr;
+        if (match.route->accept_all_methods || match.route->allowed_method_tokenns.contains(request.metadata.method_token)) {
+            return match;
         }
 
         return std::unexpected(STATUS_CODE::METHOD_NOT_ALLOWED);
+    }
+
+    usub::uvent::task::Awaitable<void> Radix::invoke(MatchResult &match, Request &request, Response &response) {
+        if (!match.route) { co_return; }
+        co_await match.route->handler(request, response, match);
+        co_return;
+    }
+
+    bool Radix::runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, Request &request, Response &response) {
+        if (!match.route) { return false; }
+        return match.route->middleware_chain.execute(phase, request, response);
     }
 
     MiddlewareChain &Radix::addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware) {
@@ -332,14 +345,14 @@ namespace usub::unet::http::router {
         return;
     }
 
-    bool Radix::matchDFS(RadixNode *node, const std::vector<std::string> &segs, std::size_t idx,
-                         usub::unet::http::Request &request, Route *&out, std::string *last_error) {
+    bool Radix::matchDFS(RadixNode *node, const std::vector<std::string> &segs, std::size_t idx, const Request &request,
+                         MatchResult &out, std::string *last_error) {
         if (idx == segs.size()) {
             if (node->route) {
                 const bool req_has_trailing =
                         !request.metadata.uri.path.empty() && request.metadata.uri.path.back() == '/';
                 if (node->trailing_slash == req_has_trailing) {
-                    out = node->route.get();
+                    out.route = node->route.get();
                     return true;
                 }
             }
@@ -358,18 +371,18 @@ namespace usub::unet::http::router {
         for (ParamEdge &edge: node->param) {
             if (edge.regex && std::regex_match(cur, *edge.regex)) {
                 // save old value if present
-                auto prev_it = request.uri_params.find(edge.name);
+                auto prev_it = out.uri_params.find(edge.name);
                 std::optional<std::string> prev_value;
-                if (prev_it != request.uri_params.end()) prev_value = prev_it->second;
+                if (prev_it != out.uri_params.end()) prev_value = prev_it->second;
 
-                request.uri_params[edge.name] = cur;
+                out.uri_params[edge.name] = cur;
 
                 if (matchDFS(edge.child.get(), segs, idx + 1, request, out, last_error)) { return true; }
 
                 // backtrack
-                if (prev_value) request.uri_params[edge.name] = *prev_value;
+                if (prev_value) out.uri_params[edge.name] = *prev_value;
                 else
-                    request.uri_params.erase(edge.name);
+                    out.uri_params.erase(edge.name);
             } else if (last_error) {
                 local_error =
                         edge.constraint ? edge.constraint->description : ("Invalid value for parameter: " + edge.name);
@@ -381,19 +394,19 @@ namespace usub::unet::http::router {
             std::string tail;
             for (std::size_t i = idx; i < segs.size(); ++i) { tail += '/' + segs[i]; }
             if (!tail.empty()) tail.erase(0, 1);
-            request.uri_params[node->wildcard_name] = tail;
+            out.uri_params[node->wildcard_name] = tail;
             // wildcard is always last
             if (matchDFS(node->wildcard.get(), segs, segs.size(), request, out, last_error)) { return true; }
             // backtrack wildcard param
-            request.uri_params.erase(node->wildcard_name);
+            out.uri_params.erase(node->wildcard_name);
         }
 
         if (last_error && !local_error.empty()) *last_error = local_error;
         return false;
     }
 
-    bool Radix::matchIter(RadixNode *node, const std::vector<std::string> &segs, usub::unet::http::Request &request,
-                          Route *&out, std::string *last_error) {
+    bool Radix::matchIter(RadixNode *node, const std::vector<std::string> &segs, const Request &request,
+                          MatchResult &out, std::string *last_error) {
         return matchDFS(node, segs, 0, request, out, last_error);
     }
 

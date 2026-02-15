@@ -339,6 +339,8 @@ namespace usub::unet::http::v1 {
 
                     if (!request.headers.contains("host")) { return fail(Status::BAD_REQUEST, "Missing Host header"); }
 
+                    request.metadata.authority = request.headers.all("host")[0].value;
+
                     const bool method_no_body =
                             request.metadata.method_token == "GET" || request.metadata.method_token == "HEAD" ||
                             request.metadata.method_token == "OPTIONS" || request.metadata.method_token == "TRACE";

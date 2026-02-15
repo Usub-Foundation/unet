@@ -24,6 +24,8 @@ namespace usub::unet::core {
     namespace stream {
         class OpenSSLStream {
         public:
+            static constexpr bool ssl{true};
+
             enum class MODE : std::uint8_t {
                 SERVER,
                 CLIENT,
