@@ -377,6 +377,7 @@ usub::server::protocols::http::Request::parseHTTP1_X(const std::string &request,
                             return c;
                         case '\n':
                             if (this->carriage_return && !this->data_value_pair_.second.empty()) [[likely]] {
+                                usub::utils::trim(this->data_value_pair_.second);
                                 auto result = this->headers_.addHeader<Request>(std::move(this->data_value_pair_.first), std::move(data_value_pair_.second));
                                 if (!result) [[unlikely]] {
                                     const usub::server::utils::error::ParseError &err = result.error();
@@ -1265,6 +1266,7 @@ usub::uvent::task::Awaitable<bool> usub::server::protocols::http::Request::parse
                             co_return true;
                         case '\n':
                             if (this->carriage_return && !this->data_value_pair_.second.empty()) [[likely]] {
+                                usub::utils::trim(this->data_value_pair_.second);
                                 auto result = this->headers_.addHeader<Request>(std::move(this->data_value_pair_.first), std::move(data_value_pair_.second));
                                 if (!result) [[unlikely]] {
                                     const usub::server::utils::error::ParseError &err = result.error();
