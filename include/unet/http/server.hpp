@@ -12,6 +12,7 @@
 #include "unet/http/core/request.hpp"
 #include "unet/http/core/response.hpp"
 #include "unet/http/router/radix.hpp"
+#include "unet/http/router/regex.hpp"
 #include "unet/http/session.hpp"
 #include "unet/http/v1/server_session.hpp"
 
@@ -200,6 +201,7 @@ namespace usub::unet::http {
     };
 
     using ServerRadix = ServerImpl<usub::unet::http::router::Radix, usub::unet::core::stream::PlainText>;
+    using ServerRegex = ServerImpl<usub::unet::http::router::Regex, usub::unet::core::stream::PlainText>;
 
 
 }// namespace usub::unet::http
