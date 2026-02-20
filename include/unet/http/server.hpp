@@ -94,11 +94,22 @@ namespace usub::unet::http {
     template<class RouterType, typename... Streams>
     class ServerImpl {
     public:
+        explicit ServerImpl(usub::Uvent &uvent, const usub::unet::core::Config &config)
+            : config_(config), router_(std::make_shared<RouterType>()), runtime_(&uvent),
+              acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
+            (start_acceptor<Streams>(), ...);
+        };
+
+        explicit ServerImpl(usub::Uvent &uvent)
+            : router_(std::make_shared<RouterType>()), runtime_(&uvent),
+              acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
+            (start_acceptor<Streams>(), ...);
+        }
+
         //TODO: implement constructors
         explicit ServerImpl(const usub::unet::core::Config &config)
             : config_(config), router_(std::make_shared<RouterType>()),
               acceptors_(usub::unet::core::Acceptor<Streams>{}...) {
-            //TODO: for_each_thread
             (start_acceptor<Streams>(), ...);
         };
 
@@ -123,6 +134,7 @@ namespace usub::unet::http {
     private:
         usub::unet::core::Config config_;
         std::shared_ptr<RouterType> router_;
+        usub::Uvent *runtime_{nullptr};
 
         template<class Socket, class Stream>
         usub::uvent::task::Awaitable<void> runConnection(Stream &stream, Socket socket) {
@@ -191,12 +203,26 @@ namespace usub::unet::http {
         void start_acceptor() {
             auto &acc = std::get<usub::unet::core::Acceptor<Stream>>(acceptors_);
 
-            auto on_connection = [this](Stream &stream, auto socket) -> usub::uvent::task::Awaitable<void> {
-                co_await this->runConnection(stream, std::move(socket));
+            auto make_on_connection = [this]() {
+                return [this](Stream &stream, auto socket) -> usub::uvent::task::Awaitable<void> {
+                    co_await this->runConnection(stream, std::move(socket));
+                };
             };
 
-            usub::uvent::system::co_spawn(acc.acceptLoop(std::move(on_connection), this->config_));
-            // usub::uvent::system::co_spawn(acc.template acceptLoop<Dispatcher<RouterType>>(router_));
+            if (runtime_) {
+                bool started = false;
+                runtime_->for_each_thread([&](int idx, usub::uvent::thread::ThreadLocalStorage *) {
+                    if (started) { return; }
+                    started = true;
+                    usub::uvent::system::co_spawn_static(acc.acceptLoop(make_on_connection(), this->config_), idx);
+                });
+                if (!started) {
+                    usub::uvent::system::co_spawn(acc.acceptLoop(make_on_connection(), this->config_));
+                }
+                return;
+            }
+
+            usub::uvent::system::co_spawn(acc.acceptLoop(make_on_connection(), this->config_));
         }
     };
 

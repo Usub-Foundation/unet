@@ -3,14 +3,15 @@
 #include "upq/PgReflect.h"
 #include "upq/PgNotificationMultiplexer.h"
 #include "uvent/Uvent.h"
-#include "server/server.h"
-#include "Protocols/HTTP/Message.h"
+#include "unet/http.hpp"
+#include "unet/http/router/radix.hpp"
 
 #include <csignal>
 #include <cstring>
 #include <optional>
 #include <array>
 #include <list>
+#include <set>
 #include <vector>
 #include <string>
 #include <tuple>
@@ -134,14 +135,15 @@ Awaitable<std::optional<UserRow>> fetch_user_by_id(usub::pg::PgPool& pool, int64
 // ---------------- HTTP Handlers (factories capturing PgPool&) ----------------
 auto make_get_user_handler(usub::pg::PgPool& pool)
 {
-    return [&pool](auto& req, auto& resp) -> Awaitable<void>
+    return [&pool](auto&, auto& resp, const usub::unet::http::router::RadixMatch::UriParams &uri_params) -> Awaitable<void>
     {
-        std::string idraw = req.uri_params.contains("id") ? req.uri_params["id"] : "0";
+        auto id_it = uri_params.find("id");
+        std::string idraw = id_it != uri_params.end() ? id_it->second : "0";
         int64_t id = 0;
         try { id = std::stoll(idraw); }
         catch (...)
         {
-            resp.setStatus(400).setMessage("Bad Request")
+            resp.setStatus(400)
                 .addHeader("Content-Type", "application/json")
                 .setBody("{\"error\":\"invalid id\"}\n");
             co_return;
@@ -149,13 +151,13 @@ auto make_get_user_handler(usub::pg::PgPool& pool)
         auto u = co_await fetch_user_by_id(pool, id);
         if (!u)
         {
-            resp.setStatus(404).setMessage("Not Found")
+            resp.setStatus(404)
                 .addHeader("Content-Type", "application/json")
                 .setBody("{\"error\":\"user not found\"}\n");
             co_return;
         }
         std::string body = "{\"id\":" + std::to_string(u->id) + ",\"name\":\"" + jescape(u->username) + "\"}";
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/json").setBody(body);
+        resp.setStatus(200).addHeader("Content-Type", "application/json").setBody(body);
         co_return;
     };
 }
@@ -169,7 +171,7 @@ auto make_post_users_seed(usub::pg::PgPool& pool)
             "INSERT INTO users_reflect(name,password,roles,tags) VALUES($1,$2,$3,$4);", a);
         if (!r1.ok)
         {
-            resp.setStatus(500).setMessage("ERR").setBody("A: " + r1.error + "\n");
+            resp.setStatus(500).setBody("A: " + r1.error + "\n");
             co_return;
         }
 
@@ -181,11 +183,11 @@ auto make_post_users_seed(usub::pg::PgPool& pool)
             "INSERT INTO users_reflect(name,password,roles,tags) VALUES($1,$2,$3,$4);", b);
         if (!r2.ok)
         {
-            resp.setStatus(500).setMessage("ERR").setBody("B: " + r2.error + "\n");
+            resp.setStatus(500).setBody("B: " + r2.error + "\n");
             co_return;
         }
 
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/json")
+        resp.setStatus(200).addHeader("Content-Type", "application/json")
             .setBody("{\"inserted\":" + std::to_string(r1.rows_affected + r2.rows_affected) + "}\n");
         co_return;
     };
@@ -217,7 +219,7 @@ auto make_get_users(usub::pg::PgPool& pool)
             if (i + 1 < rows.size()) body += ",";
         }
         body += "]";
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/json").setBody(body);
+        resp.setStatus(200).addHeader("Content-Type", "application/json").setBody(body);
         co_return;
     };
 }
@@ -229,7 +231,7 @@ auto make_post_tx_demo(usub::pg::PgPool& pool)
         usub::pg::PgTransaction tx(&pool);
         if (!(co_await tx.begin()))
         {
-            resp.setStatus(500).setMessage("ERR").setBody("begin failed\n");
+            resp.setStatus(500).setBody("begin failed\n");
             co_return;
         }
 
@@ -238,7 +240,7 @@ auto make_post_tx_demo(usub::pg::PgPool& pool)
         if (!ins.ok)
         {
             co_await tx.rollback();
-            resp.setStatus(500).setMessage("ERR").setBody(ins.error + "\n");
+            resp.setStatus(500).setBody(ins.error + "\n");
             co_return;
         }
 
@@ -250,11 +252,11 @@ auto make_post_tx_demo(usub::pg::PgPool& pool)
             co_await sub.rollback();
         }
 
-        auto rows = co_await tx.select_reflect<UserRow>(
+        auto rows = co_await tx.query_reflect<UserRow>(
             "SELECT id, name AS username, password, roles, tags FROM users_r ORDER BY id DESC LIMIT 5");
         if (!(co_await tx.commit()))
         {
-            resp.setStatus(500).setMessage("ERR").setBody("commit failed\n");
+            resp.setStatus(500).setBody("commit failed\n");
             co_return;
         }
 
@@ -265,7 +267,7 @@ auto make_post_tx_demo(usub::pg::PgPool& pool)
             if (i + 1 < rows.size()) body += ",";
         }
         body += "]";
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/json").setBody(body);
+        resp.setStatus(200).addHeader("Content-Type", "application/json").setBody(body);
         co_return;
     };
 }
@@ -279,7 +281,7 @@ auto make_post_arrays_demo(usub::pg::PgPool& pool)
             "INSERT INTO array_test(test_array,comment) VALUES($1,$2);", arr, "comment");
         if (!r1.ok)
         {
-            resp.setStatus(500).setMessage("ERR").setBody("array_test: " + r1.error + "\n");
+            resp.setStatus(500).setBody("array_test: " + r1.error + "\n");
             co_return;
         }
 
@@ -294,11 +296,11 @@ auto make_post_arrays_demo(usub::pg::PgPool& pool)
         )SQL", ai, ci, ld, vb, il, "multi-insert");
         if (!r2.ok)
         {
-            resp.setStatus(500).setMessage("ERR").setBody("array_test_multi: " + r2.error + "\n");
+            resp.setStatus(500).setBody("array_test_multi: " + r2.error + "\n");
             co_return;
         }
 
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/json").setBody("{\"ok\":true}\n");
+        resp.setStatus(200).addHeader("Content-Type", "application/json").setBody("{\"ok\":true}\n");
         co_return;
     };
 }
@@ -307,10 +309,16 @@ auto make_post_bigdata_seed(usub::pg::PgPool& pool)
 {
     return [&pool](auto&, auto& resp) -> Awaitable<void>
     {
-        auto conn = co_await pool.acquire_connection();
+        auto acquired = co_await pool.acquire_connection();
+        if (!acquired)
+        {
+            resp.setStatus(500).setBody("no conn\n");
+            co_return;
+        }
+        auto conn = *acquired;
         if (!conn || !conn->connected())
         {
-            resp.setStatus(500).setMessage("ERR").setBody("no conn\n");
+            resp.setStatus(500).setBody("no conn\n");
             co_return;
         }
         auto st = co_await conn->copy_in_start("COPY public.bigdata(payload) FROM STDIN");
@@ -335,10 +343,10 @@ auto make_post_bigdata_seed(usub::pg::PgPool& pool)
         co_await pool.release_connection_async(conn);
         if (!fin.ok)
         {
-            resp.setStatus(500).setMessage("ERR").setBody(fin.error + "\n");
+            resp.setStatus(500).setBody(fin.error + "\n");
             co_return;
         }
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/json")
+        resp.setStatus(200).addHeader("Content-Type", "application/json")
             .setBody("{\"rows_affected\":" + std::to_string(fin.rows_affected) + "}\n");
         co_return;
     };
@@ -348,10 +356,16 @@ auto make_get_bigdata_dump(usub::pg::PgPool& pool)
 {
     return [&pool](auto&, auto& resp) -> Awaitable<void>
     {
-        auto conn = co_await pool.acquire_connection();
+        auto acquired = co_await pool.acquire_connection();
+        if (!acquired)
+        {
+            resp.setStatus(500).setBody("no conn\n");
+            co_return;
+        }
+        auto conn = *acquired;
         if (!conn || !conn->connected())
         {
-            resp.setStatus(500).setMessage("ERR").setBody("no conn\n");
+            resp.setStatus(500).setBody("no conn\n");
             co_return;
         }
         auto st = co_await conn->copy_out_start(
@@ -376,7 +390,7 @@ auto make_get_bigdata_dump(usub::pg::PgPool& pool)
             out.append(ch.value.begin(), ch.value.end());
         }
         co_await pool.release_connection_async(conn);
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "text/plain").setBody(out);
+        resp.setStatus(200).addHeader("Content-Type", "text/plain").setBody(out);
         co_return;
     };
 }
@@ -385,10 +399,16 @@ auto make_get_bigdata_cursor(usub::pg::PgPool& pool)
 {
     return [&pool](auto&, auto& resp) -> Awaitable<void>
     {
-        auto conn = co_await pool.acquire_connection();
+        auto acquired = co_await pool.acquire_connection();
+        if (!acquired)
+        {
+            resp.setStatus(500).setBody("no conn\n");
+            co_return;
+        }
+        auto conn = *acquired;
         if (!conn || !conn->connected())
         {
-            resp.setStatus(500).setMessage("ERR").setBody("no conn\n");
+            resp.setStatus(500).setBody("no conn\n");
             co_return;
         }
         std::string cname = conn->make_cursor_name();
@@ -418,7 +438,7 @@ auto make_get_bigdata_cursor(usub::pg::PgPool& pool)
         }
         (void)co_await conn->cursor_close(cname);
         co_await pool.release_connection_async(conn);
-        resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "application/x-ndjson").setBody(out);
+        resp.setStatus(200).addHeader("Content-Type", "application/x-ndjson").setBody(out);
         co_return;
     };
 }
@@ -444,7 +464,9 @@ struct RiskAlerter : usub::pg::IPgNotifyHandler
 
 Awaitable<void> run_notifications(usub::pg::PgPool& pool)
 {
-    auto conn = co_await pool.acquire_connection();
+    auto acquired = co_await pool.acquire_connection();
+    if (!acquired) co_return;
+    auto conn = *acquired;
     if (!conn || !conn->connected()) co_return;
 
     usub::pg::PgNotificationMultiplexer mux(
@@ -491,25 +513,25 @@ int main()
 
     usub::uvent::system::co_spawn(run_notifications(pool));
 
-    usub::server::Server srv("../config.toml");
+    usub::unet::http::ServerRadix srv{uvent};
 
-    srv.handle({"GET"}, "/hello",
+    srv.handle("GET", "/hello",
                [](auto&, auto& resp)-> Awaitable<void>
                {
-                   resp.setStatus(200).setMessage("OK").addHeader("Content-Type", "text/plain").
+                   resp.setStatus(200).addHeader("Content-Type", "text/plain").
                         setBody("Hello World\n");
                    co_return;
                });
 
-    srv.handle({"GET"}, "/user/{id}", make_get_user_handler(pool));
-    srv.handle({"POST"}, "/users/seed", make_post_users_seed(pool));
-    srv.handle({"GET"}, "/users", make_get_users(pool));
-    srv.handle({"POST"}, "/tx/demo", make_post_tx_demo(pool));
-    srv.handle({"POST"}, "/arrays/demo", make_post_arrays_demo(pool));
-    srv.handle({"POST"}, "/bigdata/seed", make_post_bigdata_seed(pool));
-    srv.handle({"GET"}, "/bigdata/dump", make_get_bigdata_dump(pool));
-    srv.handle({"GET"}, "/bigdata/cursor", make_get_bigdata_cursor(pool));
+    srv.handle("GET", "/user/{id}", make_get_user_handler(pool));
+    srv.handle("POST", "/users/seed", make_post_users_seed(pool));
+    srv.handle("GET", "/users", make_get_users(pool));
+    srv.handle("POST", "/tx/demo", make_post_tx_demo(pool));
+    srv.handle("POST", "/arrays/demo", make_post_arrays_demo(pool));
+    srv.handle("POST", "/bigdata/seed", make_post_bigdata_seed(pool));
+    srv.handle("GET", "/bigdata/dump", make_get_bigdata_dump(pool));
+    srv.handle("GET", "/bigdata/cursor", make_get_bigdata_cursor(pool));
 
-    srv.run();
+    uvent.run();
     return 0;
 }

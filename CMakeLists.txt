@@ -109,20 +109,19 @@ install(EXPORT unetTargets
 # ======= BUILDING EXAMPLES =============
 # ========================================
 
-option(UNET_BUILD_EXAMPLES "Build unet examples" OFF)
+option(UNET_EXAMPLES "Build unet examples" ON)
 
-if(BUILD_EXAMPLES)
-    # TODO: Add example directories here
-    # add_subdirectory(examples)
+if(UNET_EXAMPLES)
+    add_subdirectory(examples)
 endif()
 
 # ========================================
 # ======= BUILDING TESTS =================
 # ========================================
 
-option(UNET_BUILD_TESTS "Build unet tests" ON)
+option(UNET_TESTS "Build unet tests" ON)
 
-if(BUILD_EXAMPLES)
+if(UNET_TESTS)
     # TODO: Add example directories here
     add_subdirectory(tests)
 endif()

@@ -57,8 +57,22 @@ ServerHandler handlerFunctionWithUriParams(usub::unet::http::Request &request, u
 void logErrorHandler(const usub::unet::http::Request &request, usub::unet::http::Response &response) { return; };
 void notFoundErrorHandler(const usub::unet::http::Request &request, usub::unet::http::Response &response) { return; };
 
+
+class MyController {
+    int i = 5;
+
+public:
+    ServerHandler handle(usub::unet::http::Request &request, usub::unet::http::Response &response,
+                         const usub::unet::http::router::RadixMatch::UriParams &uri_params) {
+        std::cout << i << std::endl;
+        response.setStatus(200).addHeader("Content-Type", "text/plain").setBody(std::to_string(i));
+        co_return;
+    }
+};
+
 int main() {
-    usub::unet::http::ServerRadix server;
+    usub::Uvent uvent{4};
+    usub::unet::http::ServerRadix server{uvent};
     server.addErrorHandler("log", logErrorHandler);
     server.addErrorHandler("404", logErrorHandler);
     server.addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, globalHeaderMiddle);
@@ -66,7 +80,10 @@ int main() {
             .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle)
             .addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, headerMiddle);
     server.handle("GET", "/users/{id}", handlerFunctionWithUriParams);
-    usub::Uvent uvent{4};
+
+    MyController controller{};
+    server.handle("GET", "/controller", std::bind_front(&MyController::handle, &controller));
+
     uvent.run();
     // server.run();
 }
