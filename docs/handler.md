@@ -27,6 +27,36 @@ handler(usub::unet::http::Request&, usub::unet::http::Response& res,
 }
 ```
 
+## Binding Class Member Handlers
+
+You can register a class member function by binding an instance first.
+
+```cpp
+class AdminController {
+public:
+    usub::uvent::task::Awaitable<void>
+    status(usub::unet::http::Request& req, usub::unet::http::Response& res) {
+        (void)req;
+        res.setStatus(200).setBody("admin ok\n");
+        co_return;
+    }
+};
+
+int main() {
+    usub::Uvent runtime{2};
+    usub::unet::http::ServerRadix server{runtime};
+
+    AdminController controller{};
+    server.handle("GET", "/admin/status",
+                  std::bind_front(&AdminController::status, &controller));
+
+    runtime.run();
+}
+```
+
+For member handlers with URI params, use the same pattern:
+`std::bind_front(&Controller::method, &controller_instance)`.
+
 ## Practical Rules
 
 - keep handlers non-blocking

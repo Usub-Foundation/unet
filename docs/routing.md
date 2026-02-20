@@ -51,6 +51,8 @@ Supported forms:
 - `Awaitable<void>(Request&, Response&, RadixMatch::UriParams&)`
 - `Awaitable<void>(Request&, Response&, const RadixMatch::UriParams&)`
 
+For class-member handlers, see [Handlers](handler.md#binding-class-member-handlers).
+
 ## Accessing URI Params
 
 ```cpp
