@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
     
     
       
@@ -819,6 +819,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#binding-class-member-handlers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binding Class Member Handlers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#practical-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1006,6 +1017,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#binding-class-member-handlers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binding Class Member Handlers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#practical-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1056,6 +1078,31 @@
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="k">co_return</span><span class="p">;</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">}</span>
 </code></pre></div>
+<h2 id="binding-class-member-handlers">Binding Class Member Handlers<a class="headerlink" href="#binding-class-member-handlers" title="Permanent link">&para;</a></h2>
+<p>You can register a class member function by binding an instance first.</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">AdminController</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">public</span><span class="o">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="n">status</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">Request</span><span class="o">&amp;</span><span class="w"> </span><span class="n">req</span><span class="p">,</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">Response</span><span class="o">&amp;</span><span class="w"> </span><span class="n">res</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">        </span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">req</span><span class="p">;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="n">res</span><span class="p">.</span><span class="n">setStatus</span><span class="p">(</span><span class="mi">200</span><span class="p">).</span><span class="n">setBody</span><span class="p">(</span><span class="s">&quot;admin ok</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">        </span><span class="k">co_return</span><span class="p">;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">};</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">Uvent</span><span class="w"> </span><span class="n">runtime</span><span class="p">{</span><span class="mi">2</span><span class="p">};</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ServerRadix</span><span class="w"> </span><span class="n">server</span><span class="p">{</span><span class="n">runtime</span><span class="p">};</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="n">AdminController</span><span class="w"> </span><span class="n">controller</span><span class="p">{};</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">    </span><span class="n">server</span><span class="p">.</span><span class="n">handle</span><span class="p">(</span><span class="s">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/admin/status&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">                  </span><span class="n">std</span><span class="o">::</span><span class="n">bind_front</span><span class="p">(</span><span class="o">&amp;</span><span class="n">AdminController</span><span class="o">::</span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">controller</span><span class="p">));</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span><span class="n">runtime</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="p">}</span>
+</code></pre></div>
+<p>For member handlers with URI params, use the same pattern:
+<code>std::bind_front(&amp;Controller::method, &amp;controller_instance)</code>.</p>
 <h2 id="practical-rules">Practical Rules<a class="headerlink" href="#practical-rules" title="Permanent link">&para;</a></h2>
 <ul>
 <li>keep handlers non-blocking</li>
