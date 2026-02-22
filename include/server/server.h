@@ -14,6 +14,7 @@ namespace usub::server {
     template<class RouterType, template<typename> class... StreamHandlerTemplates>
     class ServerImpl {
     private:
+        configuration::ConfigReader config_;
         std::shared_ptr<RouterType> endpoint_handler_{};
         std::shared_ptr<usub::Uvent> uvent_{nullptr};
         std::tuple<Acceptor<StreamHandlerTemplates<RouterType> >...> acceptors_;
@@ -23,9 +24,6 @@ namespace usub::server {
             return std::tuple<Acceptor<StreamHandlerTemplates<RouterType> >...>(
                 Acceptor<StreamHandlerTemplates<RouterType> >(uvent_, endpoint_handler_, config_, Indices)...);
         }
-
-    public:
-        configuration::ConfigReader config_{};
 
     public:
         ServerImpl(/* args */) = default;
@@ -44,6 +42,10 @@ namespace usub::server {
         }
 
         ~ServerImpl() = default;
+
+        inline auto getConfig() const {
+            return config_;
+        }
 
         auto &handle(std::string_view method_token,
                      const std::string &endpoint,
