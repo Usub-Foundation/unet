@@ -11,31 +11,35 @@
 #include "server/Acceptor.h"
 
 namespace usub::server {
-
     template<class RouterType, template<typename> class... StreamHandlerTemplates>
     class ServerImpl {
     private:
-        configuration::ConfigReader config_{};
         std::shared_ptr<RouterType> endpoint_handler_{};
         std::shared_ptr<usub::Uvent> uvent_{nullptr};
-        std::tuple<Acceptor<StreamHandlerTemplates<RouterType>>...> acceptors_;
+        std::tuple<Acceptor<StreamHandlerTemplates<RouterType> >...> acceptors_;
 
         template<size_t... Indices>
         auto createAcceptors(std::index_sequence<Indices...>) {
-            return std::tuple<Acceptor<StreamHandlerTemplates<RouterType>>...>(
-                    Acceptor<StreamHandlerTemplates<RouterType>>(uvent_, endpoint_handler_, config_, Indices)...);
+            return std::tuple<Acceptor<StreamHandlerTemplates<RouterType> >...>(
+                Acceptor<StreamHandlerTemplates<RouterType> >(uvent_, endpoint_handler_, config_, Indices)...);
         }
+
+    public:
+        configuration::ConfigReader config_{};
 
     public:
         ServerImpl(/* args */) = default;
 
         ServerImpl(const std::string &config_path)
-            : config_(config_path), endpoint_handler_(std::make_shared<RouterType>()), uvent_(std::make_shared<usub::Uvent>(int(config_.getThreads()))), acceptors_(createAcceptors(std::make_index_sequence<sizeof...(StreamHandlerTemplates)>{})) {
+            : config_(config_path), endpoint_handler_(std::make_shared<RouterType>()),
+              uvent_(std::make_shared<usub::Uvent>(int(config_.getThreads()))),
+              acceptors_(createAcceptors(std::make_index_sequence<sizeof...(StreamHandlerTemplates)>{})) {
             spawnAcceptors();
         }
 
         ServerImpl(std::shared_ptr<usub::Uvent> ext_uvent)
-            : config_(), endpoint_handler_(std::make_shared<RouterType>()), uvent_(std::move(ext_uvent)), acceptors_(createAcceptors(std::make_index_sequence<sizeof...(StreamHandlerTemplates)>{})) {
+            : config_(), endpoint_handler_(std::make_shared<RouterType>()), uvent_(std::move(ext_uvent)),
+              acceptors_(createAcceptors(std::make_index_sequence<sizeof...(StreamHandlerTemplates)>{})) {
             spawnAcceptors();
         }
 
@@ -68,7 +72,8 @@ namespace usub::server {
         auto &handle(std::string_view method,
                      const std::string &endpoint,
                      std::function<usub::server::protocols::http::FunctionType> function,
-                     std::unordered_map<std::string_view, const usub::server::protocols::http::param_constraint *> &&constraints) {
+                     std::unordered_map<std::string_view, const usub::server::protocols::http::param_constraint *> &&
+                     constraints) {
             std::set<std::string> methods{method.data()};
             return this->endpoint_handler_->addHandler(methods, endpoint, function, std::move(constraints));
         }
@@ -78,7 +83,8 @@ namespace usub::server {
         auto &handle(const std::set<std::string> &methods,
                      const std::string &endpoint,
                      std::function<usub::server::protocols::http::FunctionType> function,
-                     std::unordered_map<std::string_view, const usub::server::protocols::http::param_constraint *> &&constraints) {
+                     std::unordered_map<std::string_view, const usub::server::protocols::http::param_constraint *> &&
+                     constraints) {
             return this->endpoint_handler_->addHandler(methods, endpoint, function, std::move(constraints));
         }
 
@@ -87,7 +93,8 @@ namespace usub::server {
         auto &handle(std::initializer_list<const char *> methods,
                      const std::string &endpoint,
                      std::function<usub::server::protocols::http::FunctionType> function,
-                     std::unordered_map<std::string_view, const usub::server::protocols::http::param_constraint *> &&constraints = {}) {
+                     std::unordered_map<std::string_view, const usub::server::protocols::http::param_constraint *> &&
+                             constraints = {}) {
             std::set<std::string> method_set{methods.begin(), methods.end()};
             return this->endpoint_handler_->addHandler(method_set, endpoint, function, std::move(constraints));
         }
@@ -96,7 +103,9 @@ namespace usub::server {
                              const std::function<usub::server::protocols::http::FunctionType> &function) {
         }
 
-        usub::server::protocols::http::MiddlewareChain &addMiddleware(usub::server::protocols::http::MiddlewarePhase phase, std::function<usub::server::protocols::http::MiddlewareFunctionType> middleware) {
+        usub::server::protocols::http::MiddlewareChain &addMiddleware(
+            usub::server::protocols::http::MiddlewarePhase phase,
+            std::function<usub::server::protocols::http::MiddlewareFunctionType> middleware) {
             return this->endpoint_handler_->addMiddleware(phase, std::move(middleware));
         }
 
@@ -122,9 +131,9 @@ namespace usub::server {
         }
 
         void spawnAcceptors() {
-            std::apply([&](auto &...a) {
-                (usub::uvent::system::co_spawn(a.loop()), ...);
-            },
+            std::apply([&](auto &... a) {
+                           (usub::uvent::system::co_spawn(a.loop()), ...);
+                       },
                        acceptors_);
         }
 
@@ -134,9 +143,7 @@ namespace usub::server {
     };
 
     using Server = usub::server::ServerImpl<protocols::http::HTTPEndpointHandler, PlainHTTPStreamHandler>;
-
-
-}// namespace usub::server
+} // namespace usub::server
 
 using ServerHandler = usub::uvent::task::Awaitable<void>;
 
