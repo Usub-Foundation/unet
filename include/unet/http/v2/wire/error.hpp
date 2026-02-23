@@ -19,4 +19,5 @@ namespace usub::unet::http::v2 {
         INADEQUATE_SECURITY = 0x0c,
         HTTP_1_1_REQUIRED = 0x0d,
     };
-}
+
+}// namespace usub::unet::http::v2

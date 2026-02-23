@@ -34,6 +34,16 @@ namespace usub::unet::http::v2 {
         FlowControl flow_control{};
         Request request{};
         Response response{};
+        // RequestParser request_reader{};
+        // ResponseSerializer response_writer{};
+    };
+
+    struct ClientStream : public Stream {
+        RequestSerializer request_writer{};
+        ResponseParser response_reader{};
+    };
+
+    struct ServerStream : public Stream {
         RequestParser request_reader{};
         ResponseSerializer response_writer{};
     };

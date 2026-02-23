@@ -205,6 +205,7 @@ namespace usub::unet::core {
             };
 
             static constexpr std::size_t kIoBufferSize = 16 * 1024;
+            // TODO: move alpns to config. so its not hardcoded
             static constexpr unsigned char kAlpnH1[] = {8, 'h', 't', 't', 'p', '/', '1', '.', '1'};
 
             static void initOpenSSLOnce() {

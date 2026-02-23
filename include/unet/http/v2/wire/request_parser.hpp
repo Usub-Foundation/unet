@@ -6,6 +6,7 @@ namespace usub::unet::http::v2 {
     class RequestParser {
     public:
         enum class STATE : std::uint8_t {
+            // TODO: Rethink maybe?
             HEADERS,
             HEADERS_DONE,
             DATA,
@@ -15,8 +16,9 @@ namespace usub::unet::http::v2 {
             FAILED,
         };
 
+
         struct ParserContext {
-            STATE state_{STATE::HEADERS};
+            STATE state_{};
         };
 
         RequestParser() = default;
