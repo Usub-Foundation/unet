@@ -462,12 +462,11 @@ namespace usub::unet::http::v1 {
                         } else {
                             state = STATE::DATA_CONTENT_LENGTH;
                         }
-                        break;
                     }
 
                     state = STATE::DATA_CONTENT_LENGTH;
                     rv.kind = STEP::HEADERS;
-                    break;
+                    return rv;
                 }
                 // case STATE::HEADERS_DONE: {
                 //     // Realistically we dont get there... but so the parser can work standalone

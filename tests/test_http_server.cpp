@@ -65,7 +65,8 @@ public:
     ServerHandler handle(usub::unet::http::Request &request, usub::unet::http::Response &response,
                          const usub::unet::http::router::RadixMatch::UriParams &uri_params) {
         std::cout << i << std::endl;
-        response.setStatus(200).addHeader("Content-Type", "text/plain").setBody(std::to_string(i));
+        // response.setStatus(209).addHeader("Content-Type", "text/plain").setBody(std::to_string(i));
+        response.setStatus(204);
         co_return;
     }
 };
@@ -82,7 +83,7 @@ int main() {
     server.handle("GET", "/users/{id}", handlerFunctionWithUriParams);
 
     MyController controller{};
-    server.handle("GET", "/controller", std::bind_front(&MyController::handle, &controller));
+    server.handle("POST", "/controller", std::bind_front(&MyController::handle, &controller));
 
     uvent.run();
     // server.run();
