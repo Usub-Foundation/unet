@@ -32,6 +32,14 @@ add_executable(test_http_client_example
     test_http_client_example.cpp
 )
 
+add_executable(test_imap_core
+    test_imap_core.cpp
+)
+
+add_executable(test_imap_live
+    test_imap_live.cpp
+)
+
 # Include new headers
 target_include_directories(test_form_data PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
@@ -61,6 +69,14 @@ target_include_directories(test_http_client_example PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
 
+target_include_directories(test_imap_core PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
+target_include_directories(test_imap_live PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
 if(TARGET unet)
     target_link_libraries(test_form_data PRIVATE unet)
     target_link_libraries(test_http1_parser PRIVATE unet)
@@ -69,6 +85,8 @@ if(TARGET unet)
     target_link_libraries(test_http_openssl_server PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
     target_link_libraries(test_openssl_stream_roundtrip PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
     target_link_libraries(test_http_client_example PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
+    target_link_libraries(test_imap_core PRIVATE unet)
+    target_link_libraries(test_imap_live PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
 endif()
 
 # Simple test run target
@@ -111,5 +129,17 @@ add_custom_target(run_openssl_stream_roundtrip_tests
 add_custom_target(run_http_client_example_test
     COMMAND test_http_client_example
     DEPENDS test_http_client_example
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_imap_core_tests
+    COMMAND test_imap_core
+    DEPENDS test_imap_core
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_imap_live_tests
+    COMMAND test_imap_live
+    DEPENDS test_imap_live
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )

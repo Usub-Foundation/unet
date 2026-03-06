@@ -2,23 +2,22 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <variant>
 #include <vector>
 
-namespace usub::unet::mail::imap {
+namespace usub::unet::mail::imap::core {
 
     struct Atom {
-        std::string value;
+        std::string value{};
     };
 
     using Number = std::uint64_t;
 
     struct String {
-        enum class Form {
-            SynchronizingLiteral,   // {n}\r\n...
-            NonSynchronizingLiteral,// {n+}\r\n...
-            Quoted,                 // "..."
+        enum class Form : std::uint8_t {
+            SynchronizingLiteral,
+            NonSynchronizingLiteral,
+            Quoted,
         };
 
         Form form{Form::Quoted};
@@ -31,15 +30,15 @@ namespace usub::unet::mail::imap {
 
     struct NIL {};
 
-    using AString = std::variant<Atom, String>;// atom / string
-    using NString = std::variant<NIL, String>; // NIL / string
+    using AString = std::variant<Atom, String>;
+    using NString = std::variant<NIL, String>;
 
     struct Value;
     using ParenthesizedList = std::vector<Value>;
 
     struct Value {
         using Data = std::variant<Atom, Number, String, Literal8, NIL, ParenthesizedList>;
-        Data data;
+        Data data{};
     };
 
-}// namespace usub::unet::mail::imap
+}// namespace usub::unet::mail::imap::core

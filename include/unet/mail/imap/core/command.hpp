@@ -2,8 +2,9 @@
 
 #include <cstdint>
 
-namespace usub::unet::mail::imap {
-    enum class COMMAND {
+namespace usub::unet::mail::imap::core {
+
+    enum class COMMAND : std::uint8_t {
         CAPABILITY,
         NOOP,
         LOGOUT,
@@ -33,4 +34,5 @@ namespace usub::unet::mail::imap {
         MOVE,
         UID,
     };
-}// namespace usub::unet::mail::imap
+
+}// namespace usub::unet::mail::imap::core
