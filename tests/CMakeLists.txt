@@ -32,6 +32,14 @@ add_executable(test_http_client_example
     test_http_client_example.cpp
 )
 
+add_executable(test_http_client_persistence
+    test_http_client_persistence.cpp
+)
+
+add_executable(test_http_client_proxy
+    test_http_client_proxy.cpp
+)
+
 # Include new headers
 target_include_directories(test_form_data PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
@@ -61,6 +69,14 @@ target_include_directories(test_http_client_example PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
 
+target_include_directories(test_http_client_persistence PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
+target_include_directories(test_http_client_proxy PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
 if(TARGET unet)
     target_link_libraries(test_form_data PRIVATE unet)
     target_link_libraries(test_http1_parser PRIVATE unet)
@@ -69,6 +85,8 @@ if(TARGET unet)
     target_link_libraries(test_http_openssl_server PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
     target_link_libraries(test_openssl_stream_roundtrip PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
     target_link_libraries(test_http_client_example PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
+    target_link_libraries(test_http_client_persistence PRIVATE unet)
+    target_link_libraries(test_http_client_proxy PRIVATE unet OpenSSL::Crypto OpenSSL::SSL)
 endif()
 
 # Simple test run target
@@ -111,5 +129,17 @@ add_custom_target(run_openssl_stream_roundtrip_tests
 add_custom_target(run_http_client_example_test
     COMMAND test_http_client_example
     DEPENDS test_http_client_example
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_http_client_persistence_test
+    COMMAND test_http_client_persistence
+    DEPENDS test_http_client_persistence
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_http_client_proxy_test
+    COMMAND test_http_client_proxy
+    DEPENDS test_http_client_proxy
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )

@@ -47,27 +47,24 @@ namespace {
         }
     };
 
-    Request build_get_request(std::string_view scheme, std::string_view host, std::uint16_t port) {
-        Request request{};
-        request.metadata.method_token = "GET";
-        request.metadata.version = VERSION::HTTP_1_1;
-        request.metadata.uri.scheme = std::string(scheme);
-        request.metadata.uri.authority.host = std::string(host);
-        request.metadata.uri.authority.port = port;
-        request.metadata.authority = std::string(host);
-        request.metadata.uri.path = "/";
-        request.headers.addHeader("user-agent"sv, "unet-test/1.0"sv);
-        request.headers.addHeader("accept"sv, "*/*"sv);
-        return request;
-    }
-
     usub::uvent::task::Awaitable<void> run_example_requests(SharedState &state) {
         MixedClient client{};
 
         ClientRequestOptions plain_options{};
         plain_options.connect_timeout = std::chrono::milliseconds{4000};
 
-        auto plain_result = co_await client.request(build_get_request("http", "example.com", 80), plain_options);
+        Request plain_request{};
+        plain_request.metadata.method_token = "GET";
+        plain_request.metadata.version = VERSION::HTTP_1_1;
+        plain_request.metadata.uri.scheme = "http";
+        plain_request.metadata.uri.authority.host = "example.com";
+        plain_request.metadata.uri.authority.port = 80;
+        plain_request.metadata.authority = "example.com";
+        plain_request.metadata.uri.path = "/";
+        plain_request.headers.addHeader("user-agent"sv, "unet-test/1.0"sv);
+        plain_request.headers.addHeader("accept"sv, "*/*"sv);
+
+        auto plain_result = co_await client.request(std::move(plain_request), plain_options);
         if (!plain_result) {
             state.fail("plain client request failed: " + plain_result.error().message);
             co_return;
@@ -82,16 +79,21 @@ namespace {
             co_return;
         }
 
-        usub::unet::core::stream::OpenSSLStream::Config tls_cfg{};
-        tls_cfg.mode = usub::unet::core::stream::OpenSSLStream::MODE::CLIENT;
-        tls_cfg.verify_peer = true;
-        tls_cfg.server_name = "example.com";
-        client.stream<usub::unet::core::stream::OpenSSLStream>().setConfig(std::move(tls_cfg));
-
         ClientRequestOptions tls_options{};
         tls_options.connect_timeout = std::chrono::milliseconds{4000};
 
-        auto tls_result = co_await client.request(build_get_request("https", "example.com", 443), tls_options);
+        Request tls_request{};
+        tls_request.metadata.method_token = "GET";
+        tls_request.metadata.version = VERSION::HTTP_1_1;
+        tls_request.metadata.uri.scheme = "https";
+        tls_request.metadata.uri.authority.host = "example.com";
+        tls_request.metadata.uri.authority.port = 443;
+        tls_request.metadata.authority = "example.com";
+        tls_request.metadata.uri.path = "/";
+        tls_request.headers.addHeader("user-agent"sv, "unet-test/1.0"sv);
+        tls_request.headers.addHeader("accept"sv, "*/*"sv);
+
+        auto tls_result = co_await client.request(std::move(tls_request), tls_options);
         if (!tls_result) {
             state.fail("tls client request failed: " + tls_result.error().message);
             co_return;
