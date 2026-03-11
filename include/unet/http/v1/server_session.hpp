@@ -34,6 +34,7 @@ namespace usub::unet::http {
                 this->router_->error("log", this->request_, this->response_);
                 this->router_->error(std::to_string(this->response_.metadata.status_code), this->request_,
                                      this->response_);
+                goto send_body;
             }
 
             switch (result.value().kind) {
@@ -85,13 +86,13 @@ namespace usub::unet::http {
             }
 
         send_body:
+            const SessionAction::Kind action_kind = this->prepareResponse();
             // co_await this->write_response(transport);
             co_await transport.send(this->response_writer_.serialize(this->response_));
             this->response_ = {};
             this->request_ = {};
             this->current_match_.reset();
-        end:
-            co_return {};
+            co_return SessionAction{.kind = action_kind};
         }
 
         usub::uvent::task::Awaitable<void> onClose() {
@@ -117,6 +118,24 @@ namespace usub::unet::http {
         v1::ResponseSerializer response_writer_{};
         std::shared_ptr<RouterType> router_;
         std::optional<typename RouterType::MatchResult> current_match_{};
+
+        SessionAction::Kind prepareResponse() {
+            if (this->response_.metadata.status_code >= 400) {
+                bool has_connection_header = false;
+                for (auto &header: this->response_.headers) {
+                    if (header.key == "connection") {
+                        header.value = "close";
+                        has_connection_header = true;
+                    }
+                }
+                if (!has_connection_header) {
+                    this->response_.headers.addHeader(std::string_view{"Connection"}, std::string_view{"close"});
+                }
+                return SessionAction::Kind::Close;
+            }
+
+            return SessionAction::Kind::Continue;
+        }
 
         usub::uvent::task::Awaitable<void> send(usub::unet::core::stream::Transport &transport, std::string_view data) {
             co_await transport.send(data);
