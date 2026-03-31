@@ -108,6 +108,8 @@ namespace usub::unet::mail::imap {
         [[nodiscard]] ClientSession &session() noexcept { return session_; }
         [[nodiscard]] const ClientSession &session() const noexcept { return session_; }
         [[nodiscard]] const std::optional<core::Response> &greeting() const noexcept { return greeting_; }
+        [[nodiscard]] bool connected() const noexcept { return connected_; }
+        [[nodiscard]] bool idling() const noexcept { return idle_active_; }
 
         template<typename Stream>
         Stream &stream() {
@@ -223,6 +225,11 @@ namespace usub::unet::mail::imap {
                 co_return std::unexpected(ClientError{.code = ClientError::CODE::INVALID_INPUT,
                                                       .message = "client is not connected"});
             }
+            if (idle_active_) {
+                co_return std::unexpected(ClientError{
+                        .code = ClientError::CODE::PROTOCOL_STATE,
+                        .message = "cannot send IMAP command while IDLE is active; call idleDone() first"});
+            }
 
             auto wire = session_.buildCommand(command, std::move(arguments));
             if (!wire) {
@@ -252,6 +259,102 @@ namespace usub::unet::mail::imap {
 
                 const auto &tagged = std::get<core::TaggedResponse>(response.data);
                 if (tagged.tag.value == expected_tag) { break; }
+            }
+
+            co_return responses;
+        }
+
+        usub::uvent::task::Awaitable<std::expected<std::vector<core::Response>, ClientError>> idleStart() {
+            if (!connected_) {
+                co_return std::unexpected(ClientError{.code = ClientError::CODE::INVALID_INPUT,
+                                                      .message = "client is not connected"});
+            }
+            if (idle_active_) {
+                co_return std::unexpected(
+                        ClientError{.code = ClientError::CODE::PROTOCOL_STATE, .message = "IDLE is already active"});
+            }
+
+            auto wire = session_.buildCommand(core::COMMAND::IDLE);
+            if (!wire) {
+                co_return std::unexpected(ClientError{.code = ClientError::CODE::PROTOCOL_STATE,
+                                                      .message = "failed to build IMAP IDLE command",
+                                                      .core_error = wire.error()});
+            }
+
+            if (session_.pendingCommands().empty()) {
+                co_return std::unexpected(ClientError{.code = ClientError::CODE::PROTOCOL_STATE,
+                                                      .message = "no pending IDLE command after build"});
+            }
+
+            const std::string expected_tag = session_.pendingCommands().back().tag;
+
+            auto wrote = co_await sendRaw(*wire);
+            if (!wrote) { co_return std::unexpected(wrote.error()); }
+
+            std::vector<core::Response> responses;
+            while (true) {
+                auto next = co_await readResponse();
+                if (!next) { co_return std::unexpected(next.error()); }
+
+                responses.push_back(*next);
+                const auto &response = responses.back();
+                if (response.kind == core::Response::Kind::Continuation) {
+                    idle_active_ = true;
+                    idle_tag_ = expected_tag;
+                    break;
+                }
+
+                if (response.kind != core::Response::Kind::Tagged) { continue; }
+
+                const auto &tagged = std::get<core::TaggedResponse>(response.data);
+                if (tagged.tag.value == expected_tag) {
+                    co_return std::unexpected(
+                            ClientError{.code = ClientError::CODE::PROTOCOL_STATE,
+                                        .message = "IDLE finished before server sent continuation"});
+                }
+            }
+
+            co_return responses;
+        }
+
+        usub::uvent::task::Awaitable<std::expected<std::vector<core::Response>, ClientError>> idleDone() {
+            if (!connected_) {
+                co_return std::unexpected(ClientError{.code = ClientError::CODE::INVALID_INPUT,
+                                                      .message = "client is not connected"});
+            }
+            if (!idle_active_ || !idle_tag_.has_value()) {
+                co_return std::unexpected(
+                        ClientError{.code = ClientError::CODE::PROTOCOL_STATE, .message = "IDLE is not active"});
+            }
+
+            const std::string expected_tag = *idle_tag_;
+
+            auto wrote = co_await sendRaw("DONE\r\n");
+            if (!wrote) {
+                idle_active_ = false;
+                idle_tag_.reset();
+                co_return std::unexpected(wrote.error());
+            }
+
+            std::vector<core::Response> responses;
+            while (true) {
+                auto next = co_await readResponse();
+                if (!next) {
+                    idle_active_ = false;
+                    idle_tag_.reset();
+                    co_return std::unexpected(next.error());
+                }
+
+                responses.push_back(*next);
+                const auto &response = responses.back();
+                if (response.kind != core::Response::Kind::Tagged) { continue; }
+
+                const auto &tagged = std::get<core::TaggedResponse>(response.data);
+                if (tagged.tag.value == expected_tag) {
+                    idle_active_ = false;
+                    idle_tag_.reset();
+                    break;
+                }
             }
 
             co_return responses;
@@ -294,6 +397,8 @@ namespace usub::unet::mail::imap {
 
             socket_.reset();
             connected_ = false;
+            idle_active_ = false;
+            idle_tag_.reset();
             co_return;
         }
 
@@ -382,6 +487,8 @@ namespace usub::unet::mail::imap {
         usub::uvent::utils::DynamicBuffer read_buffer_{};
         bool connected_{false};
         bool use_ssl_{false};
+        bool idle_active_{false};
+        std::optional<std::string> idle_tag_{};
     };
 
 }// namespace usub::unet::mail::imap

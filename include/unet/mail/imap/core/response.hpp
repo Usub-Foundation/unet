@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <variant>
 
 #include "unet/mail/imap/core/data_format.hpp"
@@ -72,5 +73,7 @@ namespace usub::unet::mail::imap::core {
     };
 
     [[nodiscard]] bool isOk(const StatusInfo &status) noexcept;
+    [[nodiscard]] std::optional<std::uint32_t> extractExists(const Response &response) noexcept;
+    [[nodiscard]] std::optional<std::string_view> extractFetchLiteral(const Response &response) noexcept;
 
 }// namespace usub::unet::mail::imap::core

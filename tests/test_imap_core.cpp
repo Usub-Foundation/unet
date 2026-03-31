@@ -22,6 +22,8 @@ using usub::unet::mail::imap::core::TaggedResponse;
 using usub::unet::mail::imap::core::UntaggedNumericResponse;
 using usub::unet::mail::imap::core::UntaggedStatusResponse;
 using usub::unet::mail::imap::core::Value;
+using usub::unet::mail::imap::core::extractExists;
+using usub::unet::mail::imap::core::extractFetchLiteral;
 using usub::unet::mail::imap::core::parseCapabilities;
 
 namespace {
@@ -156,6 +158,26 @@ namespace {
         assert(session.state() == SessionState::Logout);
     }
 
+    void test_response_extract_helpers() {
+        ResponseParser parser{};
+
+        auto exists = require_one(parser, "* 4 EXISTS\r\n");
+        auto exists_value = extractExists(exists);
+        assert(exists_value.has_value());
+        assert(*exists_value == 4);
+        assert(!extractFetchLiteral(exists).has_value());
+
+        auto fetch = require_one(parser, "* 1 FETCH (BODY[TEXT] {5}\r\nHello)\r\n");
+        auto literal = extractFetchLiteral(fetch);
+        assert(literal.has_value());
+        assert(*literal == "Hello");
+        assert(!extractExists(fetch).has_value());
+
+        auto status = require_one(parser, "* OK ready\r\n");
+        assert(!extractExists(status).has_value());
+        assert(!extractFetchLiteral(status).has_value());
+    }
+
 }// namespace
 
 int main() {
@@ -164,6 +186,7 @@ int main() {
     test_encoder();
     test_sequence_set();
     test_client_session_state_flow();
+    test_response_extract_helpers();
 
     std::cout << "imap core tests passed\n";
     return 0;

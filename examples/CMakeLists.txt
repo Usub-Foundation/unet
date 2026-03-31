@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
+find_package(OpenSSL)
+
 add_executable(HTTPServer
     HTTPServer.cpp
 )
@@ -14,5 +16,12 @@ add_executable(UventDemo
     UventDemo.cpp
 )
 target_link_libraries(UventDemo PRIVATE usub::uvent)
+
+if(OpenSSL_FOUND)
+    add_executable(ImapInboxListener
+        ImapInboxListener.cpp
+    )
+    target_link_libraries(ImapInboxListener PRIVATE unet usub::uvent OpenSSL::Crypto OpenSSL::SSL)
+endif()
 
 add_subdirectory(upq_integration)
