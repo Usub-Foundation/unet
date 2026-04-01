@@ -1,192 +1,241 @@
 #include <cassert>
 #include <iostream>
-#include <optional>
 #include <string>
 
-#include "unet/mail/imap/client.hpp"
-#include "unet/mail/imap/core/capability.hpp"
-#include "unet/mail/imap/core/encoder.hpp"
-#include "unet/mail/imap/core/parser.hpp"
-#include "unet/mail/imap/core/sequence_set.hpp"
+#include "unet/mail/imap/core/command.hpp"
+#include "unet/mail/imap/core/message_data.hpp"
+#include "unet/mail/imap/core/response.hpp"
+#include "unet/mail/imap/wire/command_serializer.hpp"
+#include "unet/mail/imap/wire/response_parser.hpp"
 
-using usub::unet::mail::imap::ClientSession;
-using usub::unet::mail::imap::core::CommandEncoder;
-using usub::unet::mail::imap::core::COMMAND;
-using usub::unet::mail::imap::core::Response;
-using usub::unet::mail::imap::core::ResponseCondition;
-using usub::unet::mail::imap::core::ResponseParser;
-using usub::unet::mail::imap::core::SequenceSet;
-using usub::unet::mail::imap::core::SessionState;
-using usub::unet::mail::imap::core::String;
-using usub::unet::mail::imap::core::TaggedResponse;
-using usub::unet::mail::imap::core::UntaggedNumericResponse;
-using usub::unet::mail::imap::core::UntaggedStatusResponse;
-using usub::unet::mail::imap::core::Value;
-using usub::unet::mail::imap::core::extractExists;
-using usub::unet::mail::imap::core::extractFetchLiteral;
-using usub::unet::mail::imap::core::parseCapabilities;
+using usub::unet::mail::imap::BodyMultipart;
+using usub::unet::mail::imap::BodyTextPart;
+using usub::unet::mail::imap::Envelope;
+using usub::unet::mail::imap::HeaderFields;
+using usub::unet::mail::imap::MessageDataItem;
+using usub::unet::mail::imap::MessageDataValue;
+using usub::unet::mail::imap::Nil;
+using usub::unet::mail::imap::SequenceSet;
+using usub::unet::mail::imap::SequenceSetItem;
+using usub::unet::mail::imap::SequenceSetValue;
+using usub::unet::mail::imap::asciiEqual;
+using usub::unet::mail::imap::command::Command;
+using usub::unet::mail::imap::command::Fetch;
+using usub::unet::mail::imap::command::Login;
+using usub::unet::mail::imap::command::Search;
+using usub::unet::mail::imap::command::SearchKey;
+using usub::unet::mail::imap::command::SearchResultSpecifier;
+using usub::unet::mail::imap::command::Store;
+using usub::unet::mail::imap::findBodyFieldParameter;
+using usub::unet::mail::imap::findMessageDataItem;
+using usub::unet::mail::imap::response::CapabilityData;
+using usub::unet::mail::imap::response::FetchData;
+using usub::unet::mail::imap::response::Ok;
+using usub::unet::mail::imap::response::TaggedStatus;
+using usub::unet::mail::imap::response::UntaggedServerData;
+using usub::unet::mail::imap::response::UntaggedStatus;
+using usub::unet::mail::imap::wire::CommandSerializer;
+using usub::unet::mail::imap::wire::ResponseParser;
 
 namespace {
 
-    Response require_one(ResponseParser &parser, std::string_view chunk) {
+    usub::unet::mail::imap::response::ServerResponse requireOne(ResponseParser &parser, std::string_view chunk) {
         auto fed = parser.feed(chunk);
         assert(fed.has_value());
 
         auto parsed = parser.next();
-        if (!parsed.has_value()) {
-            std::cerr << "parse error: " << parsed.error().message << " @ " << parsed.error().offset << '\n';
-        }
         assert(parsed.has_value());
         assert(parsed->has_value());
         return **parsed;
     }
 
-    void test_parser_status_and_capability_code() {
-        ResponseParser parser{};
-
-        auto greeting = require_one(parser, "* OK [CAPABILITY IMAP4rev1 STARTTLS AUTH=PLAIN] hi\r\n");
-        assert(greeting.kind == Response::Kind::Untagged);
-
-        const auto &untagged = std::get<usub::unet::mail::imap::core::UntaggedResponse>(greeting.data);
-        const auto *status = std::get_if<UntaggedStatusResponse>(&untagged.payload);
-        assert(status != nullptr);
-        assert(status->status.condition == ResponseCondition::OK);
-        assert(status->status.code.has_value());
-
-        auto capabilities = parseCapabilities(greeting);
-        assert(capabilities.has_value());
-        assert(capabilities->has("IMAP4rev1"));
-        assert(capabilities->has("STARTTLS"));
-        assert(capabilities->has("AUTH=PLAIN"));
+    const MessageDataItem &requireItem(const std::vector<MessageDataItem> &items, std::string_view name) {
+        const auto *item = findMessageDataItem(items, name);
+        assert(item != nullptr);
+        return *item;
     }
 
-    void test_parser_literal_and_tagged() {
-        ResponseParser parser{};
-
-        auto first = require_one(parser, "* 1 FETCH (BODY[] {5}\r\nHello)\r\n");
-        assert(first.kind == Response::Kind::Untagged);
-
-        const auto &untagged = std::get<usub::unet::mail::imap::core::UntaggedResponse>(first.data);
-        const auto *numeric = std::get_if<UntaggedNumericResponse>(&untagged.payload);
-        assert(numeric != nullptr);
-        assert(numeric->number == 1);
-        assert(numeric->atom.value == "FETCH");
-        assert(numeric->literal.has_value());
-        assert(numeric->literal->value == "Hello");
-
-        auto fed = parser.feed("A0001 OK FETCH done\r\n");
-        assert(fed.has_value());
-
-        auto second = parser.next();
-        assert(second.has_value());
-        assert(second->has_value());
-        assert((**second).kind == Response::Kind::Tagged);
-
-        const auto &tagged = std::get<TaggedResponse>((**second).data);
-        assert(tagged.tag.value == "A0001");
-        assert(tagged.status.condition == ResponseCondition::OK);
-    }
-
-    void test_encoder() {
-        auto login = CommandEncoder::encodeLogin("A0001", "alice", "s3cr3t");
+    void test_command_serializer() {
+        auto login = CommandSerializer::serialize(Command<Login>{
+                .tag = "A001",
+                .data = Login{.username = "alice", .password = "s3cr3t"},
+        });
         assert(login.has_value());
-        assert(*login == "A0001 LOGIN \"alice\" \"s3cr3t\"\r\n");
+        assert(*login == "A001 LOGIN \"alice\" \"s3cr3t\"\r\n");
 
-        auto invalid = CommandEncoder::encodeSimple("BAD-TAG", COMMAND::NOOP);
-        assert(!invalid.has_value());
-    }
-
-    void test_sequence_set() {
-        auto parsed = SequenceSet::parse("1:4,6,9:*");
-        assert(parsed.has_value());
-        assert(parsed->ranges().size() == 3);
-        assert(parsed->toString() == "1:4,6,9:*");
-
-        auto invalid = SequenceSet::parse("1,,2");
-        assert(!invalid.has_value());
-    }
-
-    void test_client_session_state_flow() {
-        ClientSession session{};
-
-        auto command_before_greeting = session.buildCommand(COMMAND::CAPABILITY);
-        assert(!command_before_greeting.has_value());
-
-        auto fed_greeting = session.feed("* OK ready\r\n");
-        assert(fed_greeting.has_value());
-
-        auto greeting = session.nextResponse();
-        assert(greeting.has_value());
-        assert(greeting->has_value());
-        assert(session.state() == SessionState::NotAuthenticated);
-
-        std::vector<Value> login_args{
-                Value{.data = String{.form = String::Form::Quoted, .value = "alice"}},
-                Value{.data = String{.form = String::Form::Quoted, .value = "pwd"}},
+        Search search_data{};
+        search_data.result_specifier = SearchResultSpecifier{.return_options = {"MIN", "COUNT"}};
+        search_data.search_criteria = {
+                SearchKey{.data = SearchKey::Flagged{}},
+                SearchKey{.data = SearchKey::Since{.value = "1-Feb-1994"}},
+                SearchKey{.data = SearchKey::Not{.key = std::make_shared<SearchKey>(
+                                                         SearchKey{.data = SearchKey::From{.value = "Smith"}})}},
         };
+        auto search = CommandSerializer::serialize(Command<Search>{.tag = "A282", .data = std::move(search_data)});
+        assert(search.has_value());
+        assert(*search == "A282 SEARCH RETURN (MIN COUNT) FLAGGED SINCE 1-Feb-1994 NOT FROM \"Smith\"\r\n");
 
-        auto login_cmd = session.buildCommand(COMMAND::LOGIN, login_args);
-        assert(login_cmd.has_value());
-        assert(login_cmd->rfind("A0001 LOGIN", 0) == 0);
+        Store store_data{};
+        store_data.sequence_set.push_back(SequenceSetItem{SequenceSetValue{std::uint32_t{1}}, std::nullopt});
+        store_data.mode = Store::MODE::ADD;
+        store_data.silent = true;
+        store_data.flag_list = {"\\Seen", "\\Flagged"};
 
-        auto fed_login = session.feed("A0001 OK LOGIN completed\r\n");
-        assert(fed_login.has_value());
-
-        auto login_response = session.nextResponse();
-        assert(login_response.has_value());
-        assert(login_response->has_value());
-        assert(session.state() == SessionState::Authenticated);
-
-        auto select_cmd = session.buildCommand(
-                COMMAND::SELECT,
-                {Value{.data = String{.form = String::Form::Quoted, .value = "INBOX"}}});
-        assert(select_cmd.has_value());
-        assert(select_cmd->rfind("A0002 SELECT", 0) == 0);
-
-        auto fed_select = session.feed("A0002 OK [READ-WRITE] SELECT completed\r\n");
-        assert(fed_select.has_value());
-        auto select_response = session.nextResponse();
-        assert(select_response.has_value());
-        assert(select_response->has_value());
-        assert(session.state() == SessionState::Selected);
-
-        auto fed_bye = session.feed("* BYE logging out\r\n");
-        assert(fed_bye.has_value());
-        auto bye_response = session.nextResponse();
-        assert(bye_response.has_value());
-        assert(bye_response->has_value());
-        assert(session.state() == SessionState::Logout);
+        auto store = CommandSerializer::serialize(Command<Store>{.tag = "A003", .data = std::move(store_data)});
+        assert(store.has_value());
+        assert(*store == "A003 STORE 1 +FLAGS.SILENT (\\Seen \\Flagged)\r\n");
     }
 
-    void test_response_extract_helpers() {
+    void test_parse_status_and_capability() {
         ResponseParser parser{};
+        auto greeting = requireOne(parser, "* OK [CAPABILITY IMAP4rev1 STARTTLS AUTH=PLAIN] ready\r\n");
 
-        auto exists = require_one(parser, "* 4 EXISTS\r\n");
-        auto exists_value = extractExists(exists);
-        assert(exists_value.has_value());
-        assert(*exists_value == 4);
-        assert(!extractFetchLiteral(exists).has_value());
+        const auto *status = std::get_if<UntaggedStatus>(&greeting);
+        assert(status != nullptr);
 
-        auto fetch = require_one(parser, "* 1 FETCH (BODY[TEXT] {5}\r\nHello)\r\n");
-        auto literal = extractFetchLiteral(fetch);
-        assert(literal.has_value());
-        assert(*literal == "Hello");
-        assert(!extractExists(fetch).has_value());
+        const auto *ok = std::get_if<Ok>(&status->data);
+        assert(ok != nullptr);
+        assert(ok->code.has_value());
+        assert(ok->code->name == "CAPABILITY");
+        assert(ok->code->data.has_value());
+        assert(*ok->code->data == "IMAP4rev1 STARTTLS AUTH=PLAIN");
+        assert(ok->text == "ready");
 
-        auto status = require_one(parser, "* OK ready\r\n");
-        assert(!extractExists(status).has_value());
-        assert(!extractFetchLiteral(status).has_value());
+        auto capabilities = requireOne(parser, "* CAPABILITY IMAP4rev1 IDLE UIDPLUS\r\n");
+        const auto *untagged = std::get_if<UntaggedServerData>(&capabilities);
+        assert(untagged != nullptr);
+        const auto *capability = std::get_if<CapabilityData>(&untagged->data);
+        assert(capability != nullptr);
+        assert(capability->capabilities.size() == 3);
+        assert(capability->capabilities[1] == "IDLE");
+    }
+
+    void test_parse_header_literal() {
+        ResponseParser parser{};
+        auto response = requireOne(
+                parser,
+                "* 1 FETCH (BODY[HEADER] {38}\r\nSubject: Test\r\nFrom: a@example.com\r\n\r\n)\r\n");
+
+        const auto *untagged = std::get_if<UntaggedServerData>(&response);
+        assert(untagged != nullptr);
+        const auto *fetch = std::get_if<FetchData>(&untagged->data);
+        assert(fetch != nullptr);
+        assert(fetch->sequence_number == 1);
+
+        const auto &item = requireItem(fetch->items, "BODY[HEADER]");
+        const auto *headers = item.value.asHeaders();
+        assert(headers != nullptr);
+        assert(headers->getFirst("subject").has_value());
+        assert(*headers->getFirst("subject") == "Test");
+        assert(headers->getFirst("from").has_value());
+        assert(*headers->getFirst("from") == "a@example.com");
+    }
+
+    void test_parse_bodystructure() {
+        ResponseParser parser{};
+        auto response = requireOne(
+                parser,
+                "* 7 FETCH (BODYSTRUCTURE ((\"TEXT\" \"PLAIN\" (\"CHARSET\" \"US-ASCII\") NIL NIL \"7BIT\" 1152 23) "
+                "(\"TEXT\" \"PLAIN\" (\"CHARSET\" \"US-ASCII\" \"NAME\" \"cc.diff\") "
+                "\"<960723163407.20117h@cac.washington.edu>\" \"Compiler diff\" \"BASE64\" 4554 73) \"MIXED\"))\r\n");
+
+        const auto *untagged = std::get_if<UntaggedServerData>(&response);
+        assert(untagged != nullptr);
+        const auto *fetch = std::get_if<FetchData>(&untagged->data);
+        assert(fetch != nullptr);
+
+        const auto &item = requireItem(fetch->items, "BODYSTRUCTURE");
+        const auto *body = item.value.asBodyStructure();
+        assert(body != nullptr);
+
+        const auto *multipart = body->asMultipart();
+        assert(multipart != nullptr);
+        assert(asciiEqual(multipart->media_subtype, "MIXED"));
+        assert(multipart->parts.size() == 2);
+
+        const auto *first_text = multipart->parts[0].asText();
+        assert(first_text != nullptr);
+        assert(asciiEqual(first_text->fields.media_type, "TEXT"));
+        assert(asciiEqual(first_text->fields.media_subtype, "PLAIN"));
+        assert(first_text->line_count.has_value());
+        assert(*first_text->line_count == 23);
+
+        const auto *charset = findBodyFieldParameter(first_text->fields.parameters, "CHARSET");
+        assert(charset != nullptr);
+        assert(std::holds_alternative<std::string>(*charset));
+        assert(std::get<std::string>(*charset) == "US-ASCII");
+
+        const auto *second_text = multipart->parts[1].asText();
+        assert(second_text != nullptr);
+        const auto *name = findBodyFieldParameter(second_text->fields.parameters, "NAME");
+        assert(name != nullptr);
+        assert(std::holds_alternative<std::string>(*name));
+        assert(std::get<std::string>(*name) == "cc.diff");
+        assert(second_text->fields.octet_count.has_value());
+        assert(*second_text->fields.octet_count == 4554);
+    }
+
+    void test_parse_envelope() {
+        ResponseParser parser{};
+        auto response = requireOne(
+                parser,
+                "* 9 FETCH (ENVELOPE (\"Mon, 7 Feb 2022 12:34:56 +0000\" \"Hello\" "
+                "((\"Alice\" NIL \"alice\" \"example.com\")) "
+                "((\"Alice\" NIL \"alice\" \"example.com\")) "
+                "((\"Alice\" NIL \"alice\" \"example.com\")) "
+                "((\"Bob\" NIL \"bob\" \"example.com\")) "
+                "NIL NIL NIL \"<msg@example.com>\"))\r\n");
+
+        const auto *untagged = std::get_if<UntaggedServerData>(&response);
+        assert(untagged != nullptr);
+        const auto *fetch = std::get_if<FetchData>(&untagged->data);
+        assert(fetch != nullptr);
+
+        const auto &item = requireItem(fetch->items, "ENVELOPE");
+        const auto *envelope = item.value.asEnvelope();
+        assert(envelope != nullptr);
+
+        assert(std::holds_alternative<std::string>(envelope->date));
+        assert(std::get<std::string>(envelope->date) == "Mon, 7 Feb 2022 12:34:56 +0000");
+        assert(std::holds_alternative<std::string>(envelope->subject));
+        assert(std::get<std::string>(envelope->subject) == "Hello");
+
+        assert(std::holds_alternative<usub::unet::mail::imap::AddressList>(envelope->from));
+        const auto &from = std::get<usub::unet::mail::imap::AddressList>(envelope->from);
+        assert(from.size() == 1);
+        assert(std::holds_alternative<std::string>(from.front().name));
+        assert(std::get<std::string>(from.front().name) == "Alice");
+        assert(std::holds_alternative<std::string>(from.front().mailbox));
+        assert(std::get<std::string>(from.front().mailbox) == "alice");
+        assert(std::holds_alternative<usub::unet::mail::imap::AddressList>(envelope->to));
+        const auto &to = std::get<usub::unet::mail::imap::AddressList>(envelope->to);
+        assert(std::holds_alternative<std::string>(to.front().mailbox));
+        assert(std::get<std::string>(to.front().mailbox) == "bob");
+        assert(std::holds_alternative<Nil>(envelope->cc));
+        assert(std::holds_alternative<Nil>(envelope->bcc));
+        assert(std::holds_alternative<std::string>(envelope->message_id));
+        assert(std::get<std::string>(envelope->message_id) == "<msg@example.com>");
+    }
+
+    void test_tagged_completion() {
+        ResponseParser parser{};
+        auto response = requireOne(parser, "A044 BAD No such command as \"BLURDYBLOOP\"\r\n");
+
+        const auto *tagged = std::get_if<TaggedStatus>(&response);
+        assert(tagged != nullptr);
+        assert(tagged->tag == "A044");
+        assert(std::holds_alternative<usub::unet::mail::imap::response::Bad>(tagged->data));
     }
 
 }// namespace
 
 int main() {
-    test_parser_status_and_capability_code();
-    test_parser_literal_and_tagged();
-    test_encoder();
-    test_sequence_set();
-    test_client_session_state_flow();
-    test_response_extract_helpers();
+    test_command_serializer();
+    test_parse_status_and_capability();
+    test_parse_header_literal();
+    test_parse_bodystructure();
+    test_parse_envelope();
+    test_tagged_completion();
 
     std::cout << "imap core tests passed\n";
     return 0;
