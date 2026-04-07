@@ -1,0 +1,40 @@
+#pragma once
+
+#include <any>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <string>
+
+
+#include "unet/http/core/message.hpp"
+#include "unet/http/header.hpp"
+#include "unet/uri/uri.hpp"
+
+
+namespace usub::unet::http {
+
+    extern std::uint8_t max_method_token_size;
+    extern std::uint16_t max_uri_size;
+
+    struct RequestMetadata {
+        std::string method_token{};
+        uri::URI uri{};
+        VERSION version{};
+        std::string authority;// :authority: http2, Host header duplication in http/1.1
+    };
+
+    struct Request {
+        RequestMetadata metadata{};
+        usub::unet::header::Headers headers{};
+        std::string body{};
+
+        std::any user_data{};// A place to store content between middlewares
+
+        template<typename ReturnType = std::string>
+        ReturnType getQueryAs() {
+            return ReturnType(this->metadata.uri.query);
+        }
+    };
+
+}// namespace usub::unet::http

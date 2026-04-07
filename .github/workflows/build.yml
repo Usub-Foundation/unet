@@ -1,0 +1,81 @@
+name: Build
+
+on:
+  push:
+    # TODO: Dont forget to remove branches that are not relevant anymore
+    branches: [main, strict_parsing]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-13 g++-13
+
+      - name: Install LLVM (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install llvm
+
+      - name: Install toolchain (Windows)
+        if: runner.os == 'Windows'
+        run: |
+
+      - name: Configure CMake (Linux, Makefiles)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -S . -B build \
+            -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=gcc-13 \
+            -DCMAKE_CXX_COMPILER=g++-13 \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+
+      - name: Configure CMake (macOS, Ninja)
+        if: runner.os == 'macOS'
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          "$LLVM_PREFIX/bin/clang" --version
+          "$LLVM_PREFIX/bin/clang++" --version
+
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="$LLVM_PREFIX/bin/clang" \
+            -DCMAKE_CXX_COMPILER="$LLVM_PREFIX/bin/clang++" \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+
+      - name: Configure CMake (Windows, MSVC)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: cmake --build build --parallel
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: cmake --build build --parallel
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake --build build --config Release

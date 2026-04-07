@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22..3.29) #3.24
-project(server VERSION 1.0.0)
+project(unet VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -32,119 +32,30 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(uvent)
 
-if (UNET_USE_UJSON)
-    FetchContent_Declare(
-            ujson
-            GIT_REPOSITORY https://github.com/Usub-development/ujson.git
-            GIT_TAG main
-            FIND_PACKAGE_ARGS
-    )
-    FetchContent_MakeAvailable(ujson)
-endif()
 
-include_directories(
-    ${CMAKE_SOURCE_DIR}/include
+file(GLOB_RECURSE UNET_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
+file(GLOB_RECURSE UNET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+
+list(FILTER UNET_HEADERS EXCLUDE REGEX "/include/unet/http/v2/")
+list(FILTER UNET_SOURCES EXCLUDE REGEX "/src/http/v2/")
+
+# list(APPEND UNET_SOURCES
+#     "${CMAKE_CURRENT_SOURCE_DIR}/src/http/v1/request_serializer.cpp"
+#     "${CMAKE_CURRENT_SOURCE_DIR}/src/http/v1/response_parser.cpp"
+# )
+list(REMOVE_DUPLICATES UNET_SOURCES)
+
+# Build the new implementation as a separate library so it can be tested independently
+add_library(unet
+    ${UNET_SOURCES}
+    ${UNET_HEADERS}
 )
 
-file(GLOB_RECURSE MYLIBRARY_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
-
-add_library(server
-
-    # Components/Compression
-    src/Components/Compression/gzip.cpp
-
-    # Components/Encodings
-    src/Components/Encodings/PercentEncoded.cpp
-
-    # Components/Headers
-    src/Protocols/HTTP/Headers.cpp
-
-    # Components/URL
-    src/Components/URL/QueryParams.cpp
-    src/Components/URL/URL.cpp
-
-    #Components/DataTypes
-    src/Components/DataTypes/Multipart/MultipartFormData.cpp
-
-    # Protocols/HTTP
-    src/Protocols/HTTP/EndpointHandler.cpp
-    src/Protocols/HTTP/RouterCommon.cpp
-    src/Protocols/HTTP/RadixRouter.cpp
-    
-    src/Protocols/HTTP/headers_lookup.cpp
-    src/Protocols/HTTP/HTTP1.cpp
-    src/Protocols/HTTP/Message.cpp
-    src/Protocols/HTTP/Middlewares.cpp
-
-    # Protocols/websocket
-    # Protocols/websocket/Websocket.cpp
-    # Protocols/websocket/WebsocketBase.cpp
-
-    # server
-    # server/client_handler.cpp
-    src/server/server.cpp
-
-    # utils
-    src/utils/utils.cpp
-    src/utils/configuration/ConfigReader.cpp
-    src/utils/crypto/SHA1.cpp
-    # utils/ssl/data.cpp
-    src/utils/toml/toml.cpp
-    src/utils/HTTPUtils/HTTPUtils.cpp
-)
-add_library(usub::server ALIAS server)
+add_library(usub::unet ALIAS unet)
 
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "Debug mode enabled")
-    #    add_definitions(-DUVENT_DEBUG)
-    #
-    #    include(FetchContent)
-    #    FetchContent_Declare(
-    #            spdlog
-    #            GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    #            GIT_TAG v1.14.1
-    #            FIND_PACKAGE_ARGS
-    #    )
-    #    FetchContent_MakeAvailable(spdlog)
-endif ()
-
-
-#add_dependencies(${CURRENT_PROJECT_NAME} run_tests)
-FetchContent_Declare(
-    ZLIB
-    GIT_REPOSITORY https://github.com/madler/zlib.git
-    GIT_TAG v1.3.1.2
-    FIND_PACKAGE_ARGS
-)
-
-FetchContent_MakeAvailable(ZLIB)
-
-
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-    target_link_libraries(server PRIVATE
-            ZLIB::ZLIB
-            usub::uvent
-            #            spdlog::spdlog
-    )
-
-else()
-    target_link_libraries(server PUBLIC
-            ZLIB::ZLIB
-            usub::uvent
-    )
-endif ()
-
-target_compile_definitions(server PUBLIC
-        $<$<BOOL:${UNET_USE_UJSON}>:UNET_USE_UJSON>
-)
-
-if (UNET_USE_UJSON)
-    target_link_libraries(server PUBLIC
-            usub::ujson
-    )
-endif()
+# Link dependencies that the new implementation may need (reuse existing fetches)
+target_link_libraries(unet PUBLIC usub::uvent)
 
 # --------------------
 # INSTALL
@@ -153,39 +64,44 @@ endif()
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
-target_include_directories(server 
+target_include_directories(unet 
 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include/server>
+    $<INSTALL_INTERFACE:include/>
 )
 
 configure_package_config_file(
-    cmake/serverConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/serverConfig.cmake
-    INSTALL_DESTINATION lib/cmake/server
+    cmake/unetConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/unetConfig.cmake
+    INSTALL_DESTINATION lib/cmake/unet
 )
 
-install(TARGETS server
-    EXPORT serverTargets
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/unetConfig.cmake
+    DESTINATION lib/cmake/unet
+)
+
+install(TARGETS unet
+    EXPORT unetTargets
     #LIBRARY DESTINATION lib
     #ARCHIVE DESTINATION lib
     #RUNTIME DESTINATION bin
-    PUBLIC_HEADER DESTINATION include/server
-    INCLUDES DESTINATION include/server
+    PUBLIC_HEADER DESTINATION include/unet
+    INCLUDES DESTINATION include/unet
 )
 
-foreach(header ${MYLIBRARY_HEADERS})
+foreach(header ${UNET_HEADERS})
     get_filename_component(header_path ${header} DIRECTORY)
     file(RELATIVE_PATH header_relative_path "${CMAKE_CURRENT_SOURCE_DIR}/include" ${header_path})
-    install(FILES ${header} DESTINATION include/server/${header_relative_path})
+    install(FILES ${header} DESTINATION include/${header_relative_path})
 endforeach()
 
-install(EXPORT serverTargets
-    FILE serverConfig.cmake
+install(EXPORT unetTargets
+    FILE unetTargets.cmake
     NAMESPACE usub::
-    DESTINATION lib/cmake/server
+    DESTINATION lib/cmake/unet
 )
 
 
@@ -193,44 +109,19 @@ install(EXPORT serverTargets
 # ======= BUILDING EXAMPLES =============
 # ========================================
 
-option(BUILD_EXAMPLES "Build the Server example executables" OFF)
+option(UNET_EXAMPLES "Build unet examples" OFF)
 
-if (USE_OPEN_SSL)
-    find_package(OpenSSL REQUIRED)
-    if (OpenSSL_FOUND)
-        message(STATUS "OpenSSL found, enabling TLS support in examples")
-        add_definitions(-DUSE_OPEN_SSL)
-        include_directories(${OPENSSL_INCLUDE_DIR})
-        link_libraries(${OPENSSL_LIBRARIES})
-    else()
-        message(WARNING "OpenSSL not found, TLS support will be disabled in examples")
-    endif()
-endif()
-
-if(BUILD_EXAMPLES)
-    add_executable(SimpleServer examples/SimpleServer.cpp)
-    add_executable(SimpleClient examples/SimpleClient.cpp)
-    
-    target_link_libraries(SimpleServer server ZLIB::ZLIB pthread usub::uvent)
-    target_link_libraries(SimpleClient server ZLIB::ZLIB pthread usub::uvent)
-
-    if (USE_OPEN_SSL)
-        add_executable(AdvancedClient examples/AdvancedClientExamples.cpp)
-        add_executable(ModernHttpClient examples/ModernHttpClient.cpp)
-        target_link_libraries(AdvancedClient server ZLIB::ZLIB pthread usub::uvent OpenSSL::SSL OpenSSL::Crypto)
-        target_link_libraries(ModernHttpClient server ZLIB::ZLIB pthread usub::uvent OpenSSL::SSL OpenSSL::Crypto)
-    endif()
-    
+if(UNET_EXAMPLES)
+    add_subdirectory(examples)
 endif()
 
 # ========================================
-# ======= BUILDING TESTS =============
+# ======= BUILDING TESTS =================
 # ========================================
 
-# PunycodeEncoding tests
+option(UNET_TESTS "Build unet tests" OFF)
 
-option(BUILD_TESTS "Build and run tests" OFF)
-
-if(BUILD_TESTS)
+if(UNET_TESTS)
+    # TODO: Add example directories here
     add_subdirectory(tests)
 endif()

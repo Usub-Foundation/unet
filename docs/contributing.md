@@ -1,34 +1,32 @@
 # Contributing
 
-We welcome contributions to **Webserver**! Whether it's fixing bugs, improving documentation, or adding new features, every contribution helps. Every little bit helps, want to contribute, here is how:
+## High-Value Contribution Areas
 
-## Ways to Contribute
-- **Bug reports** – Open an [issue](https://github.com/Usub-development/webserver/issues) if you find a problem.
-- **Feature requests** – [Suggest](https://github.com/Usub-development/webserver/discussions) improvements or new capabilities.
-- **Code contributions** – [Fix](https://github.com/Usub-development/webserver/pulls) a bug, [implement](https://github.com/Usub-development/webserver/pulls) a feature, or [improve](https://github.com/Usub-development/webserver/pulls) performance.
-- **Documentation** – Help us improve clarity and examples.
+- HTTP/1 parser correctness and edge cases
+- middleware and routing behavior cleanup
+- client reliability improvements
+- test quality improvements
+- docs updates that match current headers
 
-## Coding style
+## Suggested Workflow
 
-**While this is not enforced, we ask you to**
+1. Open an issue/discussion for non-trivial changes.
+2. Implement in small, reviewable commits.
+3. Add or update tests for behavior changes.
+4. Update docs when public behavior changes.
 
-* Try to keep code clean, consistent, and modular. This will not only help you but those who will come later.
-* Try writing tests for new features and bug fixes. 
-* Follow the existing project style for naming and formatting. If you see inconsistency, please open an [issue]()
-    - **Functions / Methods** → `functionsLikeThis`
-    - **Variables** → `vars_like_this`
-    - **Private member variables** → `private_vars_like_this_` (with trailing underscore)
-    - **Structs / Classes** → `StructsLikeThis` / `ClassesLikeThisToo`
-    - **Enums** → `ENUMS_ARE::LIKE_THIS` (namespace-style) or `ENUMSARELIKE::This` depending on context
-    - **Namespaces** → `lowercase_or_compound`
-    - **macros** → `ALL_CAPS_WITH_UNDERSCORES`
-    - **Templates / Concepts** → `CamelCaseLikeThis`
+## Style Expectations
 
-## Communication
+- C++23
+- keep code style consistent with nearby files
+- prefer clear parser state transitions over dense logic
 
-* Issues and pull requests are tracked on [GitHub](https://github.com/Usub-development/webserver).
-* For larger changes, open a discussion first to discuss the design before implementing, then we'll create issue to track.
+## Reality Check
 
----
+Current tests are useful but non-exhaustive. Add targeted regression coverage when fixing bugs.
 
-By contributing, you help make **Webserver** a robust and modern C++ framework better for everyone. Thank you for your support!
+## Links
+
+- Issues: `https://github.com/Usub-development/unet/issues`
+- Discussions: `https://github.com/Usub-development/unet/discussions`
+- Pull requests: `https://github.com/Usub-development/unet/pulls`
