@@ -23,8 +23,8 @@ using namespace usub::unet;
 
 // Feed the full byte string into a ClientFrameParser in one shot.
 // Returns the parse result (true = complete).
-static std::expected<bool, FrameParseError>
-feed_client(ClientFrameParser &parser, ClientFrame &frame, const std::string &bytes) {
+static std::expected<bool, usub::unet::ws::FrameParseError>
+feed_client(usub::unet::ws::ClientFrameParser &parser, usub::unet::ws::ClientFrame &frame, const std::string &bytes) {
     std::string_view view{bytes};
     auto begin = view.begin();
     return parser.step(frame, begin, view.end());
@@ -33,21 +33,21 @@ feed_client(ClientFrameParser &parser, ClientFrame &frame, const std::string &by
 // Build a minimal masked client frame manually (TEXT, single-byte mask key 0x00).
 static std::string make_masked_frame(uint8_t opcode, std::string_view payload,
                                      std::array<uint8_t,4> mask = {0x37,0xfa,0x21,0x3d}) {
-    ClientFrame f;
+    usub::unet::ws::ClientFrame f;
     f.fin      = true;
     f.opcode   = opcode;
     f.mask_key = mask;
     f.payload  = std::string(payload);
-    return ClientFrameSerializer::serialize(f);
+    return usub::unet::ws::ClientFrameSerializer::serialize(f);
 }
 
 // Build an unmasked server frame manually.
 static std::string make_server_frame(uint8_t opcode, std::string_view payload) {
-    ServerFrame f;
+    usub::unet::ws::ServerFrame f;
     f.fin     = true;
     f.opcode  = opcode;
     f.payload = std::string(payload);
-    return ServerFrameSerializer::serialize(f);
+    return usub::unet::ws::ServerFrameSerializer::serialize(f);
 }
 
 // ─── ClientFrameParser tests ─────────────────────────────────────────────────
@@ -56,15 +56,15 @@ static void test_parse_short_text_frame() {
     const std::array<uint8_t,4> key = {0x37, 0xfa, 0x21, 0x3d};
     const std::string plain = "Hello";
 
-    const std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::TEXT), plain, key);
+    const std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), plain, key);
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     auto result = feed_client(parser, frame, wire);
 
     assert(result && *result && "frame should be complete");
     assert(frame.fin);
-    assert(frame.opcode == static_cast<uint8_t>(Opcode::TEXT));
+    assert(frame.opcode == static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT));
     assert(frame.mask_key == key);
     assert(frame.payload == plain);
 
@@ -72,14 +72,14 @@ static void test_parse_short_text_frame() {
 }
 
 static void test_parse_empty_payload_frame() {
-    const std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::PING), "");
+    const std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::PING), "");
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     auto result = feed_client(parser, frame, wire);
 
     assert(result && *result);
-    assert(frame.opcode == static_cast<uint8_t>(Opcode::PING));
+    assert(frame.opcode == static_cast<uint8_t>(usub::unet::ws::Opcode::PING));
     assert(frame.payload.empty());
 
     std::cout << "[PASS] parse_empty_payload_frame\n";
@@ -88,15 +88,15 @@ static void test_parse_empty_payload_frame() {
 static void test_parse_two_frames_sequential() {
     const std::array<uint8_t,4> key = {0x01, 0x02, 0x03, 0x04};
     const std::string wire =
-        make_masked_frame(static_cast<uint8_t>(Opcode::TEXT), "foo", key) +
-        make_masked_frame(static_cast<uint8_t>(Opcode::BINARY), "bar", key);
+        make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), "foo", key) +
+        make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::BINARY), "bar", key);
 
     std::string_view view{wire};
     auto begin = view.begin();
     const auto end = view.end();
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
 
     auto r1 = parser.step(frame, begin, end);
     assert(r1 && *r1);
@@ -107,16 +107,16 @@ static void test_parse_two_frames_sequential() {
     auto r2 = parser.step(frame, begin, end);
     assert(r2 && *r2);
     assert(frame.payload == "bar");
-    assert(frame.opcode == static_cast<uint8_t>(Opcode::BINARY));
+    assert(frame.opcode == static_cast<uint8_t>(usub::unet::ws::Opcode::BINARY));
 
     std::cout << "[PASS] parse_two_frames_sequential\n";
 }
 
 static void test_parse_incremental_byte_by_byte() {
-    const std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::TEXT), "Hi");
+    const std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), "Hi");
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     bool done = false;
 
     for (std::size_t i = 0; i < wire.size(); ++i) {
@@ -135,45 +135,45 @@ static void test_parse_incremental_byte_by_byte() {
 
 static void test_rejects_unmasked_client_frame() {
     // Build a valid TEXT frame bytes, then clear the MASK bit (byte 1).
-    const std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::TEXT), "secret");
+    const std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), "secret");
     std::string bad = wire;
     bad[1] &= ~0x80u;  // clear MASK bit
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     auto result = feed_client(parser, frame, bad);
 
     assert(!result && "should return error");
-    assert(result.error().code == FrameParseError::CODE::UNMASKED_CLIENT_FRAME);
-    assert(parser.getContext().state == ClientFrameParser::STATE::FAILED);
+    assert(result.error().code == usub::unet::ws::FrameParseError::CODE::UNMASKED_CLIENT_FRAME);
+    assert(parser.getContext().state == usub::unet::ws::ClientFrameParser::STATE::FAILED);
 
     std::cout << "[PASS] rejects_unmasked_client_frame\n";
 }
 
 static void test_rejects_reserved_bits() {
-    std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::TEXT), "x");
+    std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), "x");
     wire[0] |= 0x40u;  // set RSV1
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     auto result = feed_client(parser, frame, wire);
 
     assert(!result);
-    assert(result.error().code == FrameParseError::CODE::RESERVED_BITS_SET);
+    assert(result.error().code == usub::unet::ws::FrameParseError::CODE::RESERVED_BITS_SET);
 
     std::cout << "[PASS] rejects_reserved_bits\n";
 }
 
 static void test_rejects_fragmented_control_frame() {
-    std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::PING), "");
+    std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::PING), "");
     wire[0] &= ~0x80u;  // clear FIN bit → fragmented control
 
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     auto result = feed_client(parser, frame, wire);
 
     assert(!result);
-    assert(result.error().code == FrameParseError::CODE::CONTROL_FRAME_FRAGMENTED);
+    assert(result.error().code == usub::unet::ws::FrameParseError::CODE::CONTROL_FRAME_FRAGMENTED);
 
     std::cout << "[PASS] rejects_fragmented_control_frame\n";
 }
@@ -181,33 +181,33 @@ static void test_rejects_fragmented_control_frame() {
 // ─── ServerFrameParser tests ─────────────────────────────────────────────────
 
 static void test_server_parser_accepts_unmasked() {
-    const std::string wire = make_server_frame(static_cast<uint8_t>(Opcode::TEXT), "world");
+    const std::string wire = make_server_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), "world");
 
-    ServerFrameParser parser;
-    ServerFrame frame;
+    usub::unet::ws::ServerFrameParser parser;
+    usub::unet::ws::ServerFrame frame;
     std::string_view view{wire};
     auto begin = view.begin();
     auto result = parser.step(frame, begin, view.end());
 
     assert(result && *result);
     assert(frame.payload == "world");
-    assert(frame.opcode == static_cast<uint8_t>(Opcode::TEXT));
+    assert(frame.opcode == static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT));
 
     std::cout << "[PASS] server_parser_accepts_unmasked\n";
 }
 
 static void test_server_parser_rejects_masked() {
     // Build a masked frame and present it to ServerFrameParser.
-    const std::string wire = make_masked_frame(static_cast<uint8_t>(Opcode::TEXT), "hi");
+    const std::string wire = make_masked_frame(static_cast<uint8_t>(usub::unet::ws::Opcode::TEXT), "hi");
 
-    ServerFrameParser parser;
-    ServerFrame frame;
+    usub::unet::ws::ServerFrameParser parser;
+    usub::unet::ws::ServerFrame frame;
     std::string_view view{wire};
     auto begin = view.begin();
     auto result = parser.step(frame, begin, view.end());
 
     assert(!result);
-    assert(result.error().code == FrameParseError::CODE::MASKED_SERVER_FRAME);
+    assert(result.error().code == usub::unet::ws::FrameParseError::CODE::MASKED_SERVER_FRAME);
 
     std::cout << "[PASS] server_parser_rejects_masked\n";
 }
@@ -215,7 +215,7 @@ static void test_server_parser_rejects_masked() {
 // ─── Serializer tests ────────────────────────────────────────────────────────
 
 static void test_server_serializer_mask_bit_clear() {
-    const std::string wire = ServerFrameSerializer::text("hello");
+    const std::string wire = usub::unet::ws::ServerFrameSerializer::text("hello");
     // Byte 1 must not have the MASK bit set (0x80).
     assert((static_cast<uint8_t>(wire[1]) & 0x80u) == 0u);
     assert((static_cast<uint8_t>(wire[1]) & 0x7Fu) == 5u);  // payload length 5
@@ -225,7 +225,7 @@ static void test_server_serializer_mask_bit_clear() {
 
 static void test_client_serializer_mask_bit_set_and_roundtrip() {
     const std::array<uint8_t,4> key = {0xAB, 0xCD, 0xEF, 0x01};
-    const std::string wire = ClientFrameSerializer::text("Hello", key);
+    const std::string wire = usub::unet::ws::ClientFrameSerializer::text("Hello", key);
 
     // Byte 1: MASK bit set, length = 5.
     assert((static_cast<uint8_t>(wire[1]) & 0x80u) != 0u);
@@ -238,8 +238,8 @@ static void test_client_serializer_mask_bit_set_and_roundtrip() {
     assert(static_cast<uint8_t>(wire[5]) == key[3]);
 
     // Feed back through the parser — should recover "Hello".
-    ClientFrameParser parser;
-    ClientFrame frame;
+    usub::unet::ws::ClientFrameParser parser;
+    usub::unet::ws::ClientFrame frame;
     std::string_view view{wire};
     auto begin = view.begin();
     auto result = parser.step(frame, begin, view.end());
@@ -252,8 +252,8 @@ static void test_client_serializer_mask_bit_set_and_roundtrip() {
 }
 
 static void test_server_close_frame_format() {
-    const std::string wire = ServerFrameSerializer::close(CloseCode::NORMAL);
-    assert((static_cast<uint8_t>(wire[0]) & 0x0Fu) == static_cast<uint8_t>(Opcode::CLOSE));
+    const std::string wire = usub::unet::ws::ServerFrameSerializer::close(usub::unet::ws::CloseCode::NORMAL);
+    assert((static_cast<uint8_t>(wire[0]) & 0x0Fu) == static_cast<uint8_t>(usub::unet::ws::Opcode::CLOSE));
     assert((static_cast<uint8_t>(wire[0]) & 0x80u) != 0u);  // FIN set
     assert((static_cast<uint8_t>(wire[1]) & 0x7Fu) == 2u);  // 2 bytes: code only
     // Code 1000 = 0x03E8
