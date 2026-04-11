@@ -158,6 +158,7 @@ namespace usub::unet::http {
 
             while (running) {
                 buffer.clear();
+                socket.set_timeout_ms(20000);
                 const ssize_t rdsz = co_await stream.read(socket, buffer);
                 if (rdsz <= 0) {
                     co_await active.ops.on_close(active.state);
