@@ -7,7 +7,7 @@ The current HTTP runtime is composed of:
 - `usub::Uvent`: event loop and coroutine scheduler
 - `usub::unet::http::ServerImpl<Router, Streams...>`: acceptor bootstrap and connection loop
 - `usub::unet::http::router::Radix`: route matching, middleware containers, and error handlers
-- stream types such as `PlainText` and `OpenSSLStream`
+- stream types such as `PlainText` and `OpenSSLStream<>`
 - HTTP session implementation for `HTTP/1.1`
 
 ## Server Lifecycle
@@ -48,6 +48,6 @@ For each accepted socket:
 `ServerImpl` owns an `Acceptor<T>` for each stream in template parameters.
 
 - `Acceptor<PlainText>` reads `HTTP.PlainTextStream` config section
-- `Acceptor<OpenSSLStream>` reads `HTTP.OpenSSLStream` config section
+- `Acceptor<OpenSSLStream<...>>` reads `HTTP.OpenSSLStream` config section
 
 If config is empty, each acceptor falls back to built-in defaults.

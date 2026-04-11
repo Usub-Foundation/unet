@@ -18,6 +18,7 @@ namespace {
     constexpr std::uint16_t kPort = 24443;
     constexpr std::string_view kClientMessage = "ping from client\n";
     constexpr std::string_view kServerMessage = "pong from server\n";
+    using TestOpenSSLStream = usub::unet::core::stream::OpenSSLStream<"unet-test-a", "unet-test-b">;
 
     // Self-signed cert for test-only localhost TLS.
     constexpr const char *kTestKeyPem = R"(-----BEGIN PRIVATE KEY-----
@@ -98,7 +99,7 @@ WUxhbPq2E7RCJ8fYPw==
         return out.good();
     }
 
-    usub::uvent::task::Awaitable<std::optional<std::string>> read_line(usub::unet::core::stream::OpenSSLStream &stream,
+    usub::uvent::task::Awaitable<std::optional<std::string>> read_line(TestOpenSSLStream &stream,
                                                                        usub::uvent::net::TCPClientSocket socket) {
         usub::uvent::utils::DynamicBuffer buffer;
         std::string acc;
@@ -115,7 +116,7 @@ WUxhbPq2E7RCJ8fYPw==
         std::string ip = "127.0.0.1";
         usub::uvent::net::TCPServerSocket server_socket{ip, kPort, 8, usub::uvent::utils::net::IPV::IPV4,
                                                         usub::uvent::utils::net::TCP};
-        usub::unet::core::stream::OpenSSLStream tls_server{key_path, cert_path};
+        TestOpenSSLStream tls_server{key_path, cert_path};
 
         auto accepted = co_await server_socket.async_accept();
         if (!accepted) {
@@ -143,11 +144,11 @@ WUxhbPq2E7RCJ8fYPw==
     usub::uvent::task::Awaitable<void> client_task(SharedState &state) {
         co_await usub::uvent::system::this_coroutine::sleep_for(std::chrono::milliseconds(50));
 
-        usub::unet::core::stream::OpenSSLStream::Config cfg{};
-        cfg.mode = usub::unet::core::stream::OpenSSLStream::MODE::CLIENT;
+        TestOpenSSLStream::Config cfg{};
+        cfg.mode = TestOpenSSLStream::MODE::CLIENT;
         cfg.verify_peer = false;// self-signed cert in test
         cfg.server_name = "localhost";
-        usub::unet::core::stream::OpenSSLStream tls_client{cfg};
+        TestOpenSSLStream tls_client{cfg};
 
         usub::uvent::net::TCPClientSocket socket;
         std::string host = "127.0.0.1";

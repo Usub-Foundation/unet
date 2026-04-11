@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <climits>
 #include <cstdint>
 #include <cstring>
@@ -19,9 +18,11 @@
 
 #include "unet/core/acceptor.hpp"
 #include "unet/core/config.hpp"
+#include "unet/core/streams/alpn.hpp"
 
 namespace usub::unet::core {
     namespace stream {
+        template<FixedString... Alpns>
         class OpenSSLStream {
         public:
             static constexpr bool ssl{true};
@@ -65,7 +66,7 @@ namespace usub::unet::core {
                 this->initContext();
             }
 
-            usub::uvent::task::Awaitable<ssize_t> read(usub::uvent::net::TCPClientSocket socket,
+            usub::uvent::task::Awaitable<ssize_t> read(usub::uvent::net::TCPClientSocket &socket,
                                                        usub::uvent::utils::DynamicBuffer &buffer) {
                 buffer.reserve(kIoBufferSize);
                 buffer.clear();
@@ -113,7 +114,7 @@ namespace usub::unet::core {
                 }
             }
 
-            usub::uvent::task::Awaitable<void> send(usub::uvent::net::TCPClientSocket socket, std::string_view data) {
+            usub::uvent::task::Awaitable<void> send(usub::uvent::net::TCPClientSocket &socket, std::string_view data) {
                 if (data.empty()) { co_return; }
 
                 auto [fd, session] = this->getOrCreateSession(socket);
@@ -170,9 +171,9 @@ namespace usub::unet::core {
                 co_return;
             }
 
-            usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket /*socket*/) { co_return; }
+            usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket &/*socket*/) { co_return; }
 
-            usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket socket) {
+            usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket &socket) {
                 auto [fd, session] = this->findSession(socket);
                 if (session) {
                     (void) ::SSL_shutdown(session->ssl.get());
@@ -205,8 +206,8 @@ namespace usub::unet::core {
             };
 
             static constexpr std::size_t kIoBufferSize = 16 * 1024;
-            // TODO: move alpns to config. so its not hardcoded
-            static constexpr unsigned char kAlpnH1[] = {8, 'h', 't', 't', 'p', '/', '1', '.', '1'};
+            using AlpnConfig = AlpnWireFormatTraits<Alpns...>;
+            static constexpr auto kAlpnWireFormat = AlpnConfig::kWireFormat;
 
             static void initOpenSSLOnce() {
                 static bool initialized = []() {
@@ -242,13 +243,20 @@ namespace usub::unet::core {
                         this->ctx_.reset();
                         return;
                     }
+                    if (::SSL_CTX_check_private_key(ctx) != 1) {
+                        ::SSL_CTX_free(ctx);
+                        this->ctx_.reset();
+                        return;
+                    }
 
                     ::SSL_CTX_set_alpn_select_cb(
                             ctx,
                             [](SSL * /*ssl*/, const unsigned char **out, unsigned char *outlen, const unsigned char *in,
                                unsigned int inlen, void * /*arg*/) -> int {
-                                int sel = ::SSL_select_next_proto(const_cast<unsigned char **>(out), outlen, kAlpnH1,
-                                                                  sizeof(kAlpnH1), in, inlen);
+                                int sel = ::SSL_select_next_proto(const_cast<unsigned char **>(out), outlen,
+                                                                  kAlpnWireFormat.data(),
+                                                                  static_cast<unsigned int>(kAlpnWireFormat.size()), in,
+                                                                  inlen);
                                 if (sel == OPENSSL_NPN_NEGOTIATED) { return SSL_TLSEXT_ERR_OK; }
                                 return SSL_TLSEXT_ERR_NOACK;
                             },
@@ -277,7 +285,7 @@ namespace usub::unet::core {
                 return header->fd;
             }
 
-            std::pair<int, Session *> findSession(usub::uvent::net::TCPClientSocket socket) {
+            std::pair<int, Session *> findSession(usub::uvent::net::TCPClientSocket &socket) {
                 auto fd_opt = getSocketFd(socket);
                 if (!fd_opt.has_value()) { return {-1, nullptr}; }
                 const int fd = *fd_opt;
@@ -288,7 +296,7 @@ namespace usub::unet::core {
                 return {fd, it->second.get()};
             }
 
-            std::pair<int, Session *> getOrCreateSession(usub::uvent::net::TCPClientSocket socket) {
+            std::pair<int, Session *> getOrCreateSession(usub::uvent::net::TCPClientSocket &socket) {
                 auto fd_opt = getSocketFd(socket);
                 if (!fd_opt.has_value()) { return {-1, nullptr}; }
                 const int fd = *fd_opt;
@@ -318,7 +326,8 @@ namespace usub::unet::core {
                     ::SSL_set_accept_state(ssl);
                 } else {
                     ::SSL_set_connect_state(ssl);
-                    (void) ::SSL_set_alpn_protos(ssl, kAlpnH1, sizeof(kAlpnH1));
+                    (void) ::SSL_set_alpn_protos(ssl, kAlpnWireFormat.data(),
+                                                 static_cast<unsigned int>(kAlpnWireFormat.size()));
                     if (this->config_.server_name.has_value() && !this->config_.server_name->empty()) {
                         (void) ::SSL_set_tlsext_host_name(ssl, this->config_.server_name->c_str());
                         if (this->config_.verify_peer) {
@@ -341,7 +350,7 @@ namespace usub::unet::core {
             }
 
             usub::uvent::task::Awaitable<ssize_t> flushBioToSocket(Session &session,
-                                                                   usub::uvent::net::TCPClientSocket socket) {
+                                                                   usub::uvent::net::TCPClientSocket &socket) {
                 std::array<char, kIoBufferSize> network_buffer{};
                 BIO *out_bio = ::SSL_get_wbio(session.ssl.get());
                 if (!out_bio) { co_return -1; }
@@ -363,7 +372,7 @@ namespace usub::unet::core {
             }
 
             usub::uvent::task::Awaitable<ssize_t> pumpSocketToBio(Session &session,
-                                                                  usub::uvent::net::TCPClientSocket socket) {
+                                                                  usub::uvent::net::TCPClientSocket &socket) {
                 std::array<char, kIoBufferSize> network_buffer{};
                 const ssize_t rd = co_await socket.async_read(reinterpret_cast<uint8_t *>(network_buffer.data()),
                                                               network_buffer.size());
@@ -378,7 +387,7 @@ namespace usub::unet::core {
             }
 
             usub::uvent::task::Awaitable<bool> ensureHandshake(Session &session,
-                                                               usub::uvent::net::TCPClientSocket socket) {
+                                                               usub::uvent::net::TCPClientSocket &socket) {
                 if (session.handshake_done) { co_return true; }
 
                 for (;;) {
@@ -412,8 +421,8 @@ namespace usub::unet::core {
         };
     }// namespace stream
 
-    template<>
-    class Acceptor<stream::OpenSSLStream> {
+    template<stream::FixedString... Alpns>
+    class Acceptor<stream::OpenSSLStream<Alpns...>> {
     public:
         Acceptor() = default;
         ~Acceptor() = default;
@@ -453,7 +462,7 @@ namespace usub::unet::core {
             usub::uvent::net::TCPServerSocket server_socket{host, static_cast<int>(port), backlog, ip_version,
                                                             socket_type};
 
-            stream::OpenSSLStream stream(key_file, cert_file);
+            stream::OpenSSLStream<Alpns...> stream(key_file, cert_file);
 
             for (;;) {
                 auto soc = co_await server_socket.async_accept();

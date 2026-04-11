@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <memory>
 #include <string_view>
 
@@ -13,12 +14,17 @@ namespace usub::unet::http {
     template<enum VERSION>
     class ClientSession;
 
+    // Distinguishes normal HTTP routes from upgrade routes in the router.
+    enum class RouteKind : uint8_t { Normal, Upgrade };
+
     struct SessionAction {
         enum class Kind : uint8_t { Continue, Upgrade, Close, Error };
-        Kind kind{Kind::Continue};
+        Kind        kind{Kind::Continue};
         std::string out_bytes;
-        std::string upgrade_proto;
         std::string carry_bytes;
+        // Holds a SessionBox (via std::any) when kind == Upgrade.
+        // Replaces upgrade_proto + upgrade_data — no string matching, no any_cast for protocol.
+        std::any    next_session_box;
     };
 
     struct SessionOps {

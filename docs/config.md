@@ -74,7 +74,7 @@ usub::unet::core::Config cfg = makeConfig();
 usub::unet::http::ServerImpl<
     usub::unet::http::router::Radix,
     usub::unet::core::stream::PlainText,
-    usub::unet::core::stream::OpenSSLStream
+    usub::unet::core::stream::OpenSSLStream<>
 > server{cfg};
 ```
 
