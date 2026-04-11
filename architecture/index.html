@@ -1087,7 +1087,7 @@
 <li><code>usub::Uvent</code>: event loop and coroutine scheduler</li>
 <li><code>usub::unet::http::ServerImpl&lt;Router, Streams...&gt;</code>: acceptor bootstrap and connection loop</li>
 <li><code>usub::unet::http::router::Radix</code>: route matching, middleware containers, and error handlers</li>
-<li>stream types such as <code>PlainText</code> and <code>OpenSSLStream</code></li>
+<li>stream types such as <code>PlainText</code> and <code>OpenSSLStream&lt;&gt;</code></li>
 <li>HTTP session implementation for <code>HTTP/1.1</code></li>
 </ul>
 <h2 id="server-lifecycle">Server Lifecycle<a class="headerlink" href="#server-lifecycle" title="Permanent link">&para;</a></h2>
@@ -1124,7 +1124,7 @@
 <p><code>ServerImpl</code> owns an <code>Acceptor&lt;T&gt;</code> for each stream in template parameters.</p>
 <ul>
 <li><code>Acceptor&lt;PlainText&gt;</code> reads <code>HTTP.PlainTextStream</code> config section</li>
-<li><code>Acceptor&lt;OpenSSLStream&gt;</code> reads <code>HTTP.OpenSSLStream</code> config section</li>
+<li><code>Acceptor&lt;OpenSSLStream&lt;...&gt;&gt;</code> reads <code>HTTP.OpenSSLStream</code> config section</li>
 </ul>
 <p>If config is empty, each acceptor falls back to built-in defaults.</p>
 
