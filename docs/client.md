@@ -67,17 +67,34 @@ The client runtime now delegates HTTP/1.1 response parsing to a dedicated sessio
 
 ## Managed Stream Config
 
-For configurable streams such as `OpenSSLStream`, you can set a default client-managed config once:
+For configurable streams such as `OpenSSLStream<>`, you can set a default client-managed config once:
 
 ```cpp
-usub::unet::core::stream::OpenSSLStream::Config tls_cfg{};
+usub::unet::core::stream::OpenSSLStream<>::Config tls_cfg{};
 tls_cfg.verify_peer = true;
 
-client.setStreamConfig<usub::unet::core::stream::OpenSSLStream>(std::move(tls_cfg));
+client.setStreamConfig<usub::unet::core::stream::OpenSSLStream<>>(std::move(tls_cfg));
+```
+
+To customize ALPN at compile time, pass one or more string literal template arguments:
+
+```cpp
+using H2Tls = usub::unet::core::stream::OpenSSLStream<"h2">;
+using H2OrHttp1Tls = usub::unet::core::stream::OpenSSLStream<"h2", "http/1.1">;
 ```
 
 If `server_name` is left empty, the client fills it from `request.metadata.uri.authority.host` when opening a new TLS connection.
 Prefer `client.setStreamConfig<...>(...)` for client-side TLS defaults so the client can keep that config aligned with connection reuse.
+
+On Windows, there is also a native client TLS stream:
+
+```cpp
+using NativeTls = usub::unet::core::stream::SChannelStream<"http/1.1">;
+```
+
+`SChannelStream` is a Windows-native TLS stream and follows the same managed `server_name` / `verify_peer` config pattern for client usage.
+Consumers that use it should link the Windows system libraries themselves, typically `Secur32` and `Crypt32`.
+The template ALPN shape is shared with `OpenSSLStream`, but native Schannel ALPN negotiation is not wired yet in this first implementation.
 
 ## Proxy Support
 
@@ -105,7 +122,7 @@ Current client proxy behavior:
 ```cpp
 using Client = usub::unet::http::ClientImpl<
     usub::unet::core::stream::PlainText,
-    usub::unet::core::stream::OpenSSLStream
+    usub::unet::core::stream::OpenSSLStream<>
 >;
 
 usub::uvent::task::Awaitable<void> run(Client& client) {

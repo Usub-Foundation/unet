@@ -29,12 +29,7 @@ namespace usub::unet::http {
         usub::uvent::task::Awaitable<SessionAction> onBytes(std::string_view data,
                                                             usub::unet::core::stream::Transport & /*transport*/) {
             if (decided_) {
-                co_return SessionAction{
-                        .kind = SessionAction::Kind::Error,
-                        .out_bytes = {},
-                        .upgrade_proto = {},
-                        .carry_bytes = {},
-                };
+                co_return SessionAction{.kind = SessionAction::Kind::Error};
             }
 
             pending_.append(data.data(), data.size());
@@ -50,11 +45,16 @@ namespace usub::unet::http {
             const bool is_h2_prior_knowledge =
                     probe.size() >= kH2Preface.size() && probe.substr(0, kH2Preface.size()) == kH2Preface;
 
+            if (is_h2_prior_knowledge) {
+                // TODO: when h2 session is ready
+                co_return SessionAction{.kind = SessionAction::Kind::Close};
+            }
+
             co_return SessionAction{
-                    .kind = SessionAction::Kind::Upgrade,
-                    .out_bytes = {},
-                    .upgrade_proto = is_h2_prior_knowledge ? "h2-prior" : "http/1.1",
-                    .carry_bytes = std::move(pending_),// pass everything to next session
+                    .kind             = SessionAction::Kind::Upgrade,
+                    .carry_bytes      = std::move(pending_),
+                    .next_session_box = std::any(SessionBox::make<ServerSession<VERSION::HTTP_1_1, RouterType>>(
+                            this->router_)),
             };
         }
 
@@ -123,6 +123,10 @@ namespace usub::unet::http {
 
         auto &handle(auto &&...args) { return this->router_->addRoute(std::forward<decltype(args)>(args)...); }
 
+        auto &handleUpgrade(auto &&...args) {
+            return this->router_->addUpgradeRoute(std::forward<decltype(args)>(args)...);
+        }
+
         auto &addMiddleware(auto &&...args) {// allow for modifying router when wanted
             return this->router_->addMiddleware(std::forward<decltype(args)>(args)...);
         }
@@ -141,11 +145,11 @@ namespace usub::unet::http {
             usub::uvent::utils::DynamicBuffer buffer;
             usub::unet::core::stream::Transport transport{
                     .send = [&](std::string_view out) -> usub::uvent::task::Awaitable<ssize_t> {
-                        auto *buf = const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(out.data()));
-                        co_return co_await socket.async_write(buf, out.size());
+                        co_await stream.send(socket, out);
+                        co_return static_cast<ssize_t>(out.size());
                     },
                     .close = [&]() -> usub::uvent::task::Awaitable<void> {
-                        socket.shutdown();
+                        co_await stream.shutdown(socket);
                         co_return;
                     }};
             bool running = true;
@@ -167,24 +171,16 @@ namespace usub::unet::http {
 
                 // Handle chained upgrades in the same tick (bootstrap -> http1, http1 -> ws, etc.)
                 while (action.kind == SessionAction::Kind::Upgrade) {
-                    if (action.upgrade_proto == "http/1.1") {
-                        active = SessionBox::make<ServerSession<VERSION::HTTP_1_1, RouterType>>(this->router_);
-                    } else if (action.upgrade_proto == "h2-prior") {
-                        // TODO: when h2 session is ready
-                        // active = SessionBox::make<ServerSession<VERSION::HTTP_2_0, RouterType>>(router);
-                        co_await transport.close();
-                        co_return;
-                    } else {
-                        // TODO: registry lookup for custom protocols
+                    if (!action.next_session_box.has_value()) {
                         co_await transport.close();
                         co_return;
                     }
+                    active = std::any_cast<SessionBox>(std::move(action.next_session_box));
 
                     if (action.carry_bytes.empty()) {
                         action = SessionAction{.kind = SessionAction::Kind::Continue};
                         break;
                     }
-
                     action = co_await active.ops.on_bytes(active.state, action.carry_bytes, transport);
                 }
 
@@ -210,19 +206,11 @@ namespace usub::unet::http {
             };
 
             if (runtime_) {
-                bool started = false;
                 runtime_->for_each_thread([&](int idx, usub::uvent::thread::ThreadLocalStorage *) {
-                    if (started) { return; }
-                    started = true;
                     usub::uvent::system::co_spawn_static(acc.acceptLoop(make_on_connection(), this->config_), idx);
                 });
-                if (!started) {
-                    usub::uvent::system::co_spawn(acc.acceptLoop(make_on_connection(), this->config_));
-                }
                 return;
             }
-
-            usub::uvent::system::co_spawn(acc.acceptLoop(make_on_connection(), this->config_));
         }
     };
 

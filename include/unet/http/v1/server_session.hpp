@@ -7,6 +7,7 @@
 #include "unet/http/core/request.hpp"
 #include "unet/http/core/response.hpp"
 #include "unet/http/session.hpp"
+#include "unet/http/upgrade_context.hpp"
 #include "unet/http/v1/wire/request_parser.hpp"
 #include "unet/http/v1/wire/response_serializer.hpp"
 
@@ -79,7 +80,26 @@ namespace usub::unet::http {
                 case STEP::COMPLETE: {
                 complete:
                     if (this->current_match_.has_value()) {
-                        co_await this->router_->invoke(*this->current_match_, this->request_, this->response_);
+                        if (this->current_match_->route &&
+                            this->current_match_->route->kind == RouteKind::Upgrade) {
+                            UpgradeContext upgrade_ctx;
+                            co_await this->router_->invokeUpgrade(*this->current_match_, this->request_,
+                                                                  this->response_, upgrade_ctx);
+                            if (upgrade_ctx.accepted) {
+                                co_await transport.send(this->response_writer_.serialize(this->response_));
+                                std::any next_box{upgrade_ctx.make_session()};
+                                this->response_ = {};
+                                this->request_  = {};
+                                this->current_match_.reset();
+                                co_return SessionAction{
+                                    .kind             = SessionAction::Kind::Upgrade,
+                                    .next_session_box = std::move(next_box),
+                                };
+                            }
+                            // not accepted — fall through and send response_ as normal HTTP
+                        } else {
+                            co_await this->router_->invoke(*this->current_match_, this->request_, this->response_);
+                        }
                     }
                     break;
                 }

@@ -15,4 +15,9 @@ add_executable(UventDemo
 )
 target_link_libraries(UventDemo PRIVATE usub::uvent)
 
-add_subdirectory(upq_integration)
+add_executable(WSChat
+    WSChat.cpp
+)
+target_link_libraries(WSChat PRIVATE unet usub::uvent)
+
+# add_subdirectory(upq_integration)

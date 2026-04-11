@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "unet/http/middleware.hpp"
+#include "unet/http/upgrade_context.hpp"
 #include "unet/utils/error.hpp"
 
 namespace usub::unet::http::router {
@@ -43,13 +44,18 @@ namespace usub::unet::http::router {
     };
 
     struct RadixRoute {
-        using HandlerFunctionType = usub::uvent::task::Awaitable<void>(Request &, Response &, RadixMatch &);
+        using HandlerFunctionType        = usub::uvent::task::Awaitable<void>(Request &, Response &, RadixMatch &);
+        using UpgradeHandlerFunctionType = usub::uvent::task::Awaitable<void>(Request &, Response &,
+                                                                               usub::unet::http::UpgradeContext &,
+                                                                               RadixMatch &);
 
+        usub::unet::http::RouteKind kind{usub::unet::http::RouteKind::Normal};
         bool accept_all_methods{};
         std::set<std::string> allowed_method_tokenns{};
         MiddlewareChain middleware_chain{};
         std::vector<std::string> param_names{};
-        std::function<HandlerFunctionType> handler{};
+        std::function<HandlerFunctionType>        handler{};
+        std::function<UpgradeHandlerFunctionType> upgrade_handler{};
 
         RadixRoute(const std::set<std::string> &methods, const std::vector<std::string> &params,
                    std::function<HandlerFunctionType> handler_fn, bool accept_all = false)
@@ -66,6 +72,45 @@ namespace usub::unet::http::router {
         RadixRoute &addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware) {
             this->middleware_chain.emplace_back(phase, std::move(middleware));
             return *this;
+        }
+
+        template<typename Handler>
+        static std::function<UpgradeHandlerFunctionType> makeUpgradeHandler(Handler &&handler_fn) {
+            using HandlerType = std::remove_reference_t<Handler>;
+            using UriParams   = RadixMatch::UriParams;
+            using Ctx         = usub::unet::http::UpgradeContext;
+
+            if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, UriParams &>) {
+                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+                                                                Ctx &ctx, RadixMatch &match) mutable
+                               -> usub::uvent::task::Awaitable<void> {
+                    co_await fn(request, response, ctx, match.uri_params);
+                };
+            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, const UriParams &>) {
+                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+                                                                Ctx &ctx, RadixMatch &match) mutable
+                               -> usub::uvent::task::Awaitable<void> {
+                    co_await fn(request, response, ctx, std::as_const(match.uri_params));
+                };
+            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, RadixMatch &>) {
+                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+                                                                Ctx &ctx, RadixMatch &match) mutable
+                               -> usub::uvent::task::Awaitable<void> {
+                    co_await fn(request, response, ctx, match);
+                };
+            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &>) {
+                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+                                                                Ctx &ctx, RadixMatch &) mutable
+                               -> usub::uvent::task::Awaitable<void> {
+                    co_await fn(request, response, ctx);
+                };
+            } else {
+                static_assert(!sizeof(HandlerType),
+                              "Upgrade handler must be invocable as "
+                              "Awaitable<void>(Request&, Response&, UpgradeContext&) or "
+                              "Awaitable<void>(Request&, Response&, UpgradeContext&, RadixMatch&) or "
+                              "Awaitable<void>(Request&, Response&, UpgradeContext&, UriParams&)");
+            }
         }
 
         template<typename Handler>
@@ -165,6 +210,36 @@ namespace usub::unet::http::router {
                                   constraints);
         }
 
+        template<typename Handler>
+        RouteType &addUpgradeRoute(std::string_view method, const std::string &pattern, Handler &&handler,
+                                   const std::unordered_map<std::string_view, const param_constraint *> &constraints =
+                                           no_constraints) {
+            // Register path/method in the tree. Normal handler is a no-op; upgrade handler is set below.
+            auto &route = this->addRoute(method, pattern,
+                                         [](Request &, Response &, RadixMatch &) -> usub::uvent::task::Awaitable<void> {
+                                             co_return;
+                                         },
+                                         constraints);
+            route.kind            = usub::unet::http::RouteKind::Upgrade;
+            route.upgrade_handler = RouteType::makeUpgradeHandler(std::forward<Handler>(handler));
+            return route;
+        }
+
+        template<typename Handler>
+        RouteType &addUpgradeRoute(const std::set<std::string> &methods, const std::string &pattern,
+                                   Handler &&handler,
+                                   const std::unordered_map<std::string_view, const param_constraint *> &constraints =
+                                           no_constraints) {
+            auto &route = this->addRoute(methods, pattern,
+                                         [](Request &, Response &, RadixMatch &) -> usub::uvent::task::Awaitable<void> {
+                                             co_return;
+                                         },
+                                         constraints);
+            route.kind            = usub::unet::http::RouteKind::Upgrade;
+            route.upgrade_handler = RouteType::makeUpgradeHandler(std::forward<Handler>(handler));
+            return route;
+        }
+
         Radix &addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn);
 
         void error(const std::string &level, const Request &request, Response &);
@@ -173,6 +248,14 @@ namespace usub::unet::http::router {
                                                       std::string *error_description = nullptr);
 
         usub::uvent::task::Awaitable<void> invoke(MatchResult &match, Request &request, Response &response);
+
+        usub::uvent::task::Awaitable<void> invokeUpgrade(MatchResult &match, Request &request, Response &response,
+                                                         usub::unet::http::UpgradeContext &ctx) {
+            if (match.route && match.route->upgrade_handler) {
+                co_await match.route->upgrade_handler(request, response, ctx, match);
+            }
+            co_return;
+        }
 
         bool runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, Request &request, Response &response);
 
