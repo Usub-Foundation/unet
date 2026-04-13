@@ -44,7 +44,7 @@ namespace usub::unet::core {
             //     }
             // }
 
-            usub::uvent::task::Awaitable<ssize_t> read(usub::uvent::net::TCPClientSocket socket,
+            usub::uvent::task::Awaitable<ssize_t> read(usub::uvent::net::TCPClientSocket &socket,
                                                        usub::uvent::utils::DynamicBuffer &buffer) {
                 static constexpr size_t MAX_READ_SIZE = 16 * 1024;
                 buffer.reserve(MAX_READ_SIZE);
@@ -54,13 +54,13 @@ namespace usub::unet::core {
                 co_return co_await socket.async_read(buffer, MAX_READ_SIZE);
             }
 
-            usub::uvent::task::Awaitable<void> send(usub::uvent::net::TCPClientSocket socket, std::string_view data) {
+            usub::uvent::task::Awaitable<void> send(usub::uvent::net::TCPClientSocket &socket, std::string_view data) {
                 auto wrsz = co_await socket.async_write((uint8_t *) data.data(), data.size());
             }
 
-            usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket socket) { co_return; }
+            usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket &socket) { co_return; }
 
-            usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket socket) {
+            usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket &socket) {
                 socket.shutdown();
                 co_return;
             }

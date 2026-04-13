@@ -56,7 +56,7 @@ ServerHandler handlerFunction(usub::unet::http::Request &request, usub::unet::ht
 
 int main() {
     usub::Uvent uvent{4};
-    usub::unet::http::ServerImpl<usub::unet::http::router::Radix, usub::unet::core::stream::OpenSSLStream> server{
+    usub::unet::http::ServerImpl<usub::unet::http::router::Radix, usub::unet::core::stream::OpenSSLStream<>> server{
             uvent};
     server.addMiddleware(usub::unet::http::MIDDLEWARE_PHASE::HEADER, globalHeaderMiddle);
     server.handle("GET", "/path", handlerFunction)

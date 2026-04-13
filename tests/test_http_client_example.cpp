@@ -18,7 +18,8 @@ namespace {
     using namespace std::string_view_literals;
 
     using MixedClient =
-            usub::unet::http::ClientImpl<usub::unet::core::stream::PlainText, usub::unet::core::stream::OpenSSLStream>;
+            usub::unet::http::ClientImpl<usub::unet::core::stream::PlainText,
+                                         usub::unet::core::stream::OpenSSLStream<>>;
     using usub::unet::http::ClientRequestOptions;
     using usub::unet::http::Request;
     using usub::unet::http::VERSION;

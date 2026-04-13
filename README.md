@@ -21,26 +21,61 @@ It provides everything you need to handle HTTP/1.0 and HTTP/1.1 efficiently, wit
 Minimal server:
 
 ```cpp
-#include "server/server.h"
-#include "Protocols/HTTP/Message.h"
+#include <cstdint>
+#include <iostream>
 
-using namespace usub::server;
+#include <uvent/Uvent.h>
 
-void handler(protocols::http::Request &req, protocols::http::Response &res) {
-    res.setStatus(200).setMessage("OK").setBody("Hello World!\n");
+#include <unet/core/config.hpp>
+#include <unet/http.hpp>
+#include <unet/http/router/radix.hpp>
+
+using Request = usub::unet::http::Request;
+using Response = usub::unet::http::Response;
+
+usub::uvent::task::Awaitable<void> handle_any(Request &, Response &response) {
+    response.setStatus(200)
+            .addHeader("content-type", "application/json")
+            .setBody(R"({"status":"success"})");
+    co_return;
+}
+
+usub::unet::core::Config make_server_config() {
+    usub::unet::core::Config config{};
+
+    usub::unet::core::Config::Object stream_cfg{};
+    stream_cfg["host"] = usub::unet::core::Config::Value{std::string{"0.0.0.0"}};
+    stream_cfg["port"] = usub::unet::core::Config::Value{static_cast<std::uint64_t>(45901)};
+    stream_cfg["backlog"] = usub::unet::core::Config::Value{static_cast<std::uint64_t>(128)};
+    stream_cfg["version"] = usub::unet::core::Config::Value{static_cast<std::uint64_t>(4)};
+    stream_cfg["tcp"] = usub::unet::core::Config::Value{std::string{"tcp"}};
+
+    usub::unet::core::Config::Object http_cfg{};
+    http_cfg["PlainTextStream"] = usub::unet::core::Config::Value{std::move(stream_cfg)};
+    config.root["HTTP"] = usub::unet::core::Config::Value{std::move(http_cfg)};
+
+    return config;
 }
 
 int main() {
-    Server server("../config/config.toml");
-    server.handle({"GET"}, "/hello", handler);
-    server.run();
+    usub::Uvent runtime{8};
+    auto config = make_server_config();
+    usub::unet::http::ServerRadix server{runtime, config};
+
+    server.handle("*", "/", handle_any);
+
+    std::cout << "minimal http server listening on http://127.0.0.1:45901\n";
+    std::cout << "quick check: curl -i http://127.0.0.1:45901/\n";
+
+    runtime.run();
+    return 0;
 }
 ```
 
 Run:
 
 ```bash
-curl http://127.0.0.1:8111/hello
+curl http://127.0.0.1:45901/
 ```
 
 ---

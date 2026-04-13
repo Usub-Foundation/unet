@@ -437,7 +437,7 @@ namespace usub::unet::http {
             return static_cast<std::uint16_t>((code_view[0] - '0') * 100 + (code_view[1] - '0') * 10 + (code_view[2] - '0'));
         }
 
-        static usub::uvent::task::Awaitable<bool> writeAll(usub::uvent::net::TCPClientSocket socket,
+        static usub::uvent::task::Awaitable<bool> writeAll(usub::uvent::net::TCPClientSocket &socket,
                                                            std::string_view data) {
             std::size_t offset = 0;
             while (offset < data.size()) {
@@ -451,7 +451,7 @@ namespace usub::unet::http {
         }
 
         static usub::uvent::task::Awaitable<std::expected<void, ClientError>>
-        establishProxyTunnel(usub::uvent::net::TCPClientSocket socket, const Request &request, const RoutePlan &plan,
+        establishProxyTunnel(usub::uvent::net::TCPClientSocket &socket, const Request &request, const RoutePlan &plan,
                              std::uint16_t target_port) {
             std::string connect_request = "CONNECT " + request.metadata.uri.authority.host + ":" +
                                           std::to_string(target_port) + " HTTP/1.1\r\n";
