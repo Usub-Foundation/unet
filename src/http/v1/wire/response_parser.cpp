@@ -121,32 +121,12 @@ namespace usub::unet::http::v1 {
             return static_cast<std::uint8_t>(10 + (c - 'A'));
         }
 
-        inline std::string_view trim_ows(const std::string &value) {
+        inline std::string_view trim_ows(std::string_view value) {
             std::size_t start = 0;
             std::size_t end = value.size();
             while (start < end && (value[start] == ' ' || value[start] == '\t')) { ++start; }
             while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) { --end; }
-            return std::string_view(value.data() + start, end - start);
-        }
-
-        inline bool contains_chunked_token(std::string_view value) {
-            constexpr std::string_view token = "chunked";
-            std::size_t i = 0;
-            while (i < value.size()) {
-                while (i < value.size() && (value[i] == ' ' || value[i] == '\t' || value[i] == ',')) { ++i; }
-                if (i + token.size() > value.size()) break;
-                bool match = true;
-                for (std::size_t j = 0; j < token.size(); ++j) {
-                    char c = value[i + j];
-                    if (asciiLower(c) != token[j]) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) return true;
-                while (i < value.size() && value[i] != ',') { ++i; }
-            }
-            return false;
+            return value.substr(start, end - start);
         }
         bool parse_uint(std::string_view value, std::size_t &out) {
             if (value.empty()) return false;
@@ -431,82 +411,65 @@ namespace usub::unet::http::v1 {
                 case STATE::HEADERS_VALIDATION: {
                     ctx.current_state_size = 0;
 
-                    const auto content_length_headers = response.headers.all("content-length");
-                    const auto transfer_encoding_headers = response.headers.all("transfer-encoding");
-                    const bool has_transfer_encoding = !transfer_encoding_headers.empty();
-
                     std::size_t content_length_value = 0;
                     bool content_length_seen = false;
-
-                    auto trim_view = [](std::string_view value) -> std::string_view {
-                        std::size_t start = 0;
-                        std::size_t end = value.size();
-                        while (start < end && (value[start] == ' ' || value[start] == '\t')) { ++start; }
-                        while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) { --end; }
-                        return value.substr(start, end - start);
-                    };
-
-                    auto parse_uint = [](std::string_view value, std::size_t &out) -> bool {
-                        if (value.empty()) return false;
-                        std::size_t result = 0;
-                        for (char c: value) {
-                            if (c < '0' || c > '9') return false;
-                            const std::size_t digit = static_cast<std::size_t>(c - '0');
-                            if (result > (std::numeric_limits<std::size_t>::max() - digit) / 10) return false;
-                            result = result * 10 + digit;
-                        }
-                        out = result;
-                        return true;
-                    };
-
-
-                    for (const auto &header: content_length_headers) {
-                        std::string_view value = header.value;
-                        while (!value.empty()) {
-                            const std::size_t comma = value.find(',');
-                            std::string_view token = (comma == std::string_view::npos) ? value : value.substr(0, comma);
-                            token = trim_view(token);
-
-                            std::size_t parsed = 0;
-                            if (!parse_uint(token, parsed)) {
-                                return fail(Status::BAD_REQUEST, "Invalid Content-Length");
-                            }
-
-                            if (!content_length_seen) {
-                                content_length_value = parsed;
-                                content_length_seen = true;
-                            } else if (parsed != content_length_value) {
-                                return fail(Status::BAD_REQUEST, "Conflicting Content-Length");
-                            }
-
-                            if (comma == std::string_view::npos) break;
-                            value.remove_prefix(comma + 1);
-                        }
-                    }
-
-
+                    bool has_transfer_encoding = false;
                     bool has_chunked = false;
                     bool has_other_encoding = false;
 
-                    auto is_chunked_token = [](std::string_view token) -> bool {
-                        constexpr std::string_view chunked = "chunked";
-                        if (token.size() != chunked.size()) return false;
-                        for (std::size_t i = 0; i < chunked.size(); ++i) {
-                            if (asciiLower(token[i]) != chunked[i]) return false;
-                        }
-                        return true;
-                    };
+                    for (const auto &header: response.headers.all()) {
+                        const std::string_view key = header.key;
 
-                    for (const auto &header: transfer_encoding_headers) {
+                        if (key == "content-length") {
+                            std::string_view value = header.value;
+                            while (!value.empty()) {
+                                const std::size_t comma = value.find(',');
+                                std::string_view token =
+                                        (comma == std::string_view::npos) ? value : value.substr(0, comma);
+                                token = trim_ows(token);
+
+                                std::size_t parsed = 0;
+                                if (!parse_uint(token, parsed)) {
+                                    return fail(Status::BAD_REQUEST, "Invalid Content-Length");
+                                }
+
+                                if (!content_length_seen) {
+                                    content_length_value = parsed;
+                                    content_length_seen = true;
+                                } else if (parsed != content_length_value) {
+                                    return fail(Status::BAD_REQUEST, "Conflicting Content-Length");
+                                }
+
+                                if (comma == std::string_view::npos) break;
+                                value.remove_prefix(comma + 1);
+                            }
+                            continue;
+                        }
+
+                        if (key != "transfer-encoding") { continue; }
+
+                        has_transfer_encoding = true;
                         std::string_view value = header.value;
                         while (!value.empty()) {
                             const std::size_t comma = value.find(',');
-                            std::string_view token = (comma == std::string_view::npos) ? value : value.substr(0, comma);
-                            token = trim_view(token);
+                            std::string_view token =
+                                    (comma == std::string_view::npos) ? value : value.substr(0, comma);
+                            token = trim_ows(token);
 
                             if (token.empty()) { return fail(Status::BAD_REQUEST, "Invalid Transfer-Encoding"); }
 
-                            if (is_chunked_token(token)) {
+                            constexpr std::string_view chunked = "chunked";
+                            bool token_is_chunked = token.size() == chunked.size();
+                            if (token_is_chunked) {
+                                for (std::size_t i = 0; i < chunked.size(); ++i) {
+                                    if (asciiLower(token[i]) != chunked[i]) {
+                                        token_is_chunked = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (token_is_chunked) {
                                 has_chunked = true;
                             } else {
                                 has_other_encoding = true;

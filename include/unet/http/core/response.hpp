@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "unet/header/generic.hpp"
 #include "unet/http/core/message.hpp"
@@ -37,15 +38,13 @@ namespace usub::unet::http {
         }
 
 
-        Response &setBody(const std::string &data, const std::string &content_type = "") {
-            this->body = data;
-            this->headers.addHeader("Content-Length", std::to_string(data.size()));
+        Response &setBody(std::string data, const std::string &content_type = "") {
+            this->body = std::move(data);
+            this->headers.addHeader("Content-Length", std::to_string(this->body.size()));
             return *this;
         }
-        Response &addHeader(const std::string &key, const std::string &value) {
-            std::string k = key;
-            std::string v = value;
-            this->headers.addHeader(std::move(k), std::move(v));
+        Response &addHeader(std::string_view key, std::string_view value) {
+            this->headers.addHeader(key, value);
             return *this;
         }
     };

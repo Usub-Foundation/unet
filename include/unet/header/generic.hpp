@@ -10,7 +10,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "unet/header/enum.hpp"
 #include "unet/utils/error.hpp"
 
 #include "unet/utils/string_utils.h"

@@ -172,7 +172,7 @@ namespace {
         auto result = harness.step_to(header_end);
         assert(result);
         assert(harness.parser.getContext().state == State::DATA_CONTENT_LENGTH);
-        assert(result->kind == STEP::CONTINUE);
+        assert(result->kind == STEP::HEADERS);
         assert(!result->complete);
 
         result = harness.step_to(header_end + 2);
@@ -241,7 +241,7 @@ namespace {
             auto result = parser.step(request, begin, end);
             assert(result);
             assert(result->kind == STEP::COMPLETE);
-            assert(parser.getContext().state == State::DATA_DONE);
+            assert(parser.getContext().state == State::COMPLETE);
         }
 
         {
@@ -257,6 +257,35 @@ namespace {
             assert(!result);
             assert(result.error().expected_status == STATUS_CODE::BAD_REQUEST);
         }
+    }
+
+    void test_chunked_parse_complete() {
+        const std::string data = "POST /chunk HTTP/1.1\r\n"
+                                 "Host: example\r\n"
+                                 "Transfer-Encoding: chunked\r\n"
+                                 "\r\n"
+                                 "5\r\nHello\r\n"
+                                 "0\r\n\r\n";
+
+        auto result = RequestParser::parse(data);
+        assert(result);
+        assert(result->metadata.method_token == "POST");
+        assert(result->metadata.uri.path == "/chunk");
+        assert(result->body == "Hello");
+    }
+
+    void test_chunked_parse_multiple_chunks() {
+        const std::string data = "POST /chunk HTTP/1.1\r\n"
+                                 "Host: example\r\n"
+                                 "Transfer-Encoding: chunked\r\n"
+                                 "\r\n"
+                                 "5\r\nHello\r\n"
+                                 "6\r\n World\r\n"
+                                 "0\r\n\r\n";
+
+        auto result = RequestParser::parse(data);
+        assert(result);
+        assert(result->body == "Hello World");
     }
 
     void test_error_cases() {
@@ -319,6 +348,8 @@ int main() {
     test_content_length_body_partial();
     test_chunked_states();
     test_chunked_last_and_data_done();
+    test_chunked_parse_complete();
+    test_chunked_parse_multiple_chunks();
     test_error_cases();
 
     std::cout << "All http1 parser tests passed.\n";

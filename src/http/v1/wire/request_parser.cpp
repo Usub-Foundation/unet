@@ -1,5 +1,7 @@
 #include "unet/http/v1/wire/request_parser.hpp"
 
+#include <charconv>
+
 // TODO: Recheck on all that uses ctx....
 
 namespace usub::unet::http::v1 {
@@ -11,32 +13,42 @@ namespace usub::unet::http::v1 {
             return static_cast<std::uint8_t>(10 + (c - 'A'));
         }
 
-        inline std::string_view trim_ows(const std::string &value) {
+        inline std::string_view trim_ows(std::string_view value) {
             std::size_t start = 0;
             std::size_t end = value.size();
             while (start < end && (value[start] == ' ' || value[start] == '\t')) { ++start; }
             while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) { --end; }
-            return std::string_view(value.data() + start, end - start);
+            return value.substr(start, end - start);
         }
 
-        inline bool contains_chunked_token(std::string_view value) {
-            constexpr std::string_view token = "chunked";
-            std::size_t i = 0;
-            while (i < value.size()) {
-                while (i < value.size() && (value[i] == ' ' || value[i] == '\t' || value[i] == ',')) { ++i; }
-                if (i + token.size() > value.size()) break;
-                bool match = true;
-                for (std::size_t j = 0; j < token.size(); ++j) {
-                    char c = value[i + j];
-                    if (asciiLower(c) != token[j]) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) return true;
-                while (i < value.size() && value[i] != ',') { ++i; }
+        inline bool parse_uint(std::string_view value, std::size_t &out) {
+            if (value.empty()) return false;
+            const char *const begin = value.data();
+            const char *const end = begin + value.size();
+            const auto [ptr, ec] = std::from_chars(begin, end, out);
+            return ec == std::errc{} && ptr == end;
+        }
+
+        inline bool is_chunked_token(std::string_view token) {
+            constexpr std::string_view chunked = "chunked";
+            if (token.size() != chunked.size()) return false;
+            for (std::size_t i = 0; i < chunked.size(); ++i) {
+                if (asciiLower(token[i]) != chunked[i]) return false;
             }
-            return false;
+            return true;
+        }
+
+        inline bool parse_hex_size(std::string_view value, std::size_t &out) {
+            if (value.empty()) return false;
+            std::size_t parsed = 0;
+            for (const unsigned char ch: value) {
+                if (!isHexDigit(ch)) return false;
+                const std::size_t digit = hex_value(ch);
+                if (parsed > (std::numeric_limits<std::size_t>::max() - digit) / 16) { return false; }
+                parsed = parsed * 16 + digit;
+            }
+            out = parsed;
+            return true;
         }
 
     }// namespace
@@ -337,80 +349,57 @@ namespace usub::unet::http::v1 {
                 case STATE::HEADERS_VALIDATION: {
                     ctx.current_state_size = 0;
 
-                    if (!request.headers.contains("host")) { return fail(Status::BAD_REQUEST, "Missing Host header"); }
-
-                    request.metadata.authority = request.headers.all("host")[0].value;
-
                     const bool method_no_body =
                             request.metadata.method_token == "GET" || request.metadata.method_token == "HEAD" ||
                             request.metadata.method_token == "OPTIONS" || request.metadata.method_token == "TRACE";
 
-                    const auto content_length_headers = request.headers.all("content-length");
-                    const auto transfer_encoding_headers = request.headers.all("transfer-encoding");
-                    const bool has_transfer_encoding = !transfer_encoding_headers.empty();
-
                     std::size_t content_length_value = 0;
                     bool content_length_seen = false;
-
-                    auto trim_view = [](std::string_view value) -> std::string_view {
-                        std::size_t start = 0;
-                        std::size_t end = value.size();
-                        while (start < end && (value[start] == ' ' || value[start] == '\t')) { ++start; }
-                        while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t')) { --end; }
-                        return std::string_view(value.data() + start, end - start);
-                    };
-
-                    auto parse_uint = [](std::string_view value, std::size_t &out) -> bool {
-                        if (value.empty()) return false;
-                        std::size_t result = 0;
-                        for (char c: value) {
-                            if (c < '0' || c > '9') { return false; }
-                            std::size_t digit = static_cast<std::size_t>(c - '0');
-                            if (result > (std::numeric_limits<std::size_t>::max() - digit) / 10) { return false; }
-                            result = result * 10 + digit;
-                        }
-                        out = result;
-                        return true;
-                    };
-
-                    for (const auto &header: content_length_headers) {
-                        std::string_view value = header.value;
-                        while (!value.empty()) {
-                            const std::size_t comma = value.find(',');
-                            std::string_view token = (comma == std::string_view::npos) ? value : value.substr(0, comma);
-                            token = trim_view(token);
-                            std::size_t parsed = 0;
-                            if (!parse_uint(token, parsed)) {
-                                return fail(Status::BAD_REQUEST, "Invalid Content-Length");
-                            }
-                            if (!content_length_seen) {
-                                content_length_value = parsed;
-                                content_length_seen = true;
-                            } else if (parsed != content_length_value) {
-                                return fail(Status::BAD_REQUEST, "Conflicting Content-Length");
-                            }
-                            if (comma == std::string_view::npos) break;
-                            value.remove_prefix(comma + 1);
-                        }
-                    }
-
+                    std::optional<std::string_view> host_value;
+                    bool has_transfer_encoding = false;
                     bool has_chunked = false;
                     bool has_other_encoding = false;
-                    auto is_chunked_token = [](std::string_view token) -> bool {
-                        constexpr std::string_view chunked = "chunked";
-                        if (token.size() != chunked.size()) return false;
-                        for (std::size_t i = 0; i < chunked.size(); ++i) {
-                            if (asciiLower(token[i]) != chunked[i]) return false;
-                        }
-                        return true;
-                    };
 
-                    for (const auto &header: transfer_encoding_headers) {
+                    for (const auto &header: request.headers.all()) {
+                        const std::string_view key = header.key;
+
+                        if (key == "host") {
+                            if (!host_value.has_value()) { host_value = header.value; }
+                            continue;
+                        }
+
+                        if (key == "content-length") {
+                            std::string_view value = header.value;
+                            while (!value.empty()) {
+                                const std::size_t comma = value.find(',');
+                                std::string_view token =
+                                        (comma == std::string_view::npos) ? value : value.substr(0, comma);
+                                token = trim_ows(token);
+                                std::size_t parsed = 0;
+                                if (!parse_uint(token, parsed)) {
+                                    return fail(Status::BAD_REQUEST, "Invalid Content-Length");
+                                }
+                                if (!content_length_seen) {
+                                    content_length_value = parsed;
+                                    content_length_seen = true;
+                                } else if (parsed != content_length_value) {
+                                    return fail(Status::BAD_REQUEST, "Conflicting Content-Length");
+                                }
+                                if (comma == std::string_view::npos) break;
+                                value.remove_prefix(comma + 1);
+                            }
+                            continue;
+                        }
+
+                        if (key != "transfer-encoding") { continue; }
+
+                        has_transfer_encoding = true;
                         std::string_view value = header.value;
                         while (!value.empty()) {
                             const std::size_t comma = value.find(',');
-                            std::string_view token = (comma == std::string_view::npos) ? value : value.substr(0, comma);
-                            token = trim_view(token);
+                            std::string_view token =
+                                    (comma == std::string_view::npos) ? value : value.substr(0, comma);
+                            token = trim_ows(token);
                             if (token.empty()) { return fail(Status::BAD_REQUEST, "Invalid Transfer-Encoding"); }
                             if (is_chunked_token(token)) {
                                 has_chunked = true;
@@ -421,6 +410,9 @@ namespace usub::unet::http::v1 {
                             value.remove_prefix(comma + 1);
                         }
                     }
+
+                    if (!host_value.has_value()) { return fail(Status::BAD_REQUEST, "Missing Host header"); }
+                    request.metadata.authority = *host_value;
 
                     if (has_transfer_encoding) {
                         if (request.metadata.version != VERSION::HTTP_1_1) {
@@ -504,7 +496,7 @@ namespace usub::unet::http::v1 {
                 }
                 case STATE::DATA_CHUNKED_SIZE: {
                     while (begin != end) {
-                        if (std::isxdigit(*begin)) {
+                        if (isHexDigit(static_cast<unsigned char>(*begin))) {
                             ctx.kv_buffer.first.push_back(*begin);
                             ++begin;
                             ++ctx.body_bytes_read;
@@ -525,9 +517,13 @@ namespace usub::unet::http::v1 {
                 }
                 case STATE::DATA_CHUNKED_SIZE_CRLF: {
                     if (*begin == '\n') {
-                        ctx.body_read_size =
-                                std::stoull(ctx.kv_buffer.first, nullptr,
-                                            16);// this might throw, TODO: Replace with some not throwing alt
+                        std::size_t chunk_size = 0;
+                        if (!parse_hex_size(ctx.kv_buffer.first, chunk_size)) {
+                            return fail(Status::BAD_REQUEST, "Invalid chunk size");
+                        }
+                        ctx.body_read_size = chunk_size;
+                        ctx.kv_buffer.first.clear();
+                        ctx.current_state_size = 0;
                         ++begin;
                         ++ctx.body_bytes_read;
                         state = STATE::DATA_CHUNKED_DATA;
@@ -547,7 +543,7 @@ namespace usub::unet::http::v1 {
                     const std::size_t available = static_cast<std::size_t>(end - begin);
                     const std::size_t take = (available < remaining) ? available : remaining;
 
-                    request.body.append(static_cast<char>(*begin), take);
+                    request.body.append(&*begin, take);
 
                     begin += take;
                     ctx.current_state_size += take;
@@ -578,6 +574,9 @@ namespace usub::unet::http::v1 {
                 }
                 case STATE::DATA_CHUNK_DONE: {
                     ctx.current_state_size = 0;
+                    ctx.body_read_size = 0;
+                    ctx.kv_buffer.first.clear();
+                    state = STATE::DATA_CHUNKED_SIZE;
                     break;
                 }
                 case STATE::DATA_CHUNKED_LAST_CR: {
@@ -603,6 +602,7 @@ namespace usub::unet::http::v1 {
                 }
                 case STATE::DATA_DONE:
                     if (begin != end) { return fail(Status::BAD_REQUEST, "Trailers unsupported yet"); }
+                    state = STATE::COMPLETE;
                     rv.kind = STEP::COMPLETE;
                     return rv;
                     // TODO: Think if content-length should also go here, for some kind of check
