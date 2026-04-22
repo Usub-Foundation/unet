@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "unet/core/streams/stream.hpp"
+#include "unet/http/core/message.hpp"
 
 namespace usub::unet::http {
 
