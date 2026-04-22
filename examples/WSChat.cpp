@@ -135,7 +135,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
 // ─── Config helper ───────────────────────────────────────────────────────────
 
-usub::unet::core::Config make_config(uint16_t port) {
+usub::unet::core::Config makeConfig(uint16_t port) {
     usub::unet::core::Config cfg;
 
     usub::unet::core::Config::Object stream;
@@ -160,7 +160,7 @@ int main() {
     Registry registry;
 
     usub::Uvent runtime{2};
-    auto cfg = make_config(PORT);
+    auto cfg = makeConfig(PORT);
     usub::unet::http::ServerRadix server{runtime, cfg};
 
     // ── GET / — serve the chat page ──────────────────────────────────────────
@@ -184,7 +184,7 @@ int main() {
 
             // Announce to existing clients.
             for (auto &s : registry.others(id)) {
-                co_await s.send_text(joined);
+                co_await s.sendText(joined);
             }
 
             while (auto frame = co_await conn.recv()) {
@@ -195,7 +195,7 @@ int main() {
 
                 // Broadcast to everyone else.
                 for (auto &s : registry.others(id)) {
-                    co_await s.send_text(msg);
+                    co_await s.sendText(msg);
                 }
             }
 
@@ -205,7 +205,7 @@ int main() {
             std::cout << left << "\n";
 
             for (auto &s : registry.others(id)) {
-                co_await s.send_text(left);
+                co_await s.sendText(left);
             }
         })
     );

@@ -1,14 +1,6 @@
 #pragma once
 
-// FrameChannel<T> — single-producer / single-consumer awaitable queue.
-//
-// The session (producer) pushes complete frames; the user handler coroutine
-// (consumer) co_awaits recv().  Works correctly in Uvent's cooperative model:
-// only one coroutine runs at a time, so push() calling h.resume() directly is safe.
-//
-// Typical instantiations:
-//   FrameChannel<ClientFrame>  — server-side (receives masked client frames)
-//   FrameChannel<ServerFrame>  — client-side (receives unmasked server frames)
+// FrameChannel<T> - single-producer / single-consumer awaitable queue.
 
 #include <coroutine>
 #include <optional>
@@ -21,21 +13,24 @@ namespace usub::unet::ws {
     class FrameChannel {
     public:
         struct Awaiter {
-            FrameChannel &ch;
+            FrameChannel &channel;
 
             bool await_ready() noexcept {
-                return !ch.queue_.empty() || ch.closed_;
+                return !channel.queue_.empty() || channel.closed_;
             }
 
-            void await_suspend(std::coroutine_handle<> h) noexcept {
-                ch.waiter_ = h;
+            void await_suspend(std::coroutine_handle<> handle) noexcept {
+                channel.waiter_ = handle;
             }
 
             std::optional<FrameT> await_resume() noexcept {
-                if (ch.queue_.empty()) { return std::nullopt; }
-                auto f = std::move(ch.queue_.front());
-                ch.queue_.pop();
-                return f;
+                if (channel.queue_.empty()) {
+                    return std::nullopt;
+                }
+
+                auto frame = std::move(channel.queue_.front());
+                channel.queue_.pop();
+                return frame;
             }
         };
 
@@ -43,27 +38,27 @@ namespace usub::unet::ws {
 
         void push(FrameT frame) {
             queue_.push(std::move(frame));
-            resume_waiter();
+            resumeWaiter();
         }
 
         void close() noexcept {
             closed_ = true;
-            resume_waiter();
+            resumeWaiter();
         }
 
         [[nodiscard]] bool closed() const noexcept { return closed_; }
 
     private:
-        void resume_waiter() noexcept {
+        void resumeWaiter() noexcept {
             if (waiter_) {
-                auto h = std::exchange(waiter_, {});
-                h.resume();
+                auto handle = std::exchange(waiter_, {});
+                handle.resume();
             }
         }
 
-        std::queue<FrameT>       queue_{};
-        std::coroutine_handle<>  waiter_{};
-        bool                     closed_{false};
+        std::queue<FrameT> queue_{};
+        std::coroutine_handle<> waiter_{};
+        bool closed_{false};
     };
 
 }  // namespace usub::unet::ws
