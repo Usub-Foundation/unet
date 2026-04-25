@@ -15,10 +15,6 @@ namespace usub::unet::http::v1 {
             }
         }
 
-        inline bool method_no_body(std::string_view m) {
-            return m == "GET" || m == "HEAD" || m == "OPTIONS" || m == "TRACE";
-        }
-
         inline void append_origin_target(std::string &out, const decltype(Request::metadata.uri) &uri) {
             if (!uri.path.empty()) {
                 out.append(uri.path);
@@ -58,7 +54,7 @@ namespace usub::unet::http::v1 {
         rv.append("\r\n");
 
 
-        if (!method_no_body(request.metadata.method_token)) { rv.append(request.body); }
+        rv.append(request.body);
 
         return rv;
     }

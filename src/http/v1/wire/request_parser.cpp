@@ -349,10 +349,6 @@ namespace usub::unet::http::v1 {
                 case STATE::HEADERS_VALIDATION: {
                     ctx.current_state_size = 0;
 
-                    const bool method_no_body =
-                            request.metadata.method_token == "GET" || request.metadata.method_token == "HEAD" ||
-                            request.metadata.method_token == "OPTIONS" || request.metadata.method_token == "TRACE";
-
                     std::size_t content_length_value = 0;
                     bool content_length_seen = false;
                     std::optional<std::string_view> host_value;
@@ -427,36 +423,21 @@ namespace usub::unet::http::v1 {
                         return fail(Status::BAD_REQUEST, "Both Transfer-Encoding and Content-Length present");
                     }
 
-                    if (method_no_body) {
-                        if (has_chunked) { return fail(Status::BAD_REQUEST, "Body not allowed for method"); }
-                        if (content_length_seen && content_length_value != 0) {
-                            return fail(Status::BAD_REQUEST, "Body not allowed for method");
-                        }
-                        state = STATE::COMPLETE;
-                        rv.complete = true;
-                        rv.kind = STEP::HEADERS;
-                        return rv;
-                    }
-
                     if (has_chunked) {
                         ctx.current_state_size = 0;
                         state = STATE::DATA_CHUNKED_SIZE;
                         break;
                     }
 
-                    if (content_length_seen) {
+                    if (content_length_seen && content_length_value != 0) {
                         ctx.body_read_size = content_length_value;
-                        if (content_length_value == 0) {
-                            state = STATE::COMPLETE;
-                            rv.complete = true;
-                            rv.kind = STEP::HEADERS;
-                            return rv;
-                        } else {
-                            state = STATE::DATA_CONTENT_LENGTH;
-                        }
+                        state = STATE::DATA_CONTENT_LENGTH;
+                        rv.kind = STEP::HEADERS;
+                        return rv;
                     }
 
-                    state = STATE::DATA_CONTENT_LENGTH;
+                    state = STATE::COMPLETE;
+                    rv.complete = true;
                     rv.kind = STEP::HEADERS;
                     return rv;
                 }

@@ -5,12 +5,14 @@
 #include <string_view>
 
 #include "unet/http/v1/wire/request_parser.hpp"
+#include "unet/http/v1/wire/request_serializer.hpp"
 
 using usub::unet::http::ParseError;
 using usub::unet::http::STATUS_CODE;
 using usub::unet::http::STEP;
 using usub::unet::http::VERSION;
 using usub::unet::http::v1::RequestParser;
+using usub::unet::http::v1::RequestSerializer;
 using State = usub::unet::http::v1::RequestParser::STATE;
 using usub::unet::http::Request;
 
@@ -186,6 +188,19 @@ namespace {
         assert(harness.request.body == "Hello");
     }
 
+    void test_get_content_length_body() {
+        const std::string data = "GET /submit HTTP/1.1\r\n"
+                                 "Host: example\r\n"
+                                 "Content-Length: 5\r\n"
+                                 "\r\n"
+                                 "Hello";
+
+        auto result = RequestParser::parse(data);
+        assert(result);
+        assert(result->metadata.method_token == "GET");
+        assert(result->body == "Hello");
+    }
+
     void test_chunked_states() {
         std::string data = "POST /chunk HTTP/1.1\r\n"
                            "Host: example\r\n"
@@ -288,6 +303,37 @@ namespace {
         assert(result->body == "Hello World");
     }
 
+    void test_get_chunked_parse_complete() {
+        const std::string data = "GET /chunk HTTP/1.1\r\n"
+                                 "Host: example\r\n"
+                                 "Transfer-Encoding: chunked\r\n"
+                                 "\r\n"
+                                 "5\r\nHello\r\n"
+                                 "0\r\n\r\n";
+
+        auto result = RequestParser::parse(data);
+        assert(result);
+        assert(result->metadata.method_token == "GET");
+        assert(result->body == "Hello");
+    }
+
+    void test_serializer_keeps_get_body() {
+        Request request;
+        request.metadata.method_token = "GET";
+        request.metadata.uri.path = "/submit";
+        request.metadata.version = VERSION::HTTP_1_1;
+        request.headers.addHeader(std::string_view{"Host"}, std::string_view{"example"});
+        request.headers.addHeader(std::string_view{"Content-Length"}, std::string_view{"5"});
+        request.body = "Hello";
+
+        const auto serialized = RequestSerializer::serialize(request);
+        assert(serialized == "GET /submit HTTP/1.1\r\n"
+                             "host: example\r\n"
+                             "content-length: 5\r\n"
+                             "\r\n"
+                             "Hello");
+    }
+
     void test_error_cases() {
         expect_error(" / HTTP/1.1\r\nHost: example\r\n\r\n", STATUS_CODE::BAD_REQUEST);
         expect_error("G@T / HTTP/1.1\r\nHost: example\r\n\r\n", STATUS_CODE::BAD_REQUEST);
@@ -334,11 +380,6 @@ namespace {
                      "Hello",
                      STATUS_CODE::BAD_REQUEST);
 
-        expect_error("GET / HTTP/1.1\r\n"
-                     "Content-Length: 5\r\n"
-                     "\r\n"
-                     "Hello",
-                     STATUS_CODE::BAD_REQUEST);
     }
 
 }// namespace
@@ -346,10 +387,13 @@ namespace {
 int main() {
     test_metadata_and_headers();
     test_content_length_body_partial();
+    test_get_content_length_body();
     test_chunked_states();
     test_chunked_last_and_data_done();
     test_chunked_parse_complete();
     test_chunked_parse_multiple_chunks();
+    test_get_chunked_parse_complete();
+    test_serializer_keeps_get_body();
     test_error_cases();
 
     std::cout << "All http1 parser tests passed.\n";
