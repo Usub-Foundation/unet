@@ -47,6 +47,11 @@ namespace usub::unet::http {
             this->headers.addHeader(key, value);
             return *this;
         }
+
+        Response &setMessage(std::string_view message) {
+            this->metadata.status_message = message;
+            return *this;
+        }
     };
 
 }// namespace usub::unet::http
