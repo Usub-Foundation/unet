@@ -56,7 +56,7 @@ namespace usub::unet::http {
             return this->query_params;
         }
 
-        usub::unet::header::Headers &getHeaders {
+        usub::unet::header::Headers& getHeaders() {
             return this->headers;
         }
 
