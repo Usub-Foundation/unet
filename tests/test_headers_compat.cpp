@@ -1,17 +1,20 @@
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <string_view>
 
 #include "unet/http/core/request.hpp"
 
 int main() {
-    usub::unet::http::Request request;
-    request.headers.addHeader("Cookie", "session=abc");
-    request.headers.addHeader("Set-Cookie", "a=1");
-    request.headers.addHeader("Set-Cookie", "b=2");
-    request.headers.addHeader("Content-Type", "multipart/form-data");
+    using namespace std::string_view_literals;
 
-    auto &headers = request.getHeaders();
+    usub::unet::http::Request request;
+    request.headers.addHeader("Cookie"sv, "session=abc"sv);
+    request.headers.addHeader("Set-Cookie"sv, "a=1"sv);
+    request.headers.addHeader("Set-Cookie"sv, "b=2"sv);
+    request.headers.addHeader("Content-Type"sv, "multipart/form-data"sv);
+
+    auto headers = request.getHeaders();
 
     const auto &cookie_values = headers.at("Cookie");
     assert(!cookie_values.empty());
@@ -34,13 +37,25 @@ int main() {
     auto missing = headers.find("Authorization");
     assert(missing == headers.end());
 
-    const auto &const_headers = request.getHeaders();
+    auto direct_find = request.getHeaders().find("Content-Type");
+    assert(direct_find != request.getHeaders().end());
+    assert(direct_find->second[0] == "multipart/form-data");
+
+    const auto const_headers = request.getHeaders();
     auto const_content_type = const_headers.find("content-type");
     assert(const_content_type != const_headers.end());
     assert(const_content_type->second[0] == "multipart/form-data");
 
+    std::size_t compat_count = 0;
+    for (const auto &[name, values]: headers) {
+        assert(!name.empty());
+        assert(!values.empty());
+        ++compat_count;
+    }
+    assert(compat_count == 3);
+
     std::size_t list_count = 0;
-    for (const auto &header: headers) {
+    for (const auto &header: request.headers) {
         assert(!header.key.empty());
         ++list_count;
     }

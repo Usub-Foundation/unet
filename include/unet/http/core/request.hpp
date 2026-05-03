@@ -9,6 +9,7 @@
 
 
 #include "unet/http/core/message.hpp"
+#include "unet/header/compat.hpp"
 #include "unet/http/header.hpp"
 #include "unet/mime/application/x_www_form_urlencoded.hpp"
 #include "unet/uri/uri.hpp"
@@ -34,8 +35,6 @@ namespace usub::unet::http {
         std::string body{};
 
         std::any user_data{};// A place to store content between middlewares
-        QueryParams query_params{};
-        std::string query_params_source{};
 
         template<typename ReturnType = std::string>
         ReturnType getQueryAs() {
@@ -43,30 +42,20 @@ namespace usub::unet::http {
         }
 
         //COMPAT
-        QueryParams &getQueryParams() {
-            if (this->query_params_source == this->metadata.uri.query) {
-                return this->query_params;
-            }
-
-            this->query_params_source = this->metadata.uri.query;
-
+        [[deprecated("compatability function: use metadata.uri.query with mime::application::x_www_form_urlencoded::parse_to_map; request metadata is public")]]
+        QueryParams getQueryParams() const {
             auto parsed = usub::unet::mime::application::x_www_form_urlencoded::parse_to_map(this->metadata.uri.query);
-            this->query_params = parsed ? std::move(*parsed) : QueryParams{};
-
-            return this->query_params;
+            return parsed ? std::move(*parsed) : QueryParams{};
         }
 
         //COMPAT
-        usub::unet::header::Headers& getHeaders() {
-            return this->headers;
+        [[deprecated("compatability function: use the public headers field directly; getHeaders returns the old map-like grouped view")]]
+        usub::unet::header::HeaderCompatView getHeaders() const {
+            return usub::unet::header::HeaderCompatView{this->headers};
         }
 
         //COMPAT
-        const usub::unet::header::Headers& getHeaders() const {
-            return this->headers;
-        }
-
-        //COMPAT
+        [[deprecated("compatability function: use the public body field directly")]]
         std::string &getBody() {
             return this->body;
         }

@@ -1,5 +1,6 @@
 #include "unet/ws/upgrade.hpp"
 
+#include <string>
 #include <utility>
 
 namespace usub::unet::ws {
@@ -14,21 +15,23 @@ namespace usub::unet::ws {
         const auto key = req.headers.value("sec-websocket-key");
 
         if (!upgradeHeader || !connectionHeader || !versionHeader || !key) {
-            res.setStatus(400);
-            res.setBody("Bad Request: missing WebSocket upgrade headers");
+            res.metadata.status_code = 400;
+            res.body = "Bad Request: missing WebSocket upgrade headers";
+            res.headers.addHeader("Content-Length", std::to_string(res.body.size()));
             return;
         }
 
         if (!validateRequest(*upgradeHeader, *connectionHeader, *versionHeader)) {
-            res.setStatus(400);
-            res.setBody("Bad Request: invalid WebSocket upgrade");
+            res.metadata.status_code = 400;
+            res.body = "Bad Request: invalid WebSocket upgrade";
+            res.headers.addHeader("Content-Length", std::to_string(res.body.size()));
             return;
         }
 
-        res.setStatus(101);
-        res.addHeader("Upgrade", "websocket");
-        res.addHeader("Connection", "Upgrade");
-        res.addHeader("Sec-WebSocket-Accept", makeAcceptKey(*key));
+        res.metadata.status_code = 101;
+        res.headers.addHeader("Upgrade", "websocket");
+        res.headers.addHeader("Connection", "Upgrade");
+        res.headers.addHeader("Sec-WebSocket-Accept", makeAcceptKey(*key));
 
         ctx.accept([handler = std::move(fn)]() mutable -> usub::unet::http::SessionBox {
             return usub::unet::http::SessionBox::make<Session>(std::move(handler));

@@ -40,14 +40,14 @@ int main() {
     usub::unet::http::Request request;
     request.metadata.uri.query = "account_id=acct_1&tag=c%2B%2B&tag=http";
 
-    auto &query_params = request.getQueryParams();
+    auto query_params = request.getQueryParams();
     assert(query_params.at("account_id")[0] == "acct_1");
     assert(query_params.at("tag").size() == 2);
     assert(query_params.at("tag")[0] == "c++");
     assert(query_params.at("tag")[1] == "http");
 
     request.metadata.uri.query = "account_id=acct_2";
-    auto &updated_query_params = request.getQueryParams();
+    auto updated_query_params = request.getQueryParams();
     assert(updated_query_params.at("account_id")[0] == "acct_2");
     assert(!updated_query_params.contains("tag"));
 
