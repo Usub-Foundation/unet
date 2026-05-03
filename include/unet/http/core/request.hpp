@@ -56,7 +56,13 @@ namespace usub::unet::http {
             return this->query_params;
         }
 
+        //COMPAT
         usub::unet::header::Headers& getHeaders() {
+            return this->headers;
+        }
+
+        //COMPAT
+        const usub::unet::header::Headers& getHeaders() const {
             return this->headers;
         }
 

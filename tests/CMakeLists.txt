@@ -10,6 +10,10 @@ add_executable(test_x_www_form_urlencoded
     test_x_www_form_urlencoded.cpp
 )
 
+add_executable(test_headers_compat
+    test_headers_compat.cpp
+)
+
 add_executable(test_http1_parser
     test_http1_parser.cpp
 )
@@ -69,6 +73,10 @@ target_include_directories(test_x_www_form_urlencoded PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
 
+target_include_directories(test_headers_compat PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
 target_include_directories(test_http1_parser PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
@@ -120,6 +128,7 @@ endif()
 if(TARGET unet)
     target_link_libraries(test_form_data PRIVATE unet)
     target_link_libraries(test_x_www_form_urlencoded PRIVATE unet)
+    target_link_libraries(test_headers_compat PRIVATE unet)
     target_link_libraries(test_http1_parser PRIVATE unet)
     target_link_libraries(test_http2_parser PRIVATE unet)
     target_link_libraries(test_http_server PRIVATE unet)
@@ -149,6 +158,12 @@ add_custom_target(run_form_data_tests
 add_custom_target(run_x_www_form_urlencoded_tests
     COMMAND test_x_www_form_urlencoded
     DEPENDS test_x_www_form_urlencoded
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_headers_compat_tests
+    COMMAND test_headers_compat
+    DEPENDS test_headers_compat
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
