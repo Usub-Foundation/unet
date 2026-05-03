@@ -1,9 +1,11 @@
 #include "unet/ws/upgrade.hpp"
 
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace usub::unet::ws {
+    using namespace std::string_view_literals;
 
     void upgrade(usub::unet::http::Request &req,
                  usub::unet::http::Response &res,
@@ -17,21 +19,21 @@ namespace usub::unet::ws {
         if (!upgradeHeader || !connectionHeader || !versionHeader || !key) {
             res.metadata.status_code = 400;
             res.body = "Bad Request: missing WebSocket upgrade headers";
-            res.headers.addHeader("Content-Length", std::to_string(res.body.size()));
+            res.headers.addHeader("Content-Length"sv, std::to_string(res.body.size()));
             return;
         }
 
         if (!validateRequest(*upgradeHeader, *connectionHeader, *versionHeader)) {
             res.metadata.status_code = 400;
             res.body = "Bad Request: invalid WebSocket upgrade";
-            res.headers.addHeader("Content-Length", std::to_string(res.body.size()));
+            res.headers.addHeader("Content-Length"sv, std::to_string(res.body.size()));
             return;
         }
 
         res.metadata.status_code = 101;
-        res.headers.addHeader("Upgrade", "websocket");
-        res.headers.addHeader("Connection", "Upgrade");
-        res.headers.addHeader("Sec-WebSocket-Accept", makeAcceptKey(*key));
+        res.headers.addHeader("Upgrade"sv, "websocket"sv);
+        res.headers.addHeader("Connection"sv, "Upgrade"sv);
+        res.headers.addHeader("Sec-WebSocket-Accept"sv, makeAcceptKey(*key));
 
         ctx.accept([handler = std::move(fn)]() mutable -> usub::unet::http::SessionBox {
             return usub::unet::http::SessionBox::make<Session>(std::move(handler));
