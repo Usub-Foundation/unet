@@ -40,6 +40,7 @@ IEIRAwaitableVoid usub::server::ClientHandler::run() {
             this->is_done_ = true;
             break;
         }
+        this->socket_->set_timeout_ms(usub::uvent::settings::timeout_duration_ms);
         // request = std::string(arr, arr + rdsz);
         auto a = this->http1_.readCallback(request, this->socket_);
         co_await a;
