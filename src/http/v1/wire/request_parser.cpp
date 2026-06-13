@@ -449,7 +449,8 @@ namespace usub::unet::http::v1 {
                     if (has_chunked) {
                         ctx.current_state_size = 0;
                         state = STATE::DATA_CHUNKED_SIZE;
-                        break;
+                        rv.kind = STEP::HEADERS;
+                        return rv;
                     }
 
                     if (content_length_seen) {
@@ -457,17 +458,16 @@ namespace usub::unet::http::v1 {
                         if (content_length_value == 0) {
                             state = STATE::COMPLETE;
                             rv.complete = true;
-                            rv.kind = STEP::HEADERS;
-                            return rv;
                         } else {
                             state = STATE::DATA_CONTENT_LENGTH;
                         }
-                        break;
+                        rv.kind = STEP::HEADERS;
+                        return rv;
                     }
 
                     state = STATE::DATA_CONTENT_LENGTH;
                     rv.kind = STEP::HEADERS;
-                    break;
+                    return rv;
                 }
                 // case STATE::HEADERS_DONE: {
                 //     // Realistically we dont get there... but so the parser can work standalone
