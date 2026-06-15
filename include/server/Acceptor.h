@@ -51,7 +51,7 @@ namespace usub::server {
                 if (rdsz <= 0) {
                     break;
                 }
-                socket.set_timeout_ms(20000);
+                socket.set_timeout_ms(usub::uvent::settings::timeout_duration_ms);
 #ifdef UVENT_DEBUG
                 spdlog::info("Read size: {}", rdsz);
 #endif
@@ -173,8 +173,11 @@ namespace usub::server {
             }
             const auto &listener = listeners[listener_index_];
 
-            // 2) Обновляем связанные настройки (например, таймаут)
-            usub::uvent::settings::timeout_duration_ms = listener.timeout;
+            // 2) Обновляем связанные настройки (например, таймаут).
+            // Берём общесерверный timeout из [server] через getTimeout(), а не
+            // listener.timeout: последний по умолчанию = 10 и в конфиге timeout
+            // обычно лежит под [server], поэтому per-listener значение молча игнорировалось.
+            usub::uvent::settings::timeout_duration_ms = cfg_.getTimeout();
 
             // 3) Лениво создаём серверный сокет, если он ещё не создан
             if (!server_socket_) {
