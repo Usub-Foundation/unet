@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <expected>
@@ -9,9 +10,9 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "unet/http/core/char_table.hpp"
-#include "unet/http/core/parse_step.hpp"
 #include "unet/http/core/request.hpp"
 #include "unet/http/error.hpp"
 
@@ -27,7 +28,16 @@ namespace usub::unet::http::v1 {
             ORIGIN_QUERY,
             ORIGIN_FRAGMENT,
             ABSOLUTE_FORM,
+            ABSOLUTE_FORM_AFTER_SCHEME,
+            ABSOLUTE_FORM_AFTER_FIRST_SLASH,
+            ABSOLUTE_FORM_HOST,
+            ABSOLUTE_FORM_HOST_IPV6,
+            ABSOLUTE_FORM_AFTER_HOST,
+            ABSOLUTE_FORM_PORT,
             AUTHORITY_FORM,
+            AUTHORITY_FORM_HOST_IPV6,
+            AUTHORITY_FORM_AFTER_HOST,
+            AUTHORITY_FORM_PORT,
             ASTERISK_FORM,
             VERSION,
             REQUEST_LINE_CRLF_HTTP_0_9,// Not implemented
@@ -38,7 +48,9 @@ namespace usub::unet::http::v1 {
             HEADER_LF,
             HEADERS_CRLF,
             HEADERS_VALIDATION,
-            // HEADERS_DONE,
+            HEADERS_DONE,
+            HEADERS_DONE_CL,
+            HEADERS_DONE_CHUNKED,
             DATA_CONTENT_LENGTH,
             DATA_CHUNKED_SIZE,
             DATA_CHUNKED_SIZE_CRLF,
@@ -55,11 +67,15 @@ namespace usub::unet::http::v1 {
             TRAILER_LF,
             TRAILERS_DONE,
             COMPLETE,
-            FAILED// ERROR STATE, can't name it ERROR because of conflict with ERROR macro on Windows, my kindest regards to windows devs.
+            FAILED// ERROR STATE, can't name it ERROR because of conflict with ERROR macro on Windows. MAY Be renamed to ERROR later
+            // Since the http2 path has ERROR State as the rfc defined name hence here it's the same
         };
+
+        enum class BODY_TYPE : std::uint8_t { NONE, CONTENT_LENGTH, CHUNKED };
 
         struct ParserContext {
             STATE state{STATE::METHOD_TOKEN};
+            BODY_TYPE body_type{BODY_TYPE::NONE};
 
             std::pair<std::string, std::string> kv_buffer{};
             std::size_t headers_size{0};
@@ -76,15 +92,19 @@ namespace usub::unet::http::v1 {
         RequestParser() = default;
         ~RequestParser() = default;
 
-        // Tries to parse full request
-        static std::expected<Request, ParseError> parse(const std::string_view raw_request);
+        std::expected<void, ParseError> step(RequestReader &reader, std::string_view::const_iterator &begin,
+                                             const std::string_view::const_iterator end);
 
-        std::expected<ParseStep, ParseError> step(Request &request, std::string_view::const_iterator &begin,
-                                                  const std::string_view::const_iterator end);
+        std::string takePendingBody() noexcept {
+            std::string out;
+            out.swap(pending_body_);
+            return out;
+        }
 
         ParserContext &getContext();
 
     private:
         ParserContext context_;
+        std::string pending_body_{};
     };
 }// namespace usub::unet::http::v1

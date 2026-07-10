@@ -32,9 +32,14 @@ namespace usub::unet::core {
                 if (const auto *obj = std::get_if<Object>(&v->data)) { return obj; }
             }
 
-            // Support top-level keys that include dots literally, e.g. "HTTP.PlainTextStream".
             auto it = this->root.find(std::string(path));
             if (it == this->root.end()) { return nullptr; }
+            return std::get_if<Object>(&it->second.data);
+        }
+
+        const Object *getObject(const Object &obj, std::string_view key) const {
+            auto it = obj.find(std::string(key));
+            if (it == obj.end()) { return nullptr; }
             return std::get_if<Object>(&it->second.data);
         }
 
@@ -97,6 +102,18 @@ namespace usub::unet::core {
             if (const auto *v = std::get_if<double>(&data)) { return std::to_string(*v); }
             if (const auto *v = std::get_if<bool>(&data)) { return *v ? "true" : "false"; }
             return std::string(fallback);
+        }
+
+        bool getBool(std::string_view path, bool fallback = false) const {
+            const auto *value = this->find(path);
+            if (!value) { return fallback; }
+            if (const auto *v = std::get_if<bool>(&value->data)) { return *v; }
+            if (const auto *v = std::get_if<std::uint64_t>(&value->data)) { return *v != 0; }
+            if (const auto *v = std::get_if<std::string>(&value->data)) {
+                if (*v == "true" || *v == "1" || *v == "yes" || *v == "on") return true;
+                if (*v == "false" || *v == "0" || *v == "no" || *v == "off") return false;
+            }
+            return fallback;
         }
 
         std::uint64_t getUInt(std::string_view path, std::uint64_t fallback = 0) const {

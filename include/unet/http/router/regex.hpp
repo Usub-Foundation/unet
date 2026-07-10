@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "unet/http/middleware.hpp"
+#include "unet/http/session.hpp"
 #include "unet/http/upgrade_context.hpp"
 
 namespace usub::unet::http::router {
@@ -34,8 +35,8 @@ namespace usub::unet::http::router {
     };
 
     struct RegexRoute {
-        using HandlerFunctionType        = usub::uvent::task::Awaitable<void>(Request &, Response &, RegexMatch &);
-        using UpgradeHandlerFunctionType = usub::uvent::task::Awaitable<void>(Request &, Response &,
+        using HandlerFunctionType        = usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &, RegexMatch &);
+        using UpgradeHandlerFunctionType = usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &,
                                                                                usub::unet::http::UpgradeContext &,
                                                                                RegexMatch &);
 
@@ -65,27 +66,27 @@ namespace usub::unet::http::router {
             using CaptureGroups  = RegexMatch::CaptureGroups;
             using Ctx            = usub::unet::http::UpgradeContext;
 
-            if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, CaptureGroups &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &, CaptureGroups &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RegexMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx, match.capture_groups);
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &,
                                                       const CaptureGroups &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RegexMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx, std::as_const(match.capture_groups));
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, RegexMatch &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &, RegexMatch &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RegexMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx, match);
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RegexMatch &) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx);
@@ -104,29 +105,29 @@ namespace usub::unet::http::router {
             using HandlerType = std::remove_reference_t<Handler>;
             using CaptureGroups = RegexMatch::CaptureGroups;
 
-            if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, CaptureGroups &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, CaptureGroups &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RegexMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, match.capture_groups);
                     co_return;
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, const CaptureGroups &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, const CaptureGroups &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RegexMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, std::as_const(match.capture_groups));
                     co_return;
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, RegexMatch &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, RegexMatch &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RegexMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, match);
                     co_return;
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RegexMatch &) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response);
@@ -141,7 +142,7 @@ namespace usub::unet::http::router {
         }
     };
 
-    using ErrorFunctionType = void(const Request &, Response &);
+    using ErrorFunctionType = usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &);
     using ErrorHandlers = std::unordered_map<std::string, std::function<ErrorFunctionType>>;
 
     class Regex {
@@ -168,7 +169,7 @@ namespace usub::unet::http::router {
         template<typename Handler>
         RouteType &addUpgradeRoute(std::string_view method, const std::string &pattern, Handler &&handler) {
             auto &route = this->addRoute(method, pattern,
-                                         [](Request &, Response &, RegexMatch &) -> usub::uvent::task::Awaitable<void> {
+                                         [](RequestReader &, ResponseWriter &, RegexMatch &) -> usub::uvent::task::Awaitable<void> {
                                              co_return;
                                          });
             route.kind            = usub::unet::http::RouteKind::Upgrade;
@@ -180,7 +181,7 @@ namespace usub::unet::http::router {
         RouteType &addUpgradeRoute(const std::set<std::string> &methods, const std::string &pattern,
                                    Handler &&handler) {
             auto &route = this->addRoute(methods, pattern,
-                                         [](Request &, Response &, RegexMatch &) -> usub::uvent::task::Awaitable<void> {
+                                         [](RequestReader &, ResponseWriter &, RegexMatch &) -> usub::uvent::task::Awaitable<void> {
                                              co_return;
                                          });
             route.kind            = usub::unet::http::RouteKind::Upgrade;
@@ -190,14 +191,14 @@ namespace usub::unet::http::router {
 
         Regex &addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn);
 
-        void error(const std::string &level, const Request &request, Response &response);
+        usub::uvent::task::Awaitable<void> error(const std::string &level, RequestReader &request, ResponseWriter &response);
 
-        std::expected<MatchResult, STATUS_CODE> match(const Request &request,
+        std::expected<MatchResult, STATUS_CODE> match(const RequestReader &request,
                                                       std::string *error_description = nullptr);
 
-        usub::uvent::task::Awaitable<void> invoke(MatchResult &match, Request &request, Response &response);
+        usub::uvent::task::Awaitable<void> invoke(MatchResult &match, RequestReader &request, ResponseWriter &response);
 
-        usub::uvent::task::Awaitable<void> invokeUpgrade(MatchResult &match, Request &request, Response &response,
+        usub::uvent::task::Awaitable<void> invokeUpgrade(MatchResult &match, RequestReader &request, ResponseWriter &response,
                                                          usub::unet::http::UpgradeContext &ctx) {
             if (match.route && match.route->upgrade_handler) {
                 co_await match.route->upgrade_handler(request, response, ctx, match);
@@ -205,7 +206,8 @@ namespace usub::unet::http::router {
             co_return;
         }
 
-        bool runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, Request &request, Response &response);
+        usub::uvent::task::Awaitable<bool>
+        runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, RequestReader &request, ResponseWriter &response);
 
         MiddlewareChain &addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware);
 

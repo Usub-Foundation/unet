@@ -8,7 +8,7 @@ The current HTTP runtime is composed of:
 - `usub::unet::http::ServerImpl<Router, Streams...>`: acceptor bootstrap and connection loop
 - `usub::unet::http::router::Radix`: route matching, middleware containers, and error handlers
 - stream types such as `PlainText` and `OpenSSLStream<>`
-- HTTP session implementation for `HTTP/1.1`
+- HTTP session implementations for `HTTP/1.1` (`v1::ServerSession<R>`) and `HTTP/2.0` (`v2::ServerSession<R>`)
 
 ## Server Lifecycle
 
@@ -21,21 +21,29 @@ Typical startup sequence:
 
 There is no `server.run()` API in the current `unet` server implementation.
 
-## Connection Pipeline (HTTP/1)
+## Connection Pipeline
 
 For each accepted socket:
 
-1. `Bootstrap` receives initial bytes and decides protocol target.
-2. For HTTP/1 traffic, session upgrades to `ServerSession<VERSION::HTTP_1_1, RouterType>`.
-3. Request parser consumes bytes incrementally.
-4. When headers are complete:
-   - route match is attempted
-   - global header middleware runs
-   - route header middleware runs
-5. Body parsing continues (content-length or chunked), body middleware may run.
-6. Route handler coroutine executes when request is complete.
-7. Response is serialized (`v1::ResponseSerializer`) and written.
-8. Request/response state is reset for potential next request on same connection.
+1. `Bootstrap` receives initial bytes and decides which protocol the client speaks.
+   - HTTP/2 prior-knowledge preface → `v2::ServerSession<RouterType>`.
+   - Anything else → `v1::ServerSession<RouterType>`. From there a client may still
+     ask for h2c via `Upgrade: h2c`, which swaps the session to `v2`.
+2. The chosen session takes over and runs version-specific logic:
+   - **HTTP/1**: request parser consumes bytes incrementally; on `STEP::HEADERS`
+     the router matches, then global/route header middleware run; body parsing
+     and middleware follow; handler executes on `STEP::COMPLETE`; response is
+     serialized via `v1::ResponseSerializer`.
+   - **HTTP/2**: a frame loop reads the preface (or accepts the upgrade-seeded
+     stream), exchanges SETTINGS, dispatches builtin frame handlers (DATA,
+     HEADERS, SETTINGS, WINDOW_UPDATE, PING, GOAWAY, RST_STREAM, CONTINUATION,
+     PRIORITY). Stream completion (END_STREAM) queues for dispatch. The router
+     match + handler invoke happen once per stream; multiple streams multiplex
+     on one connection.
+3. Both sessions reset per-request state to keep the connection alive when
+   permitted; both expose `connection()` returning a user-facing handle
+   (`v1::Connection&` or `v2::Connection`) delivered to the `on_http1_connection`
+   / `on_http2_connection` hooks held on the `MiddlewareChain`.
 
 ## Router and Middleware Placement
 

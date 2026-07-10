@@ -11,7 +11,7 @@ namespace usub::unet::http::v1 {
                 case VERSION::HTTP_1_0:
                     return "HTTP/1.0";
                 default:
-                    return "HTTP/1.1";//TODO: proper version hanlding, defaulting to 1.1 is bingle bongle, dingle dangle, yickety doo, yickety da, ping pong, lippy-tappy-too-tah
+                    return "HTTP/1.1";//TODO: maybe allow for other non protocol specific parts
             }
         }
 

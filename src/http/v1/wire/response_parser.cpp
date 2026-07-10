@@ -176,16 +176,6 @@ namespace usub::unet::http::v1 {
 
         using Status = usub::unet::http::STATUS_CODE;
 
-        auto fail = [&](Status status, std::string_view message) -> std::expected<void, ParseError> {
-            ParseError err{};
-            err.code = ParseError::CODE::GENERIC_ERROR;
-            err.expected_status = status;
-            err.message = std::string(message);
-            state = STATE::FAILED;
-            return std::unexpected(err);
-        };
-
-
         while (begin != end) {
             switch (state) {
                 case STATE::STATUS_VERSION: {
@@ -208,7 +198,12 @@ namespace usub::unet::http::v1 {
 
                         if (ch == ' ') {
                             if (ver_buf.empty()) {
-                                return fail(Status::BAD_REQUEST, "Empty HTTP version in status line");
+                                state = STATE::FAILED;
+                                return std::unexpected(ParseError{
+                                    .code            = ParseError::CODE::GENERIC_ERROR,
+                                    .expected_status = Status::BAD_REQUEST,
+                                    .message         = "Empty HTTP version in status line",
+                                });
                             }
 
                             if (ver_buf == "HTTP/1.1") {
@@ -216,7 +211,12 @@ namespace usub::unet::http::v1 {
                             } else if (ver_buf == "HTTP/1.0") {
                                 response.metadata.version = VERSION::HTTP_1_0;
                             } else {
-                                return fail(Status::BAD_REQUEST, "Unknown HTTP version in status line");
+                                state = STATE::FAILED;
+                                return std::unexpected(ParseError{
+                                    .code            = ParseError::CODE::GENERIC_ERROR,
+                                    .expected_status = Status::BAD_REQUEST,
+                                    .message         = "Unknown HTTP version in status line",
+                                });
                             }
 
                             ++begin;
@@ -227,17 +227,34 @@ namespace usub::unet::http::v1 {
                         }
 
                         if (ch == '\r' || ch == '\n') {
-                            return fail(Status::BAD_REQUEST, "Malformed status line (version not followed by SP)");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Malformed status line (version not followed by SP)",
+                            });
                         }
 
                         if (!isVersion(static_cast<unsigned char>(ch))) {
-                            return fail(Status::BAD_REQUEST, "Invalid character in HTTP version");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Invalid character in HTTP version",
+                            });
                         }
 
                         ver_buf.push_back(ch);
                         ++begin;
 
-                        if (ver_buf.size() > 16) { return fail(Status::BAD_REQUEST, "HTTP version too large"); }
+                        if (ver_buf.size() > 16) {
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "HTTP version too large",
+                            });
+                        }
                     }
                     break;
                 }
@@ -251,13 +268,25 @@ namespace usub::unet::http::v1 {
 
                         if (ch >= '0' && ch <= '9') {
                             if (ctx.current_state_size >= 3) {//legacy response without HTTP-version token
-                                return fail(Status::BAD_REQUEST, "Status code too long");
+                                state = STATE::FAILED;
+                                return std::unexpected(ParseError{
+                                    .code            = ParseError::CODE::GENERIC_ERROR,
+                                    .expected_status = Status::BAD_REQUEST,
+                                    .message         = "Status code too long",
+                                });
                             }
 
                             auto &code = response.metadata.status_code;// 0..999
                             code = static_cast<std::uint16_t>(code * 10u + static_cast<unsigned>(ch - '0'));
 
-                            if (code >= 1000u) { return fail(Status::BAD_REQUEST, "Status code out of range"); }
+                            if (code >= 1000u) {
+                                state = STATE::FAILED;
+                                return std::unexpected(ParseError{
+                                    .code            = ParseError::CODE::GENERIC_ERROR,
+                                    .expected_status = Status::BAD_REQUEST,
+                                    .message         = "Status code out of range",
+                                });
+                            }
 
                             ++ctx.current_state_size;
                             ++begin;
@@ -266,7 +295,12 @@ namespace usub::unet::http::v1 {
 
                         if (ch == ' ') {
                             if (ctx.current_state_size != 3) {
-                                return fail(Status::BAD_REQUEST, "Status code must be 3 digits");
+                                state = STATE::FAILED;
+                                return std::unexpected(ParseError{
+                                    .code            = ParseError::CODE::GENERIC_ERROR,
+                                    .expected_status = Status::BAD_REQUEST,
+                                    .message         = "Status code must be 3 digits",
+                                });
                             }
 
                             ++begin;
@@ -275,7 +309,12 @@ namespace usub::unet::http::v1 {
                             break;
                         }
 
-                        return fail(Status::BAD_REQUEST, "Invalid status code (expected digit or SP)");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Invalid status code (expected digit or SP)",
+                        });
                     }
 
                     break;
@@ -294,13 +333,25 @@ namespace usub::unet::http::v1 {
                         }
 
                         if (!isVcharOrObs(static_cast<unsigned char>(ch))) {
-                            return fail(Status::BAD_REQUEST, "Invalid character in reason phrase");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Invalid character in reason phrase",
+                            });
                         }
 
                         reason.push_back(ch);
                         ++begin;
 
-                        if (reason.size() > 1024) { return fail(Status::BAD_REQUEST, "Reason phrase too large"); }
+                        if (reason.size() > 1024) {
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Reason phrase too large",
+                            });
+                        }
                     }
                     break;
                 }
@@ -308,7 +359,14 @@ namespace usub::unet::http::v1 {
                 case STATE::STATUS_LINE_CRLF: {
                     if (begin == end) { return {}; }
 
-                    if (*begin != '\n') { return fail(Status::BAD_REQUEST, "Missing LF after CR in status line"); }
+                    if (*begin != '\n') {
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Missing LF after CR in status line",
+                        });
+                    }
                     ++begin;
 
                     response.metadata.status_message = std::move(ctx.kv_buffer.second);
@@ -333,12 +391,22 @@ namespace usub::unet::http::v1 {
                             ++begin;
                             break;
                         }
-                        return fail(Status::BAD_REQUEST, "Invalid character in header name");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Invalid character in header name",
+                        });
                     }
                     // Since our reads are limited by 16 kb, there should be no case where not checking this
                     // after every append can cause problems
                     if (ctx.headers_size > usub::unet::http::max_headers_size) {
-                        return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                            .message         = "Headers too large",
+                        });
                     }
                     break;
                 }
@@ -357,12 +425,22 @@ namespace usub::unet::http::v1 {
                             break;
                         }
 
-                        return fail(Status::BAD_REQUEST, "Invalid header value");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Invalid header value",
+                        });
                     }
                     // Since our reads are limited by 16 kb, there should be no case where not checking this
                     // after every append can cause problems
                     if (ctx.headers_size > usub::unet::http::max_headers_size) {
-                        return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                            .message         = "Headers too large",
+                        });
                     }
                     break;
                 }
@@ -373,7 +451,12 @@ namespace usub::unet::http::v1 {
                         ++ctx.headers_size;
                         state = STATE::HEADER_LF;
                     } else {
-                        return fail(Status::BAD_REQUEST, "Header Missing LF");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Header Missing LF",
+                        });
                     }
                     [[fallthrough]];
                 }
@@ -388,7 +471,12 @@ namespace usub::unet::http::v1 {
                         ++ctx.headers_size;
                         state = STATE::HEADERS_CRLF;
                     } else {
-                        return fail(Status::BAD_REQUEST, "Header Missing CR/unknown char");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Header Missing CR/unknown char",
+                        });
                     }
                     break;
                 }
@@ -398,12 +486,22 @@ namespace usub::unet::http::v1 {
                         ++begin;
                         ++ctx.headers_size;
                         if (ctx.headers_size > usub::unet::http::max_headers_size) {
-                            return fail(Status::REQUEST_HEADER_FIELDS_TOO_LARGE, "Headers too large");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::REQUEST_HEADER_FIELDS_TOO_LARGE,
+                                .message         = "Headers too large",
+                            });
                         }
                         state = STATE::HEADERS_VALIDATION;
                         // return {};
                     } else {
-                        return fail(Status::BAD_REQUEST, "Header Missing CR/unknown char");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Header Missing CR/unknown char",
+                        });
                     }
                     [[fallthrough]];
                 }
@@ -430,14 +528,24 @@ namespace usub::unet::http::v1 {
 
                                 std::size_t parsed = 0;
                                 if (!parse_uint(token, parsed)) {
-                                    return fail(Status::BAD_REQUEST, "Invalid Content-Length");
+                                    state = STATE::FAILED;
+                                    return std::unexpected(ParseError{
+                                        .code            = ParseError::CODE::GENERIC_ERROR,
+                                        .expected_status = Status::BAD_REQUEST,
+                                        .message         = "Invalid Content-Length",
+                                    });
                                 }
 
                                 if (!content_length_seen) {
                                     content_length_value = parsed;
                                     content_length_seen = true;
                                 } else if (parsed != content_length_value) {
-                                    return fail(Status::BAD_REQUEST, "Conflicting Content-Length");
+                                    state = STATE::FAILED;
+                                    return std::unexpected(ParseError{
+                                        .code            = ParseError::CODE::GENERIC_ERROR,
+                                        .expected_status = Status::BAD_REQUEST,
+                                        .message         = "Conflicting Content-Length",
+                                    });
                                 }
 
                                 if (comma == std::string_view::npos) break;
@@ -456,7 +564,14 @@ namespace usub::unet::http::v1 {
                                     (comma == std::string_view::npos) ? value : value.substr(0, comma);
                             token = trim_ows(token);
 
-                            if (token.empty()) { return fail(Status::BAD_REQUEST, "Invalid Transfer-Encoding"); }
+                            if (token.empty()) {
+                                state = STATE::FAILED;
+                                return std::unexpected(ParseError{
+                                    .code            = ParseError::CODE::GENERIC_ERROR,
+                                    .expected_status = Status::BAD_REQUEST,
+                                    .message         = "Invalid Transfer-Encoding",
+                                });
+                            }
 
                             constexpr std::string_view chunked = "chunked";
                             bool token_is_chunked = token.size() == chunked.size();
@@ -483,15 +598,30 @@ namespace usub::unet::http::v1 {
 
                     if (has_transfer_encoding) {
                         if (response.metadata.version != VERSION::HTTP_1_1) {
-                            return fail(Status::BAD_REQUEST, "Transfer-Encoding not allowed");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Transfer-Encoding not allowed",
+                            });
                         }
                         if (!has_chunked || has_other_encoding) {
-                            return fail(Status::BAD_REQUEST, "Unsupported Transfer-Encoding");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Unsupported Transfer-Encoding",
+                            });
                         }
                     }
 
                     if (has_chunked && content_length_seen) {
-                        return fail(Status::BAD_REQUEST, "Both Transfer-Encoding and Content-Length present");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Both Transfer-Encoding and Content-Length present",
+                        });
                     }
 
 
@@ -553,7 +683,12 @@ namespace usub::unet::http::v1 {
                             break;
 
                         default:
-                            return fail(Status::BAD_REQUEST, "Invalid after_headers");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Invalid after_headers",
+                            });
                     }
                     break;
                 }
@@ -581,7 +716,12 @@ namespace usub::unet::http::v1 {
                         state = STATE::COMPLETE;
                         return {};
                     } else if (ctx.current_state_size > content_length) {
-                        return fail(Status::PAYLOAD_TOO_LARGE, "Body size too big");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::PAYLOAD_TOO_LARGE,
+                            .message         = "Body size too big",
+                        });
                     }
 
                     break;
@@ -602,7 +742,12 @@ namespace usub::unet::http::v1 {
                             // If the need arises, we will, it's not that hard to implement now, but for now, to hell with it
 
                             // For now, I just refuse to do so
-                            return fail(Status::BAD_REQUEST, "Unknown symbol in chunked size");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Unknown symbol in chunked size",
+                            });
                         }
                     }
                     break;
@@ -611,7 +756,12 @@ namespace usub::unet::http::v1 {
                     if (*begin == '\n') {
                         std::size_t size = 0;
                         if (!parse_hex_size(ctx.kv_buffer.first, size)) {
-                            return fail(Status::BAD_REQUEST, "Invalid chunk size");
+                            state = STATE::FAILED;
+                            return std::unexpected(ParseError{
+                                .code            = ParseError::CODE::GENERIC_ERROR,
+                                .expected_status = Status::BAD_REQUEST,
+                                .message         = "Invalid chunk size",
+                            });
                         }
                         ctx.body_read_size = size;
                         ctx.kv_buffer.first.clear();
@@ -621,7 +771,12 @@ namespace usub::unet::http::v1 {
                         state = STATE::DATA_CHUNKED_DATA;
                         if (ctx.body_read_size == 0) { state = STATE::DATA_CHUNKED_LAST_CR; }
                     } else {
-                        return fail(Status::BAD_REQUEST, "Missing LF in chunked size");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Missing LF in chunked size",
+                        });
                     }
                     break;
                 }
@@ -649,14 +804,28 @@ namespace usub::unet::http::v1 {
                     break;
                 }
                 case STATE::DATA_CHUNKED_DATA_CR: {
-                    if (*begin != '\r') { return fail(Status::BAD_REQUEST, "Missing CR after chunk data"); }
+                    if (*begin != '\r') {
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Missing CR after chunk data",
+                        });
+                    }
                     ++begin;
                     ++ctx.body_bytes_read;
                     state = STATE::DATA_CHUNKED_DATA_LF;
                 }
                 case STATE::DATA_CHUNKED_DATA_LF: {
                     if (begin == end) break;
-                    if (*begin != '\n') { return fail(Status::BAD_REQUEST, "Missing LF after chunk data"); }
+                    if (*begin != '\n') {
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Missing LF after chunk data",
+                        });
+                    }
                     ++begin;
                     ++ctx.body_bytes_read;
 
@@ -676,7 +845,12 @@ namespace usub::unet::http::v1 {
                         ++ctx.body_bytes_read;
                         state = STATE::DATA_CHUNKED_LAST_LF;
                     } else {
-                        return fail(Status::BAD_REQUEST, "Missing CR DATA_CHUNKED_LAST_CR");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Missing CR DATA_CHUNKED_LAST_CR",
+                        });
                     }
                     [[fallthrough]];
                 }
@@ -687,37 +861,74 @@ namespace usub::unet::http::v1 {
                         ++ctx.body_bytes_read;
                         state = STATE::DATA_DONE;
                     } else {
-                        return fail(Status::BAD_REQUEST, "Missing LF DATA_CHUNKED_LAST_LF");
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Missing LF DATA_CHUNKED_LAST_LF",
+                        });
                     }
                     [[fallthrough]];
                 }
                 case STATE::DATA_DONE: {
-                    if (begin != end) { return fail(Status::BAD_REQUEST, "Trailers unsupported yet"); }
+                    if (begin != end) {
+                        state = STATE::FAILED;
+                        return std::unexpected(ParseError{
+                            .code            = ParseError::CODE::GENERIC_ERROR,
+                            .expected_status = Status::BAD_REQUEST,
+                            .message         = "Trailers unsupported yet",
+                        });
+                    }
                     state = STATE::COMPLETE;
                     break;
                 }
                 case STATE::TRAILER_KEY: {
-                    return fail(Status::BAD_REQUEST, "Trailers unsupported yet, how did we get here?!");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Trailers unsupported yet, how did we get here?!",
+                    });
                     break;
                 }
 
                 case STATE::TRAILER_VALUE: {
-                    return fail(Status::BAD_REQUEST, "Trailers unsupported yet, how did we get here?!");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Trailers unsupported yet, how did we get here?!",
+                    });
                     break;
                 }
 
                 case STATE::TRAILER_CR: {
-                    return fail(Status::BAD_REQUEST, "Trailers unsupported yet, how did we get here?!");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Trailers unsupported yet, how did we get here?!",
+                    });
                     break;
                 }
 
                 case STATE::TRAILER_LF: {
-                    return fail(Status::BAD_REQUEST, "Trailers unsupported yet, how did we get here?!");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Trailers unsupported yet, how did we get here?!",
+                    });
                     break;
                 }
 
                 case STATE::TRAILERS_DONE: {
-                    return fail(Status::BAD_REQUEST, "Trailers unsupported yet, how did we get here?!");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Trailers unsupported yet, how did we get here?!",
+                    });
                     break;
                 }
 
@@ -737,10 +948,20 @@ namespace usub::unet::http::v1 {
 
                 case STATE::FAILED:
                     begin = end;
-                    return fail(Status::BAD_REQUEST, "Parser in failed state");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Parser in failed state",
+                    });
 
                 default:
-                    return fail(Status::BAD_REQUEST, "Invalid parser state");
+                    state = STATE::FAILED;
+                    return std::unexpected(ParseError{
+                        .code            = ParseError::CODE::GENERIC_ERROR,
+                        .expected_status = Status::BAD_REQUEST,
+                        .message         = "Invalid parser state",
+                    });
             }
         }
         return {};

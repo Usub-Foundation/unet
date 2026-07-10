@@ -1,13 +1,688 @@
-build
-build-*
-.cache
+# C++.gitignore
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.so.*
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+Build/
+build-*/
+build_*/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
 compile_commands.json
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# vcpkg
+vcpkg_installed/
+
+# debug information files
+*.dwo
+
+# test output & cache
+Testing/
+.cache/
+
+# C.gitignore
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# debug information files
+*.dwo
+
+# CMake.gitignore
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json
+
+# CLion
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#cmake-build-*
+
+# JetBrains.gitignore
+# Covers JetBrains IDEs: IntelliJ, GoLand, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# AWS User-specific
+.idea/**/aws.xml
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# Gradle
+.idea/**/gradle.xml
+.idea/**/libraries
+
+# Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
+# .idea/artifacts
+# .idea/compiler.xml
+# .idea/jarRepositories.xml
+# .idea/modules.xml
+# .idea/*.iml
+# .idea/modules
+# *.iml
+# *.ipr
+
+# CMake
+cmake-build-*/
+
+# Mongo Explorer plugin
+.idea/**/mongoSettings.xml
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Cursive Clojure plugin
+.idea/replstate.xml
+
+# SonarLint plugin
+.idea/sonarlint/
+# see https://community.sonarsource.com/t/is-the-file-idea-idea-idea-sonarlint-xml-intended-to-be-under-source-control/121119
+.idea/sonarlint.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Editor-based HTTP Client
+.idea/httpRequests
+http-client.private.env.json
+
+# Android studio 3.1+ serialized cache file
+.idea/caches/build_file_checksums.ser
+
+# Apifox Helper cache
+.idea/.cache/.Apifox_Helper
+.idea/ApifoxUploaderProjectSetting.xml
+
+# Github Copilot persisted session migrations, see: https://github.com/microsoft/copilot-intellij-feedback/issues/712#issuecomment-3322062215
+.idea/**/copilot.data.migration.*.xml
+
+# VisualStudioCode.gitignore
+
+# Visual Studio Code
+.vscode/
+# .vscode/*
+# !.vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
+# !.vscode/*.code-snippets
+# !*.code-workspace
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# Vim.gitignore
+# Swap
+[._]*.s[a-v][a-z]
+# comment out the next line if you don't need vector files
+!*.svg
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
 tags
-.idea
-.DS_Store
-cmake-build-debug
-cmake-build-debug-docker_io
-src/build
-src/cmake-build-debug
-python_tests/
-.vscode
+# Persistent undo
+[._]*.un~
+
+# =============================================================================
+# Agents.gitignore — AI Coding Agents & Assistants
+# https://github.com/Fellowship-dev/agents-gitignore
+#
+# A comprehensive .gitignore for all known AI coding tools.
+# Copy what you need, or use the whole file. See README for details.
+#
+# Inspired by https://github.com/github/gitignore/pull/4719
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Claude Code (Anthropic)
+# https://docs.anthropic.com/en/docs/claude-code
+# -----------------------------------------------------------------------------
+CLAUDE.md
+.claude/
+
+
+# -----------------------------------------------------------------------------
+# OpenAI Codex CLI
+# https://github.com/openai/codex
+# -----------------------------------------------------------------------------
+AGENTS.md
+AGENTS.override.md
+codex.md
+.codex/
+
+
+# -----------------------------------------------------------------------------
+# Google Gemini CLI
+# https://github.com/google-gemini/gemini-cli
+# -----------------------------------------------------------------------------
+GEMINI.md
+.gemini/
+
+
+# -----------------------------------------------------------------------------
+# Cursor (Anysphere)
+# https://docs.cursor.com
+# -----------------------------------------------------------------------------
+.cursor/
+.cursorrules
+.cursorignore
+.cursorindexingignore
+
+
+# -----------------------------------------------------------------------------
+# Windsurf (Codeium)
+# https://docs.codeium.com/windsurf
+# -----------------------------------------------------------------------------
+.windsurf/
+.windsurfrules
+
+
+# -----------------------------------------------------------------------------
+# GitHub Copilot
+# https://docs.github.com/en/copilot
+# Note: .github/copilot-instructions.md lives inside .github/ which you may
+# already track. Add it explicitly if you want to ignore Copilot instructions.
+# -----------------------------------------------------------------------------
+# .github/copilot-instructions.md
+# .github/instructions/
+.copilotignore
+
+
+# -----------------------------------------------------------------------------
+# Aider (aider-chat)
+# https://aider.chat
+# -----------------------------------------------------------------------------
+.aider*
+.aiderignore
+
+
+# -----------------------------------------------------------------------------
+# Continue.dev
+# https://docs.continue.dev
+# -----------------------------------------------------------------------------
+.continue/
+.continuerules
+
+
+# -----------------------------------------------------------------------------
+# Cline
+# https://docs.cline.bot
+# -----------------------------------------------------------------------------
+.cline/
+.clinerules
+.clinerules/
+.clineignore
+cline_docs/
+
+
+# -----------------------------------------------------------------------------
+# Roo Code
+# https://docs.roocode.com
+# -----------------------------------------------------------------------------
+.roo/
+.roorules
+.roorules-*
+.rooignore
+.roomodes
+.rooprotected
+
+
+# -----------------------------------------------------------------------------
+# Amazon Q Developer (AWS)
+# https://docs.aws.amazon.com/amazonq
+# -----------------------------------------------------------------------------
+.amazonq/
+
+
+# -----------------------------------------------------------------------------
+# Tabnine
+# https://www.tabnine.com
+# -----------------------------------------------------------------------------
+.tabnine_root
+.tabnine
+.tabnine/
+
+
+# -----------------------------------------------------------------------------
+# JetBrains Junie
+# https://www.jetbrains.com/junie
+# -----------------------------------------------------------------------------
+.junie/
+
+
+# -----------------------------------------------------------------------------
+# Sourcegraph Cody
+# https://sourcegraph.com/cody
+# -----------------------------------------------------------------------------
+.cody/
+
+
+# -----------------------------------------------------------------------------
+# Augment Code
+# https://docs.augmentcode.com
+# -----------------------------------------------------------------------------
+.augment/
+.augmentignore
+
+
+# -----------------------------------------------------------------------------
+# Devin (Cognition)
+# https://docs.devin.ai
+# Note: Devin also reads AGENTS.md (covered above under Codex CLI).
+# -----------------------------------------------------------------------------
+REVIEW.md
+.cognition/
+
+
+# -----------------------------------------------------------------------------
+# Trae (ByteDance)
+# https://www.trae.ai
+# Also covers Trae CN variant.
+# -----------------------------------------------------------------------------
+.trae/
+
+
+# -----------------------------------------------------------------------------
+# Zed AI
+# https://zed.dev/docs/ai
+# Note: .zed/ may contain non-AI editor settings you want to keep.
+# -----------------------------------------------------------------------------
+.zed/
+
+
+# -----------------------------------------------------------------------------
+# Bolt.new (StackBlitz)
+# https://bolt.new
+# -----------------------------------------------------------------------------
+.bolt/
+
+
+# -----------------------------------------------------------------------------
+# Replit Agent
+# https://docs.replit.com
+# Note: These files are core Replit config, not just AI. Only ignore if you
+# exported a Replit project and don't want to keep their platform files.
+# -----------------------------------------------------------------------------
+# .replit
+# replit.nix
+
+
+# -----------------------------------------------------------------------------
+# CodeRabbit
+# https://docs.coderabbit.ai
+# -----------------------------------------------------------------------------
+.coderabbit.yaml
+
+
+# -----------------------------------------------------------------------------
+# Qodo (formerly CodiumAI)
+# https://docs.qodo.ai
+# -----------------------------------------------------------------------------
+.codiumai.toml
+.ai_config.toml
+.pr_agent.toml
+
+
+# -----------------------------------------------------------------------------
+# Sweep AI
+# https://github.com/sweepai/sweep
+# -----------------------------------------------------------------------------
+sweep.yaml
+
+
+# -----------------------------------------------------------------------------
+# Plandex
+# https://github.com/plandex-ai/plandex
+# -----------------------------------------------------------------------------
+.plandex/
+
+
+# -----------------------------------------------------------------------------
+# GPT Engineer
+# https://github.com/AntonOsika/gpt-engineer
+# -----------------------------------------------------------------------------
+.gpteng/
+
+
+# -----------------------------------------------------------------------------
+# Mentat (archived)
+# https://github.com/AbanteAI/mentat
+# -----------------------------------------------------------------------------
+.mentat-config.json
+
+
+# -----------------------------------------------------------------------------
+# OpenHands
+# https://docs.all-hands.dev
+# -----------------------------------------------------------------------------
+.openhands/
+
+
+# -----------------------------------------------------------------------------
+# Goose (Block)
+# https://github.com/block/goose
+# -----------------------------------------------------------------------------
+.goose/
+
+
+# -----------------------------------------------------------------------------
+# Kilo Code
+# https://kilocode.ai
+# -----------------------------------------------------------------------------
+.kilocode/
+
+
+# -----------------------------------------------------------------------------
+# Kiro CLI (AWS)
+# https://kiro.dev
+# -----------------------------------------------------------------------------
+.kiro/
+
+
+# -----------------------------------------------------------------------------
+# CodeBuddy
+# https://codebuddy.ai
+# -----------------------------------------------------------------------------
+.codebuddy/
+
+
+# -----------------------------------------------------------------------------
+# Command Code
+# https://commandcode.dev
+# -----------------------------------------------------------------------------
+.commandcode/
+
+
+# -----------------------------------------------------------------------------
+# Cortex Code (Snowflake)
+# https://docs.snowflake.com/en/developer-guide/cortex
+# -----------------------------------------------------------------------------
+.cortex/
+
+
+# -----------------------------------------------------------------------------
+# Crush
+# https://crush.dev
+# -----------------------------------------------------------------------------
+.crush/
+
+
+# -----------------------------------------------------------------------------
+# Droid (Factory)
+# https://factory.ai
+# -----------------------------------------------------------------------------
+.factory/
+
+
+# -----------------------------------------------------------------------------
+# iFlow CLI
+# https://iflow.dev
+# -----------------------------------------------------------------------------
+.iflow/
+
+
+# -----------------------------------------------------------------------------
+# Kode
+# https://kode.ai
+# -----------------------------------------------------------------------------
+.kode/
+
+
+# -----------------------------------------------------------------------------
+# MCPJam
+# https://mcpjam.dev
+# -----------------------------------------------------------------------------
+.mcpjam/
+
+
+# -----------------------------------------------------------------------------
+# Mistral Vibe
+# https://mistral.ai
+# -----------------------------------------------------------------------------
+.vibe/
+
+
+# -----------------------------------------------------------------------------
+# Mux
+# https://mux.dev
+# -----------------------------------------------------------------------------
+.mux/
+
+
+# -----------------------------------------------------------------------------
+# Pi
+# https://pi.ai
+# -----------------------------------------------------------------------------
+.pi/
+
+
+# -----------------------------------------------------------------------------
+# Qoder
+# https://qoder.ai
+# -----------------------------------------------------------------------------
+.qoder/
+
+
+# -----------------------------------------------------------------------------
+# Qwen Code
+# https://qwen.ai
+# -----------------------------------------------------------------------------
+.qwen/
+
+
+# -----------------------------------------------------------------------------
+# Zencoder
+# https://zencoder.ai
+# -----------------------------------------------------------------------------
+.zencoder/
+
+
+# -----------------------------------------------------------------------------
+# Neovate
+# https://neovate.dev
+# -----------------------------------------------------------------------------
+.neovate/
+
+
+# -----------------------------------------------------------------------------
+# Pochi
+# https://pochi.dev
+# -----------------------------------------------------------------------------
+.pochi/
+
+
+# -----------------------------------------------------------------------------
+# AdaL
+# https://adal.dev
+# -----------------------------------------------------------------------------
+.adal/
+
+
+# -----------------------------------------------------------------------------
+# Spec-Kit (Fellowship-dev)
+# https://github.com/Fellowship-dev/spec-kit
+# Specification-driven development. .specify/ contains tooling (scripts,
+# templates, memory). specs/ contains generated feature specifications.
+# If your team shares specs as documentation, add: !specs/
+# -----------------------------------------------------------------------------
+.specify/
+specs/
+
+
+# -----------------------------------------------------------------------------
+# Flowchad (Fellowship-dev)
+# https://github.com/Fellowship-dev/flowchad
+# Drop-in AI QA auditor. .flowchad/ contains skills, commands, flow
+# definitions, snapshots, and reports. All generated output is gitignored
+# within .flowchad/ itself (snapshots/, reports/).
+# -----------------------------------------------------------------------------
+.flowchad/
+
+
+# -----------------------------------------------------------------------------
+# Vercel Skills CLI
+# https://github.com/vercel-labs/skills
+# Cross-agent skill package manager. .agents/ is the canonical centralized
+# location for skills shared across agents. The CLI symlinks from each agent's
+# skill directory (e.g. .claude/skills/, .cursor/skills/) into .agents/skills/.
+# skills-lock.json tracks installed versions.
+# -----------------------------------------------------------------------------
+.agents/
+skills-lock.json
+
+
+# =============================================================================
+# END — Last updated: 2026-03-27
+# Missing a tool? Open a PR: https://github.com/Fellowship-dev/agents-gitignore
+# =============================================================================

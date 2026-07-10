@@ -1,30 +1,32 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <utility>
 
-#include "unet/http/session.hpp"
+#include "unet/core/io_provider.hpp"
+#include "unet/core/transport/transport.hpp"
 
 namespace usub::unet::http {
-    #if defined(__cpp_lib_move_only_function) && __cpp_lib_move_only_function >= 202110L
-    template<typename Signature>
-    using upgrade_session_factory = std::move_only_function<Signature>;
-    #else
-    template<typename Signature>
-    using upgrade_session_factory = std::function<Signature>;
-    #endif
 
-    // Passed by ref to upgrade route handlers. The handler calls ctx.accept() to signal
-    // a protocol upgrade, or leaves it untouched to fall back to normal HTTP (Response& is sent).
+#if defined(__cpp_lib_move_only_function) && __cpp_lib_move_only_function >= 202110L
+    template<typename Signature>
+    using upgrade_action = std::move_only_function<Signature>;
+#else
+    template<typename Signature>
+    using upgrade_action = std::function<Signature>;
+#endif
+
     struct UpgradeContext {
         bool accepted{false};
-        upgrade_session_factory<SessionBox()> make_session;
+        upgrade_action<usub::uvent::task::Awaitable<void>(std::unique_ptr<core::transport::Transport>, Buffer)> spawn;
 
-        // Signal upgrade. Server will send the handler's Response& as the wire handshake,
-        // then transition the connection to the session produced by factory().
-        void accept(upgrade_session_factory<SessionBox()> factory) {
-            accepted   = true;
-            make_session = std::move(factory);
+        void
+        accept(upgrade_action<usub::uvent::task::Awaitable<void>(std::unique_ptr<core::transport::Transport>, Buffer)>
+                       action) {
+            accepted = true;
+            spawn = std::move(action);
         }
     };
 
-}  // namespace usub::unet::http
+}// namespace usub::unet::http

@@ -24,8 +24,20 @@ Current request parser behavior includes:
 
 - requires `Host` header for HTTP/1.1 flow
 - validates method token and version token
-- supports origin-form URI (`/path?query`)
-- rejects URI fragments in request target
+- accepts all four RFC 9112 §3.2 request-target forms:
+  - **origin-form**: `/path?query` — for direct origin-server requests
+  - **absolute-form**: `http://host:port/path?query` — typically proxy traffic; per
+    RFC 9112 §3.3 an origin server treats authority/path as the request target
+  - **authority-form**: `host:port` — only with `CONNECT`
+  - **asterisk-form**: `*` — only with `OPTIONS`
+- enforces RFC 9110 §16.1.1 method/form pairing: rejects `CONNECT` with
+  origin-form, `*` with anything other than `OPTIONS`, etc.
+- supports IPv4 / reg-name / bracketed IPv6 hosts in authority parsing
+- accepts URI fragments on the wire and parses them (RFC 9110 §7.1 says clients
+  MUST NOT send, but the parser is lenient; the fragment is captured into
+  `metadata.uri.fragment`)
+- enforces a single URI size budget across scheme + authority + path + query +
+  fragment so an attacker can't split an oversized URI across sections
 - supports content-length and chunked parsing
 - validates conflicting or invalid `Content-Length`
 - enforces method/URI/header limits via global settings

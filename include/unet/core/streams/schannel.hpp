@@ -217,7 +217,11 @@ namespace usub::unet::core::stream {
             co_return;
         }
 
-        usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket &/*socket*/) { co_return; }
+        usub::uvent::task::Awaitable<bool> sendFile(usub::uvent::net::TCPClientSocket &/*socket*/,
+                                                     int /*fd*/, std::uint64_t /*offset*/,
+                                                     std::uint64_t /*length*/) {
+            co_return false;
+        }
 
         usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket &socket) {
             auto [key, session] = this->findSession(socket);
@@ -227,6 +231,28 @@ namespace usub::unet::core::stream {
         }
 
         MODE mode() const { return this->config_.mode; }
+
+        void dropSession(usub::uvent::net::TCPClientSocket &socket) noexcept {
+            if (auto key_opt = getSocketKey(socket)) { this->eraseSession(*key_opt); }
+        }
+
+        usub::uvent::task::Awaitable<std::string> negotiatedAlpn(usub::uvent::net::TCPClientSocket &socket) {
+            auto [key, session] = this->getOrCreateSession(socket);
+            if (!session) { co_return std::string{}; }
+            if (!(co_await this->ensureHandshake(*session, socket))) {
+                this->eraseSession(key);
+                co_return std::string{};
+            }
+            SecPkgContext_ApplicationProtocol info{};
+            if (::QueryContextAttributesW(&session->context, SECPKG_ATTR_APPLICATION_PROTOCOL, &info) != SEC_E_OK) {
+                co_return std::string{};
+            }
+            if (info.ProtoNegoStatus != SecApplicationProtocolNegotiationStatus_Success) {
+                co_return std::string{};
+            }
+            co_return std::string(reinterpret_cast<const char *>(info.ProtocolId),
+                                  static_cast<std::size_t>(info.ProtocolIdSize));
+        }
 
     private:
         struct Session {
@@ -490,15 +516,19 @@ namespace usub::unet::core::stream {
                         ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT | ASC_REQ_CONFIDENTIALITY |
                         ASC_REQ_ALLOCATE_MEMORY | ASC_REQ_STREAM | ASC_REQ_EXTENDED_ERROR;
 
-                SecBuffer in_buffers[2]{};
+                const auto &alpn_buffer = applicationProtocolsBuffer();
+                SecBuffer in_buffers[3]{};
                 in_buffers[0].BufferType = SECBUFFER_TOKEN;
                 in_buffers[0].pvBuffer = session.encrypted_input.data();
                 in_buffers[0].cbBuffer = static_cast<unsigned long>(session.encrypted_input.size());
-                in_buffers[1].BufferType = SECBUFFER_EMPTY;
+                in_buffers[1].BufferType = SECBUFFER_APPLICATION_PROTOCOLS;
+                in_buffers[1].pvBuffer = const_cast<unsigned char *>(alpn_buffer.data());
+                in_buffers[1].cbBuffer = static_cast<unsigned long>(alpn_buffer.size());
+                in_buffers[2].BufferType = SECBUFFER_EMPTY;
 
                 SecBufferDesc in_desc{};
                 in_desc.ulVersion = SECBUFFER_VERSION;
-                in_desc.cBuffers = 2;
+                in_desc.cBuffers = 3;
                 in_desc.pBuffers = in_buffers;
 
                 SecBuffer out_buffer{};
@@ -542,7 +572,9 @@ namespace usub::unet::core::stream {
                 }
 
                 unsigned long extra_bytes = 0;
-                if (in_buffers[1].BufferType == SECBUFFER_EXTRA) { extra_bytes = in_buffers[1].cbBuffer; }
+                for (auto &b : in_buffers) {
+                    if (b.BufferType == SECBUFFER_EXTRA) { extra_bytes = b.cbBuffer; break; }
+                }
 
                 if (extra_bytes > 0) {
                     const char *end = session.encrypted_input.data() + session.encrypted_input.size();
@@ -695,13 +727,19 @@ namespace usub::unet::core::stream {
         }
 
         usub::uvent::task::Awaitable<void> send(usub::uvent::net::TCPClientSocket&, std::string_view) { co_return; }
-        usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket&) { co_return; }
+        usub::uvent::task::Awaitable<bool> sendFile(usub::uvent::net::TCPClientSocket&, int, std::uint64_t, std::uint64_t) { co_return false; }
         usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket &socket) {
             socket.shutdown();
             co_return;
         }
 
         MODE mode() const { return this->config_.mode; }
+
+        void dropSession(usub::uvent::net::TCPClientSocket &) noexcept {}
+
+        usub::uvent::task::Awaitable<std::string> negotiatedAlpn(usub::uvent::net::TCPClientSocket &) {
+            co_return std::string{};
+        }
 
     private:
         Config config_{};
@@ -721,10 +759,13 @@ namespace usub::unet::core {
         ~Acceptor() = default;
 
         template<class OnConnection>
-        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection, Config &config) {
-            const Config::Object empty_section{};
-            const Config::Object *section_ptr = config.getObject("HTTP.SChannelStream");
-            const Config::Object &section = section_ptr ? *section_ptr : empty_section;
+        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection, Config &config,
+                                                     std::string_view prefix) {
+            const Config::Object  empty_section{};
+            const Config::Object *prefix_obj  = config.getObject(prefix);
+            const Config::Object *section_ptr = prefix_obj ? config.getObject(*prefix_obj, "SChannelStream")
+                                                           : nullptr;
+            const Config::Object &section     = section_ptr ? *section_ptr : empty_section;
 
             std::string host = config.getString(section, "host", "127.0.0.1");
             const std::uint64_t raw_port = config.getUInt(section, "port", 4443);
@@ -755,6 +796,7 @@ namespace usub::unet::core {
             tls_config.verify_peer = false;
             tls_config.pfx_file = config.getString(section, "pfx", "server.pfx");
             tls_config.pfx_password = config.getString(section, "password", "");
+            const std::uint64_t base_timeout = config.getUInt(section, "base_timeout", 20000);
 
             usub::uvent::net::TCPServerSocket server_socket{host, static_cast<int>(port), backlog, ip_version,
                                                             socket_type};
@@ -763,6 +805,8 @@ namespace usub::unet::core {
             for (;;) {
                 auto soc = co_await server_socket.async_accept();
                 if (!soc) { continue; }
+
+                soc.value().set_timeout_ms(base_timeout);
                 usub::uvent::system::co_spawn(on_connection(stream, std::move(soc.value())));
             }
             co_return;

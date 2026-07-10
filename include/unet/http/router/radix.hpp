@@ -6,7 +6,6 @@
 #include <optional>
 #include <regex>
 #include <set>
-#include <stack>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -14,7 +13,10 @@
 #include <utility>
 #include <vector>
 
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
 #include "unet/http/middleware.hpp"
+#include "unet/http/session.hpp"
 #include "unet/http/upgrade_context.hpp"
 #include "unet/utils/error.hpp"
 
@@ -29,31 +31,35 @@ namespace usub::unet::http::router {
 
     struct RadixRoute;
 
+    // Captured params, in registration order. Backed by string_view slices over
+    // the request's path — zero-allocation in the hot path. Keys are the param
+    // names (`{id}` → `"id"`, `*splat` → `"splat"`).
     struct RadixMatch {
-        using UriParams = std::unordered_map<std::string, std::string>;
+        using UriParams = std::unordered_map<std::string_view, std::string_view>;
 
         RadixRoute *route{nullptr};
-        UriParams uri_params{};
-        std::any extra{};
+        UriParams   uri_params{};
+        std::any    extra{};
 
         std::optional<std::string_view> param(std::string_view key) const {
-            const auto it = this->uri_params.find(std::string(key));
-            if (it == this->uri_params.end()) { return std::nullopt; }
+            const auto it = this->uri_params.find(key);
+            if (it == this->uri_params.end()) return std::nullopt;
             return it->second;
         }
     };
 
     struct RadixRoute {
-        using HandlerFunctionType        = usub::uvent::task::Awaitable<void>(Request &, Response &, RadixMatch &);
-        using UpgradeHandlerFunctionType = usub::uvent::task::Awaitable<void>(Request &, Response &,
+        using HandlerFunctionType        = usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &,
+                                                                               RadixMatch &);
+        using UpgradeHandlerFunctionType = usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &,
                                                                                usub::unet::http::UpgradeContext &,
                                                                                RadixMatch &);
 
-        usub::unet::http::RouteKind kind{usub::unet::http::RouteKind::Normal};
-        bool accept_all_methods{};
-        std::set<std::string> allowed_method_tokenns{};
-        MiddlewareChain middleware_chain{};
-        std::vector<std::string> param_names{};
+        usub::unet::http::RouteKind         kind{usub::unet::http::RouteKind::Normal};
+        bool                                accept_all_methods{};
+        std::set<std::string>               allowed_method_tokenns{};
+        MiddlewareChain                     middleware_chain{};
+        std::vector<std::string>            param_names{};
         std::function<HandlerFunctionType>        handler{};
         std::function<UpgradeHandlerFunctionType> upgrade_handler{};
 
@@ -80,26 +86,28 @@ namespace usub::unet::http::router {
             using UriParams   = RadixMatch::UriParams;
             using Ctx         = usub::unet::http::UpgradeContext;
 
-            if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, UriParams &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &, UriParams &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RadixMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx, match.uri_params);
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, const UriParams &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &,
+                                                       const UriParams &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RadixMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx, std::as_const(match.uri_params));
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &, RadixMatch &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &,
+                                                       RadixMatch &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RadixMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx, match);
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, Ctx &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, Ctx &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 Ctx &ctx, RadixMatch &) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, ctx);
@@ -107,9 +115,9 @@ namespace usub::unet::http::router {
             } else {
                 static_assert(!sizeof(HandlerType),
                               "Upgrade handler must be invocable as "
-                              "Awaitable<void>(Request&, Response&, UpgradeContext&) or "
-                              "Awaitable<void>(Request&, Response&, UpgradeContext&, RadixMatch&) or "
-                              "Awaitable<void>(Request&, Response&, UpgradeContext&, UriParams&)");
+                              "Awaitable<void>(RequestReader&, ResponseWriter&, UpgradeContext&) or "
+                              "Awaitable<void>(RequestReader&, ResponseWriter&, UpgradeContext&, RadixMatch&) or "
+                              "Awaitable<void>(RequestReader&, ResponseWriter&, UpgradeContext&, UriParams&)");
             }
         }
 
@@ -118,68 +126,72 @@ namespace usub::unet::http::router {
             using HandlerType = std::remove_reference_t<Handler>;
             using UriParams = RadixMatch::UriParams;
 
-            if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, UriParams &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, UriParams &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RadixMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, match.uri_params);
-                    co_return;
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, const UriParams &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &,
+                                                       const UriParams &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RadixMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, std::as_const(match.uri_params));
-                    co_return;
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &, RadixMatch &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &, RadixMatch &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RadixMatch &match) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response, match);
-                    co_return;
                 };
-            } else if constexpr (std::is_invocable_v<HandlerType &, Request &, Response &>) {
-                return [fn = std::forward<Handler>(handler_fn)](Request &request, Response &response,
+            } else if constexpr (std::is_invocable_v<HandlerType &, RequestReader &, ResponseWriter &>) {
+                return [fn = std::forward<Handler>(handler_fn)](RequestReader &request, ResponseWriter &response,
                                                                 RadixMatch &) mutable
                                -> usub::uvent::task::Awaitable<void> {
                     co_await fn(request, response);
-                    co_return;
                 };
             } else {
                 static_assert(!sizeof(HandlerType),
-                              "Handler must be invocable as Awaitable<void>(Request&, Response&) or "
-                              "Awaitable<void>(Request&, Response&, RadixMatch&) or "
-                              "Awaitable<void>(Request&, Response&, uri_params)");
+                              "Handler must be invocable as "
+                              "Awaitable<void>(RequestReader&, ResponseWriter&) or "
+                              "Awaitable<void>(RequestReader&, ResponseWriter&, RadixMatch&) or "
+                              "Awaitable<void>(RequestReader&, ResponseWriter&, uri_params)");
             }
         }
     };
 
     struct ParamEdge {
-        std::string name;
-        std::optional<std::regex> regex;
-        std::unique_ptr<RadixNode> child;
+        std::string                     name;
+        std::optional<std::regex>       regex;
         std::optional<param_constraint> constraint;
+        std::unique_ptr<RadixNode>      child;
+    };
+
+    struct WildcardEdge {
+        std::string                name;
+        std::unique_ptr<RadixNode> child;
     };
 
     const param_constraint default_constraint{R"([^/]+)", "Encountered an error..."};
     const std::unordered_map<std::string_view, const param_constraint *> no_constraints{};
 
     struct RadixNode {
-        std::unordered_map<std::string, std::unique_ptr<RadixNode>> literal;
-        std::vector<ParamEdge> param;
-        std::unique_ptr<RadixNode> wildcard;
-        std::string wildcard_name;
-        bool trailing_slash = false;
-        std::unique_ptr<RadixRoute> route = nullptr;
+        std::vector<std::pair<std::string, std::unique_ptr<RadixNode>>> literal_edges;
+
+        std::unique_ptr<ParamEdge>    param_edge;
+        std::unique_ptr<WildcardEdge> wildcard_edge;
+
+        std::unique_ptr<RadixRoute> route;
+        bool                        trailing_slash{false};
     };
 
-    using ErrorFunctionType = void(const Request &, Response &);
-    using ErrorHandlers = std::unordered_map<std::string, std::function<ErrorFunctionType>>;
+    using ErrorFunctionType = usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &);
+    using ErrorHandlers     = std::unordered_map<std::string, std::function<ErrorFunctionType>>;
 
     class Radix {
     public:
-        using RouteType = RadixRoute;
+        using RouteType   = RadixRoute;
         using MatchResult = RadixMatch;
 
         Radix() : root_(std::make_unique<RadixNode>()) {}
@@ -214,11 +226,9 @@ namespace usub::unet::http::router {
         RouteType &addUpgradeRoute(std::string_view method, const std::string &pattern, Handler &&handler,
                                    const std::unordered_map<std::string_view, const param_constraint *> &constraints =
                                            no_constraints) {
-            // Register path/method in the tree. Normal handler is a no-op; upgrade handler is set below.
             auto &route = this->addRoute(method, pattern,
-                                         [](Request &, Response &, RadixMatch &) -> usub::uvent::task::Awaitable<void> {
-                                             co_return;
-                                         },
+                                         [](RequestReader &, ResponseWriter &, RadixMatch &)
+                                                 -> usub::uvent::task::Awaitable<void> { co_return; },
                                          constraints);
             route.kind            = usub::unet::http::RouteKind::Upgrade;
             route.upgrade_handler = RouteType::makeUpgradeHandler(std::forward<Handler>(handler));
@@ -231,9 +241,8 @@ namespace usub::unet::http::router {
                                    const std::unordered_map<std::string_view, const param_constraint *> &constraints =
                                            no_constraints) {
             auto &route = this->addRoute(methods, pattern,
-                                         [](Request &, Response &, RadixMatch &) -> usub::uvent::task::Awaitable<void> {
-                                             co_return;
-                                         },
+                                         [](RequestReader &, ResponseWriter &, RadixMatch &)
+                                                 -> usub::uvent::task::Awaitable<void> { co_return; },
                                          constraints);
             route.kind            = usub::unet::http::RouteKind::Upgrade;
             route.upgrade_handler = RouteType::makeUpgradeHandler(std::forward<Handler>(handler));
@@ -242,14 +251,15 @@ namespace usub::unet::http::router {
 
         Radix &addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn);
 
-        void error(const std::string &level, const Request &request, Response &);
+        usub::uvent::task::Awaitable<void> error(const std::string &level, RequestReader &request, ResponseWriter &);
 
-        std::expected<MatchResult, STATUS_CODE> match(const Request &request,
+        std::expected<MatchResult, STATUS_CODE> match(const RequestReader &request,
                                                       std::string *error_description = nullptr);
 
-        usub::uvent::task::Awaitable<void> invoke(MatchResult &match, Request &request, Response &response);
+        usub::uvent::task::Awaitable<void> invoke(MatchResult &match, RequestReader &request, ResponseWriter &response);
 
-        usub::uvent::task::Awaitable<void> invokeUpgrade(MatchResult &match, Request &request, Response &response,
+        usub::uvent::task::Awaitable<void> invokeUpgrade(MatchResult &match, RequestReader &request,
+                                                         ResponseWriter &response,
                                                          usub::unet::http::UpgradeContext &ctx) {
             if (match.route && match.route->upgrade_handler) {
                 co_await match.route->upgrade_handler(request, response, ctx, match);
@@ -257,7 +267,9 @@ namespace usub::unet::http::router {
             co_return;
         }
 
-        bool runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, Request &request, Response &response);
+        usub::uvent::task::Awaitable<bool>
+        runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, RequestReader &request,
+                           ResponseWriter &response);
 
         MiddlewareChain &addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware);
 
@@ -266,41 +278,33 @@ namespace usub::unet::http::router {
         std::string dump() const;
 
     private:
-        ErrorHandlers error_handlers_map;
+        ErrorHandlers              error_handlers_map;
         std::unique_ptr<RadixNode> root_;
-        MiddlewareChain middleware_chain_;
+        MiddlewareChain            middleware_chain_;
 
-        struct Segment {
-            enum Kind { Lit, Par, Wild } kind;
-            std::string lit, name, re;
+        // ---- pattern tokenization -----------------------------------------
+
+        // A pattern is a sequence of these tokens. Literal runs absorb any
+        // chars not interpreted as the start of `{...}` or `*name`.
+        struct PatternToken {
+            enum class Kind { Literal, Param, Wildcard } kind{Kind::Literal};
+            std::string                     text;   // literal text OR param/wildcard name
+            std::string                     regex;  // only for Param
             std::optional<param_constraint> constraint;
         };
 
-        void parsePathPattern(const std::string &pathPattern, std::regex &outRegex,
-                              std::vector<std::string> &outParamNames,
-                              const std::unordered_map<std::string_view, const param_constraint *> &constraints = {})
-                const;
+        std::vector<PatternToken>
+        tokenize(const std::string &pattern, std::vector<std::string> &param_names,
+                 const std::unordered_map<std::string_view, const param_constraint *> &constraints) const;
 
-        size_t findMatchingBrace(const std::string &pathPattern, size_t start) const;
-
-        bool containsCapturingGroup(const std::string &regex) const;
-
-        std::vector<std::string> splitPath(const std::string &path);
-
-        std::vector<Segment> parseSegments(const std::string &pattern, std::vector<std::string> &param_names) const;
-
-        void applyConstraints(std::vector<Segment> &segs,
-                              const std::unordered_map<std::string_view, const param_constraint *> &constraints);
-
-        void insert(RadixNode *node, const std::vector<Segment> &segs, std::size_t idx,
+        void insert(RadixNode *node, const std::vector<PatternToken> &tokens, std::size_t idx,
+                    std::string_view literal_remaining,
                     std::unique_ptr<RouteType> &route, bool has_trailing_slash);
 
-        bool matchDFS(RadixNode *node, const std::vector<std::string> &segs, std::size_t idx, const Request &request,
-                      MatchResult &out, std::string *last_error);
-
-        bool matchIter(RadixNode *node, const std::vector<std::string> &segs, const Request &request, MatchResult &out,
-                       std::string *last_error = nullptr);
+        bool matchAt(RadixNode *node, std::string_view path, std::string_view cursor, const RequestReader &request,
+                     MatchResult &out, std::string *last_error) const;
 
         void printNode(const RadixNode *node, std::ostringstream &buf, const std::string &prefix) const;
     };
+
 }// namespace usub::unet::http::router

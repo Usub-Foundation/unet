@@ -16,14 +16,31 @@ The method wildcard is the literal `"*"` token.
 
 ## Path Pattern Features
 
-Supported route path shapes:
+The router is a byte-level compressed radix trie. Patterns support:
 
-- literal: `/health`
-- named param: `/users/{id}`
-- param with inline regex: `/orders/{id:[0-9]+}`
-- wildcard tail: `/files/*`
+- **literal**: `/health` — common prefixes are merged across segment boundaries,
+  so `/users` and `/userdata` share the `/user` edge internally.
+- **named param**: `/users/{id}` — captures one segment by default (`[^/]+`).
+- **param with inline regex**: `/orders/{id:[0-9]+}` — constrains the capture.
+- **named wildcard tail**: `/files/*splat` — captures everything remaining,
+  must be the last token. Bare `*` is NOT a wildcard — it's a literal byte
+  (which is exactly what makes `server.handle("OPTIONS", "*", fn)` register
+  the asterisk-form request-target for `OPTIONS *` without any special API).
+- **escape**: `\{`, `\}`, `\*`, `\\` for literal occurrences mid-pattern.
 
 Trailing slash is significant (`/users/{id}` and `/users/{id}/` are different routes).
+
+## Param Map Type
+
+Captured params are surfaced as:
+
+```cpp
+using UriParams = std::unordered_map<std::string_view, std::string_view>;
+```
+
+Both keys and values are `string_view` slices over the request's path — no
+allocation in the hot path. If your handler needs an owning `std::string`,
+construct one explicitly: `std::string{params.at("id")}`.
 
 ## Param Constraints
 
@@ -60,13 +77,15 @@ usub::uvent::task::Awaitable<void>
 getUser(usub::unet::http::Request&, usub::unet::http::Response& res,
         const usub::unet::http::router::RadixMatch::UriParams& params) {
     auto it = params.find("id");
-    const std::string id = (it == params.end()) ? "missing" : it->second;
+    std::string id = (it == params.end()) ? std::string{"missing"}
+                                          : std::string{it->second};
     res.setStatus(200).setBody("id=" + id + "\n");
     co_return;
 }
 ```
 
-You can also accept `RadixMatch&` directly and use `match.param("name")`.
+You can also accept `RadixMatch&` directly and use `match.param("name")`, which
+returns `std::optional<std::string_view>`.
 
 ## Error Handlers
 

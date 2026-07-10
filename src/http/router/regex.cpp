@@ -54,7 +54,7 @@ namespace usub::unet::http::router {
         return this->addRoute(method_set, pattern, std::move(handler));
     }
 
-    std::expected<Regex::MatchResult, STATUS_CODE> Regex::match(const Request &request, std::string *error_description) {
+    std::expected<Regex::MatchResult, STATUS_CODE> Regex::match(const RequestReader &request, std::string *error_description) {
         const std::string &path = request.metadata.uri.path;
         bool has_path_match = false;
 
@@ -80,15 +80,16 @@ namespace usub::unet::http::router {
         return std::unexpected(STATUS_CODE::NOT_FOUND);
     }
 
-    usub::uvent::task::Awaitable<void> Regex::invoke(MatchResult &match, Request &request, Response &response) {
+    usub::uvent::task::Awaitable<void> Regex::invoke(MatchResult &match, RequestReader &request, ResponseWriter &response) {
         if (!match.route) { co_return; }
         co_await match.route->handler(request, response, match);
         co_return;
     }
 
-    bool Regex::runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, Request &request, Response &response) {
-        if (!match.route) { return false; }
-        return match.route->middleware_chain.execute(phase, request, response);
+    usub::uvent::task::Awaitable<bool>
+    Regex::runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, RequestReader &request, ResponseWriter &response) {
+        if (!match.route) co_return false;
+        co_return co_await match.route->middleware_chain.execute(phase, request, response);
     }
 
     MiddlewareChain &Regex::addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware) {
@@ -107,8 +108,12 @@ namespace usub::unet::http::router {
         return *this;
     }
 
-    void Regex::error(const std::string &level, const Request &request, Response &response) {
-        if (this->error_handlers_map_.contains(level)) { this->error_handlers_map_.at(level)(request, response); }
+    usub::uvent::task::Awaitable<void>
+    Regex::error(const std::string &level, RequestReader &request, ResponseWriter &response) {
+        if (this->error_handlers_map_.contains(level)) {
+            co_await this->error_handlers_map_.at(level)(request, response);
+        }
+        co_return;
     }
 
     std::string Regex::dump() const {

@@ -3,16 +3,18 @@
 **Fast and versatile web framework in modern C++**
 
 Webserver is a lightweight, high-performance framework built on top of [Uvent](https://github.com/Usub-development/uvent).  
-It provides everything you need to handle HTTP/1.0 and HTTP/1.1 efficiently, with planned support for HTTP/2 and HTTP/3.
+It supports HTTP/1.0, HTTP/1.1, and HTTP/2 (prior-knowledge and `Upgrade: h2c`), with HTTP/3 planned.
 
 ---
 
 ## Features
 - 🚀 High-performance async event loop (via Uvent)
-- 📦 RFC-compliant HTTP parser
-- 🔌 Middleware and routing system (regex & radix)
+- 📦 RFC-compliant HTTP/1 parser (all four request-target forms)
+- ⚡ HTTP/2 server with HPACK, multiplexed streams, SETTINGS exchange
+- 🌲 Byte-level radix router with named params, inline regex constraints, named wildcards
+- 🔌 Middleware system (header/body/response phases, global + per-route)
 - 🧩 Modular and extensible design
-- 🔒 TLS/SSL support (optional, OpenSSL)
+- 🔒 TLS/SSL support (optional, OpenSSL or Windows SChannel)
 
 ---
 

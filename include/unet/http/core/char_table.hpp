@@ -116,4 +116,6 @@ namespace usub::unet::http {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     }
 
+    inline bool isDigit(unsigned char c) { return c >= '0' && c <= '9'; }
+
 }// namespace usub::unet::http

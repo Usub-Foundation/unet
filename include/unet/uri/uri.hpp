@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+// TODO: Move uri to another place root folders are better left as protocol ones
+
 // The URI Is much simpler then I thought initially. No need to overcomplicate it.
 // Threr is no set rule for almost anything in URI, except general syntax rules. (alphanum and special chars)
 // im parts, otherwise ots all

@@ -1,99 +1,139 @@
 #pragma once
 
-#include <limits>
+#include <memory>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
 
-#include "unet/core/streams/stream.hpp"
-#include "unet/http/client_session.hpp"
-#include "unet/http/session.hpp"
+#include <uvent/Uvent.h>
+
+#include "unet/core/io_provider.hpp"
+#include "unet/core/transport/transport.hpp"
+#include "unet/http/client_error.hpp"
+#include "unet/http/core/request.hpp"
+#include "unet/http/core/response.hpp"
+#include "unet/http/v1/wire/request_serializer.hpp"
 #include "unet/http/v1/wire/response_parser.hpp"
 
-namespace usub::unet::http {
-    template<>
-    class ClientSession<VERSION::HTTP_1_1> {
+
+namespace usub::unet::http::v1 {
+
+    class ClientSession : public std::enable_shared_from_this<ClientSession> {
     public:
-        ClientSession() = default;
-        ~ClientSession() = default;
+        using Transport = usub::unet::core::transport::Transport;
 
-        usub::uvent::task::Awaitable<SessionAction>
-        onBytes(std::string_view data, usub::unet::core::stream::Transport & /*transport*/) {
-            if (this->state_.complete) { co_return SessionAction{.kind = SessionAction::Kind::Close}; }
-            if (!data.empty()) { this->state_.saw_bytes = true; }
+        usub::uvent::task::Awaitable<std::expected<ResponseReader, ClientError>>
+        run(std::unique_ptr<Transport> transport, Request req) {
+            fillDefaultHeaders(req);
 
-            if (this->state_.read_until_close_mode) {
-                if (data.size() > std::numeric_limits<std::size_t>::max() - this->state_.response.body.size()) {
-                    this->state_.error = ClientError{
-                            .code = ClientError::CODE::PARSE_FAILED,
-                            .message = "response body exceeded max size in until-close mode",
-                    };
-                    co_return SessionAction{.kind = SessionAction::Kind::Error};
-                }
-                this->state_.response.body.append(data.data(), data.size());
-                co_return SessionAction{.kind = SessionAction::Kind::Continue};
+            const std::string wire = RequestSerializer::serialize(req);
+            const ssize_t     sent = co_await transport->send(wire);
+            if (sent < static_cast<ssize_t>(wire.size()))
+                co_return std::unexpected(ClientError::WriteFailed);
+
+            usub::unet::Buffer buf;
+            std::string        acc;
+            ResponseParser     parser;
+            Response           head{};
+
+            while (parser.getContext().state != ResponseParser::STATE::HEADERS_DONE &&
+                   parser.getContext().state != ResponseParser::STATE::BODY_UNTIL_CLOSE &&
+                   parser.getContext().state != ResponseParser::STATE::COMPLETE) {
+                buf.clear();
+                const ssize_t n = co_await transport->read(buf);
+                if (n <= 0) co_return std::unexpected(ClientError::ReadFailed);
+                acc.append(reinterpret_cast<const char *>(buf.data()), buf.size());
+
+                std::string_view                 view = acc;
+                std::string_view::const_iterator cur  = view.begin();
+                std::string_view::const_iterator end  = view.end();
+                auto parsed = parser.parse(head, cur, end);
+                if (!parsed) co_return std::unexpected(ClientError::ParseFailed);
+                acc.erase(0, static_cast<std::size_t>(cur - view.begin()));
             }
 
-            auto begin = data.begin();
-            const auto end = data.end();
-            auto parsed = this->parser_.parse(this->state_.response, begin, end);
-            if (!parsed) {
-                this->state_.error = ClientError{
-                        .code = ClientError::CODE::PARSE_FAILED,
-                        .message = parsed.error().message,
-                        .parse_error = parsed.error(),
-                };
-                co_return SessionAction{.kind = SessionAction::Kind::Error};
+            ResponseReader reader{};
+            reader.metadata = std::move(head.metadata);
+            reader.headers  = std::move(head.headers);
+
+            if (!head.body.empty())
+                (void) co_await reader.getBodyChannel().push(std::move(head.body));
+
+            if (parser.getContext().state == ResponseParser::STATE::COMPLETE) {
+                reader.getBodyChannel().close();
+                co_return reader;
             }
 
-            auto &ctx = this->parser_.getContext();
-            if (ctx.state == v1::ResponseParser::STATE::HEADERS_DONE) {
-                if (ctx.after_headers == v1::ResponseParser::AfterHeaders::COMPLETE) {
-                    this->state_.complete = true;
-                    co_return SessionAction{.kind = SessionAction::Kind::Close};
-                }
-                if (ctx.after_headers == v1::ResponseParser::AfterHeaders::UNTIL_CLOSE) {
-                    this->state_.read_until_close_mode = true;
-                    co_return SessionAction{.kind = SessionAction::Kind::Continue};
-                }
-            }
-
-            if (ctx.after_headers == v1::ResponseParser::AfterHeaders::UNTIL_CLOSE &&
-                ctx.state == v1::ResponseParser::STATE::COMPLETE) {
-                this->state_.read_until_close_mode = true;
-                co_return SessionAction{.kind = SessionAction::Kind::Continue};
-            }
-
-            if (ctx.state == v1::ResponseParser::STATE::COMPLETE) {
-                this->state_.complete = true;
-                co_return SessionAction{.kind = SessionAction::Kind::Close};
-            }
-
-            co_return SessionAction{.kind = SessionAction::Kind::Continue};
+            usub::uvent::system::co_spawn_static(
+                    this->bodyPump(this->shared_from_this(),
+                                    std::move(transport), std::move(parser),
+                                    std::move(acc), &reader),
+                    0);
+            co_return reader;
         }
-
-        usub::uvent::task::Awaitable<void> onClose() {
-            if (this->state_.read_until_close_mode || this->state_.complete ||
-                this->parser_.getContext().state == v1::ResponseParser::STATE::BODY_UNTIL_CLOSE ||
-                this->parser_.getContext().state == v1::ResponseParser::STATE::COMPLETE) {
-                this->state_.complete = true;
-                co_return;
-            }
-
-            this->state_.error = ClientError{
-                    .code = this->state_.saw_bytes ? ClientError::CODE::PARSE_FAILED : ClientError::CODE::READ_FAILED,
-                    .message = this->state_.saw_bytes ? "connection closed before response was complete"
-                                                      : "connection closed before response started",
-            };
-            co_return;
-        }
-
-        const ClientSessionState &state() const { return this->state_; }
-        bool isComplete() const { return this->state_.complete; }
-        bool hasError() const { return this->state_.error.has_value(); }
-        bool sawBytes() const { return this->state_.saw_bytes; }
-        const std::optional<ClientError> &error() const { return this->state_.error; }
 
     private:
-        ClientSessionState state_{};
-        v1::ResponseParser parser_{};
+        static void fillDefaultHeaders(Request &req) {
+            if (req.metadata.version == VERSION{}) req.metadata.version = VERSION::HTTP_1_1;
+            if (!req.headers.value("host") && !req.metadata.authority.empty())
+                req.headers.addHeader(std::string_view{"Host"}, req.metadata.authority);
+            if (!req.body.empty() && !req.headers.value("content-length"))
+                req.headers.addHeader(std::string_view{"Content-Length"}, std::to_string(req.body.size()));
+        }
+
+        // Caller MUST keep the ResponseReader alive until the channel is closed.
+        usub::uvent::task::Awaitable<void>
+        bodyPump(std::shared_ptr<ClientSession>                 self,
+                 std::unique_ptr<Transport>                     transport,
+                 ResponseParser                                 parser,
+                 std::string                                    acc,
+                 ResponseReader                                *reader) {
+            Response scratch{};
+            while (!acc.empty() && parser.getContext().state != ResponseParser::STATE::COMPLETE) {
+                scratch.body.clear();
+                std::string_view                 view = acc;
+                std::string_view::const_iterator cur  = view.begin();
+                std::string_view::const_iterator end  = view.end();
+                auto parsed = parser.parse(scratch, cur, end);
+                acc.erase(0, static_cast<std::size_t>(cur - view.begin()));
+                if (!parsed) {
+                    reader->getBodyChannel().signalError(BODY_ERROR::PARSER_ERROR);
+                    co_return;
+                }
+                if (!scratch.body.empty())
+                    (void) co_await reader->getBodyChannel().push(std::move(scratch.body));
+            }
+
+            usub::unet::Buffer buf;
+            while (parser.getContext().state != ResponseParser::STATE::COMPLETE) {
+                buf.clear();
+                const ssize_t n = co_await transport->read(buf);
+                if (n <= 0) {
+                    if (parser.getContext().state == ResponseParser::STATE::BODY_UNTIL_CLOSE) break;
+                    reader->getBodyChannel().signalError(BODY_ERROR::PROTOCOL_ERROR);
+                    co_return;
+                }
+                acc.assign(reinterpret_cast<const char *>(buf.data()), buf.size());
+                while (!acc.empty() && parser.getContext().state != ResponseParser::STATE::COMPLETE) {
+                    scratch.body.clear();
+                    std::string_view                 view = acc;
+                    std::string_view::const_iterator cur  = view.begin();
+                    std::string_view::const_iterator end  = view.end();
+                    auto parsed = parser.parse(scratch, cur, end);
+                    acc.erase(0, static_cast<std::size_t>(cur - view.begin()));
+                    if (!parsed) {
+                        reader->getBodyChannel().signalError(BODY_ERROR::PARSER_ERROR);
+                        co_return;
+                    }
+                    if (!scratch.body.empty())
+                        (void) co_await reader->getBodyChannel().push(std::move(scratch.body));
+                }
+            }
+            for (auto &h : scratch.trailers.all()) reader->trailers.addHeader(h.key, h.value);
+            reader->getBodyChannel().close();
+            co_return;
+        }
     };
-}// namespace usub::unet::http
+
+}// namespace usub::unet::http::v1

@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -8,7 +7,8 @@
 #include <string_view>
 #include <vector>
 
-namespace usub::unet::http::v2::hpack {
+
+namespace usub::unet::http::v2 {
 
     enum class Indexing : std::uint8_t { Incremental, None, Never };
 
@@ -18,7 +18,7 @@ namespace usub::unet::http::v2::hpack {
         Indexing indexing = Indexing::Incremental;
     };
 
-    enum class ErrorCode : std::uint8_t {
+    enum class HpackErrorCode : std::uint8_t {
         OK,
         BUFFER_UNDERFLOW,
         INVALID_INTEGER,
@@ -28,15 +28,15 @@ namespace usub::unet::http::v2::hpack {
         INVALID_TABLE_SIZE_UPDATE,
     };
 
-    struct Error {
-        ErrorCode code{};
+    struct HpackError {
+        HpackErrorCode code{};
         std::string message;
     };
 
-    class Encoder {
+    class HpackEncoder {
     public:
-        explicit Encoder(std::size_t max_table_size = 4096);
-        void set_max_dynamic_table_size(std::size_t size);
+        explicit HpackEncoder(std::size_t max_table_size = 4096);
+        void setMaxDynamicTableSize(std::size_t size);
         std::string encode(const std::vector<HeaderField> &headers, bool use_huffman = true);
 
     private:
@@ -46,16 +46,22 @@ namespace usub::unet::http::v2::hpack {
         std::vector<HeaderField> dynamic_table_;
     };
 
-    class Decoder {
+    class HpackDecoder {
     public:
-        explicit Decoder(std::size_t max_table_size = 4096);
-        void set_max_dynamic_table_size(std::size_t size);
-        std::expected<std::vector<HeaderField>, Error> decode(std::string_view block);
+        explicit HpackDecoder(std::size_t max_table_size = 4096);
+        void setMaxDynamicTableSize(std::size_t size);
+        std::expected<std::vector<HeaderField>, HpackError> decode(std::string_view block);
 
     private:
+        // settings_max_table_size_: the ceiling advertised by the peer via
+        // SETTINGS_HEADER_TABLE_SIZE. Dynamic table size updates in a header block
+        // must not exceed this.
+        // max_table_size_: the peer's currently-in-use table size (set by
+        // HPACK dynamic-table-size-update instructions within a header block).
+        std::size_t settings_max_table_size_;
         std::size_t max_table_size_;
         std::size_t current_table_size_;
         std::vector<HeaderField> dynamic_table_;
     };
 
-}// namespace usub::unet::http::v2::hpack
+}// namespace usub::unet::http::v2

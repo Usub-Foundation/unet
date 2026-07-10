@@ -171,7 +171,11 @@ namespace usub::unet::core {
                 co_return;
             }
 
-            usub::uvent::task::Awaitable<void> sendFile(usub::uvent::net::TCPClientSocket &/*socket*/) { co_return; }
+            usub::uvent::task::Awaitable<bool> sendFile(usub::uvent::net::TCPClientSocket &/*socket*/,
+                                                         int /*fd*/, std::uint64_t /*offset*/,
+                                                         std::uint64_t /*length*/) {
+                co_return false;
+            }
 
             usub::uvent::task::Awaitable<void> shutdown(usub::uvent::net::TCPClientSocket &socket) {
                 auto [fd, session] = this->findSession(socket);
@@ -186,6 +190,24 @@ namespace usub::unet::core {
             }
 
             MODE mode() const { return this->config_.mode; }
+
+            void dropSession(usub::uvent::net::TCPClientSocket &socket) noexcept {
+                if (auto fd_opt = getSocketFd(socket)) { this->eraseSession(*fd_opt); }
+            }
+
+            usub::uvent::task::Awaitable<std::string> negotiatedAlpn(usub::uvent::net::TCPClientSocket &socket) {
+                auto [fd, session] = this->getOrCreateSession(socket);
+                if (!session) { co_return std::string{}; }
+                if (!(co_await this->ensureHandshake(*session, socket))) {
+                    this->eraseSession(fd);
+                    co_return std::string{};
+                }
+                const unsigned char *proto = nullptr;
+                unsigned int         len   = 0;
+                ::SSL_get0_alpn_selected(session->ssl.get(), &proto, &len);
+                if (!proto || len == 0) { co_return std::string{}; }
+                co_return std::string(reinterpret_cast<const char *>(proto), static_cast<std::size_t>(len));
+            }
 
         private:
             struct SSLContextDeleter {
@@ -428,10 +450,13 @@ namespace usub::unet::core {
         ~Acceptor() = default;
 
         template<class OnConnection>
-        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection, Config &config) {
-            const Config::Object empty_section{};
-            const Config::Object *section_ptr = config.getObject("HTTP.OpenSSLStream");
-            const Config::Object &section = section_ptr ? *section_ptr : empty_section;
+        usub::uvent::task::Awaitable<void> acceptLoop(OnConnection on_connection, Config &config,
+                                                     std::string_view prefix) {
+            const Config::Object  empty_section{};
+            const Config::Object *prefix_obj  = config.getObject(prefix);
+            const Config::Object *section_ptr = prefix_obj ? config.getObject(*prefix_obj, "OpenSSLStream")
+                                                           : nullptr;
+            const Config::Object &section     = section_ptr ? *section_ptr : empty_section;
 
             std::string host = config.getString(section, "host", "127.0.0.1");
             const std::uint64_t raw_port = config.getUInt(section, "port", 443);
@@ -458,6 +483,7 @@ namespace usub::unet::core {
 
             const std::string key_file = config.getString(section, "key", "key.pem");
             const std::string cert_file = config.getString(section, "cert", "cert.pem");
+            const std::uint64_t base_timeout = config.getUInt(section, "base_timeout", 20000);
 
             usub::uvent::net::TCPServerSocket server_socket{host, static_cast<int>(port), backlog, ip_version,
                                                             socket_type};
@@ -467,6 +493,8 @@ namespace usub::unet::core {
             for (;;) {
                 auto soc = co_await server_socket.async_accept();
                 if (!soc) { continue; }
+
+                soc.value().set_timeout_ms(base_timeout);
                 usub::uvent::system::co_spawn(on_connection(stream, std::move(soc.value())));
             }
             co_return;

@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     # TODO: Dont forget to remove branches that are not relevant anymore
-    branches: [main, strict_parsing]
+    branches: [main, http2]
   pull_request:
     branches: [main]
   workflow_dispatch:

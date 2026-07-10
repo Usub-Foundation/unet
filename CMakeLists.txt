@@ -36,13 +36,9 @@ FetchContent_MakeAvailable(uvent)
 file(GLOB_RECURSE UNET_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
 file(GLOB_RECURSE UNET_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-list(FILTER UNET_HEADERS EXCLUDE REGEX "/include/unet/http/v2/")
-list(FILTER UNET_SOURCES EXCLUDE REGEX "/src/http/v2/")
+# list(FILTER UNET_HEADERS EXCLUDE REGEX "/v2/")
+# list(FILTER UNET_SOURCES EXCLUDE REGEX "/v2/")
 
-# list(APPEND UNET_SOURCES
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/http/v1/request_serializer.cpp"
-#     "${CMAKE_CURRENT_SOURCE_DIR}/src/http/v1/response_parser.cpp"
-# )
 list(REMOVE_DUPLICATES UNET_SOURCES)
 
 # Build the new implementation as a separate library so it can be tested independently
@@ -122,6 +118,6 @@ endif()
 option(UNET_TESTS "Build unet tests" OFF)
 
 if(UNET_TESTS)
-    # TODO: Add example directories here
+    enable_testing()
     add_subdirectory(tests)
 endif()

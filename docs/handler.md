@@ -15,13 +15,17 @@ handler(usub::unet::http::Request& req, usub::unet::http::Response& res) {
 
 ## With Route Params
 
-If your route has URI params, accept them as a third argument:
+If your route has URI params, accept them as a third argument.
+`UriParams` is `std::unordered_map<std::string_view, std::string_view>` — keys
+and values are slices over the request's path, no allocation in the hot path.
 
 ```cpp
 usub::uvent::task::Awaitable<void>
 handler(usub::unet::http::Request&, usub::unet::http::Response& res,
         const usub::unet::http::router::RadixMatch::UriParams& params) {
-    auto id = params.contains("id") ? params.at("id") : "missing";
+    auto it = params.find("id");
+    std::string id = (it == params.end()) ? std::string{"missing"}
+                                          : std::string{it->second};
     res.setStatus(200).setBody("id=" + id + "\n");
     co_return;
 }

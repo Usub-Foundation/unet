@@ -1,4 +1,4 @@
-#include "unet/http/v2/hpack.hpp"
+#include "unet/http/v2/wire/hpack.hpp"
 
 #include <algorithm>
 #include <array>
@@ -6,7 +6,7 @@
 #include <cstring>
 #include <optional>
 
-namespace usub::unet::http::v2::hpack {
+namespace usub::unet::http::v2 {
     namespace {
         struct StaticEntry {
             std::string_view name;
@@ -263,10 +263,10 @@ namespace usub::unet::http::v2::hpack {
             out.push_back(static_cast<char>(value));
         }
 
-        std::expected<std::uint32_t, Error> decode_integer(std::string_view data, std::size_t &pos, std::uint8_t prefix_bits) {
+        std::expected<std::uint32_t, HpackError> decode_integer(std::string_view data, std::size_t &pos, std::uint8_t prefix_bits) {
             const std::uint32_t max_prefix = (1u << prefix_bits) - 1u;
             if (pos >= data.size()) {
-                return std::unexpected(Error{ErrorCode::BUFFER_UNDERFLOW, "integer prefix missing"});
+                return std::unexpected(HpackError{HpackErrorCode::BUFFER_UNDERFLOW, "integer prefix missing"});
             }
             std::uint8_t first = static_cast<std::uint8_t>(data[pos++]);
             std::uint32_t value = first & max_prefix;
@@ -278,10 +278,10 @@ namespace usub::unet::http::v2::hpack {
                 if ((byte & 0x80) == 0) { return value; }
                 m += 7;
                 if (m > 28) {
-                    return std::unexpected(Error{ErrorCode::INVALID_INTEGER, "integer overflow"});
+                    return std::unexpected(HpackError{HpackErrorCode::INVALID_INTEGER, "integer overflow"});
                 }
             }
-            return std::unexpected(Error{ErrorCode::BUFFER_UNDERFLOW, "integer continuation missing"});
+            return std::unexpected(HpackError{HpackErrorCode::BUFFER_UNDERFLOW, "integer continuation missing"});
         }
 
         std::string huffman_encode(std::string_view input) {
@@ -307,7 +307,7 @@ namespace usub::unet::http::v2::hpack {
             return out;
         }
 
-        std::expected<std::string, Error> huffman_decode(std::string_view input) {
+        std::expected<std::string, HpackError> huffman_decode(std::string_view input) {
             const auto &nodes = huffman_tree();
             std::string out;
             int node = 0;
@@ -319,7 +319,7 @@ namespace usub::unet::http::v2::hpack {
                     int bit = (ch >> i) & 0x1;
                     node = nodes[node].child[bit];
                     if (node < 0) {
-                        return std::unexpected(Error{ErrorCode::INVALID_HUFFMAN, "invalid huffman code"});
+                        return std::unexpected(HpackError{HpackErrorCode::INVALID_HUFFMAN, "invalid huffman code"});
                     }
                     if (prefix_all_ones) {
                         if (bit == 1) {
@@ -330,7 +330,7 @@ namespace usub::unet::http::v2::hpack {
                     }
                     if (nodes[node].sym >= 0) {
                         if (nodes[node].sym == 256) {
-                            return std::unexpected(Error{ErrorCode::INVALID_HUFFMAN, "unexpected EOS"});
+                            return std::unexpected(HpackError{HpackErrorCode::INVALID_HUFFMAN, "unexpected EOS"});
                         }
                         out.push_back(static_cast<char>(nodes[node].sym));
                         node = 0;
@@ -340,8 +340,10 @@ namespace usub::unet::http::v2::hpack {
                 }
             }
             if (node != 0) {
-                if (!prefix_all_ones || prefix_len > 30) {
-                    return std::unexpected(Error{ErrorCode::INVALID_HUFFMAN, "invalid huffman padding"});
+                // RFC 7541 §5.2 — padding is the MSB-aligned EOS-prefix and MUST NOT
+                // exceed 7 bits (else there would be room for another symbol).
+                if (!prefix_all_ones || prefix_len > 7) {
+                    return std::unexpected(HpackError{HpackErrorCode::INVALID_HUFFMAN, "invalid huffman padding"});
                 }
             }
             return out;
@@ -360,16 +362,16 @@ namespace usub::unet::http::v2::hpack {
             return encoded;
         }
 
-        std::expected<std::string, Error> decode_string(std::string_view data, std::size_t &pos) {
+        std::expected<std::string, HpackError> decode_string(std::string_view data, std::size_t &pos) {
             if (pos >= data.size()) {
-                return std::unexpected(Error{ErrorCode::BUFFER_UNDERFLOW, "string prefix missing"});
+                return std::unexpected(HpackError{HpackErrorCode::BUFFER_UNDERFLOW, "string prefix missing"});
             }
             bool huffman = (static_cast<std::uint8_t>(data[pos]) & 0x80) != 0;
             auto len_res = decode_integer(data, pos, 7);
             if (!len_res) { return std::unexpected(len_res.error()); }
             std::size_t len = *len_res;
             if (data.size() - pos < len) {
-                return std::unexpected(Error{ErrorCode::BUFFER_UNDERFLOW, "string data missing"});
+                return std::unexpected(HpackError{HpackErrorCode::BUFFER_UNDERFLOW, "string data missing"});
             }
             std::string_view raw = data.substr(pos, len);
             pos += len;
@@ -380,18 +382,18 @@ namespace usub::unet::http::v2::hpack {
         }
     }// namespace
 
-    Encoder::Encoder(std::size_t max_table_size)
+    HpackEncoder::HpackEncoder(std::size_t max_table_size)
         : max_table_size_(max_table_size),
           current_table_size_(0),
           pending_table_size_update_(false) {}
 
-    void Encoder::set_max_dynamic_table_size(std::size_t size) {
+    void HpackEncoder::setMaxDynamicTableSize(std::size_t size) {
         max_table_size_ = size;
         pending_table_size_update_ = true;
         evict_dynamic(dynamic_table_, current_table_size_, max_table_size_);
     }
 
-    std::string Encoder::encode(const std::vector<HeaderField> &headers, bool use_huffman) {
+    std::string HpackEncoder::encode(const std::vector<HeaderField> &headers, bool use_huffman) {
         std::string out;
         if (pending_table_size_update_) {
             encode_integer(out, static_cast<std::uint32_t>(max_table_size_), 5, 0x20);
@@ -443,15 +445,16 @@ namespace usub::unet::http::v2::hpack {
         return out;
     }
 
-    Decoder::Decoder(std::size_t max_table_size)
-        : max_table_size_(max_table_size), current_table_size_(0) {}
+    HpackDecoder::HpackDecoder(std::size_t max_table_size)
+        : settings_max_table_size_(max_table_size), max_table_size_(max_table_size), current_table_size_(0) {}
 
-    void Decoder::set_max_dynamic_table_size(std::size_t size) {
+    void HpackDecoder::setMaxDynamicTableSize(std::size_t size) {
+        settings_max_table_size_ = size;
         max_table_size_ = size;
         evict_dynamic(dynamic_table_, current_table_size_, max_table_size_);
     }
 
-    std::expected<std::vector<HeaderField>, Error> Decoder::decode(std::string_view block) {
+    std::expected<std::vector<HeaderField>, HpackError> HpackDecoder::decode(std::string_view block) {
         std::vector<HeaderField> headers;
         std::size_t pos = 0;
         bool seen_headers = false;
@@ -463,7 +466,7 @@ namespace usub::unet::http::v2::hpack {
                 if (!index) { return std::unexpected(index.error()); }
                 auto entry = lookup_index(dynamic_table_, *index);
                 if (!entry) {
-                    return std::unexpected(Error{ErrorCode::INVALID_INDEX, "indexed header out of range"});
+                    return std::unexpected(HpackError{HpackErrorCode::INVALID_INDEX, "indexed header out of range"});
                 }
                 headers.push_back(*entry);
                 seen_headers = true;
@@ -481,7 +484,7 @@ namespace usub::unet::http::v2::hpack {
                 } else {
                     auto entry = lookup_index(dynamic_table_, *name_index);
                     if (!entry) {
-                        return std::unexpected(Error{ErrorCode::INVALID_INDEX, "name index out of range"});
+                        return std::unexpected(HpackError{HpackErrorCode::INVALID_INDEX, "name index out of range"});
                     }
                     name = entry->name;
                 }
@@ -496,14 +499,18 @@ namespace usub::unet::http::v2::hpack {
 
             if (byte & 0x20) {
                 if (seen_headers) {
-                    return std::unexpected(Error{ErrorCode::INVALID_TABLE_SIZE_UPDATE,
+                    return std::unexpected(HpackError{HpackErrorCode::INVALID_TABLE_SIZE_UPDATE,
                                                  "dynamic table size update after headers"});
                 }
                 auto size = decode_integer(block, pos, 5);
                 if (!size) { return std::unexpected(size.error()); }
-                if (*size > max_table_size_) {
+                // RFC 7541 §4.2 — the update value must be within the ceiling
+                // set by SETTINGS_HEADER_TABLE_SIZE, not the current active size.
+                // Multiple updates in one header block are legal as long as each
+                // stays within that ceiling.
+                if (*size > settings_max_table_size_) {
                     return std::unexpected(
-                            Error{ErrorCode::INVALID_TABLE_SIZE_UPDATE, "dynamic table size exceeds limit"});
+                            HpackError{HpackErrorCode::INVALID_TABLE_SIZE_UPDATE, "dynamic table size exceeds limit"});
                 }
                 max_table_size_ = *size;
                 evict_dynamic(dynamic_table_, current_table_size_, max_table_size_);
@@ -521,7 +528,7 @@ namespace usub::unet::http::v2::hpack {
             } else {
                 auto entry = lookup_index(dynamic_table_, *name_index);
                 if (!entry) {
-                    return std::unexpected(Error{ErrorCode::INVALID_INDEX, "name index out of range"});
+                    return std::unexpected(HpackError{HpackErrorCode::INVALID_INDEX, "name index out of range"});
                 }
                 name = entry->name;
             }
@@ -532,4 +539,4 @@ namespace usub::unet::http::v2::hpack {
         }
         return headers;
     }
-}// namespace usub::unet::http::v2::hpack
+}// namespace usub::unet::http::v2

@@ -4,7 +4,7 @@ You can plug your own router into `ServerImpl` by replacing `router::Radix` with
 
 ## Where It Is Used
 
-`ServerImpl<RouterType, ...>` and `ServerSession<VERSION::HTTP_1_1, RouterType>` call router methods directly.  
+`ServerImpl<RouterType, ...>`, `v1::ServerSession<RouterType>`, and `v2::ServerSession<RouterType>` call router methods directly.  
 So your router must provide a compatible API surface.
 
 ## Required Router Interface

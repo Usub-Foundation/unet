@@ -8,9 +8,6 @@ namespace usub::unet::http {
             case MIDDLEWARE_PHASE::HEADER:
                 this->header_middlewares_.emplace_back(std::move(middleware));
                 break;
-            case MIDDLEWARE_PHASE::BODY:
-                this->body_middlewares_.emplace_back(std::move(middleware));
-                break;
             case MIDDLEWARE_PHASE::RESPONSE:
                 this->response_middlewares_.emplace_back(std::move(middleware));
                 break;
@@ -24,9 +21,6 @@ namespace usub::unet::http {
             case MIDDLEWARE_PHASE::HEADER:
                 this->header_middlewares_.emplace_back(std::move(middleware));
                 break;
-            case MIDDLEWARE_PHASE::BODY:
-                this->body_middlewares_.emplace_back(std::move(middleware));
-                break;
             case MIDDLEWARE_PHASE::RESPONSE:
                 this->response_middlewares_.emplace_back(std::move(middleware));
                 break;
@@ -34,15 +28,13 @@ namespace usub::unet::http {
         return *this;
     }
 
-    bool MiddlewareChain::execute(MIDDLEWARE_PHASE phase, Request &request, Response &response) const {
+    usub::uvent::task::Awaitable<bool>
+    MiddlewareChain::execute(MIDDLEWARE_PHASE phase, RequestReader &request, ResponseWriter &response) const {
         const std::vector<std::function<MiddlewareFunctionType>> *middlewares = nullptr;
 
         switch (phase) {
             case MIDDLEWARE_PHASE::HEADER:
                 middlewares = &this->header_middlewares_;
-                break;
-            case MIDDLEWARE_PHASE::BODY:
-                middlewares = &this->body_middlewares_;
                 break;
             case MIDDLEWARE_PHASE::RESPONSE:
                 middlewares = &this->response_middlewares_;
@@ -51,17 +43,13 @@ namespace usub::unet::http {
 
         if (middlewares) {
             for (const auto &middleware: *middlewares) {
-                if (!middleware(request, response)) {
+                if (!co_await middleware(request, response)) {
                     // Middleware has handled the response; halt the chain
-                    return false;
+                    co_return false;
                 }
-                // if (response.isSent()) {
-                //     // Response has been sent; halt further processing
-                //     return false;
-                // }
             }
         }
-        return true;
+        co_return true;
     }
 
 

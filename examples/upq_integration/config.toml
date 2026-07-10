@@ -1,9 +1,0 @@
-[server]
-threads  = 4
-backlog  = 128
-ip_addr = "0.0.0.0"
-timeout = 25000
-
-[[listener]]
-port = 3333
-ssl  = false
