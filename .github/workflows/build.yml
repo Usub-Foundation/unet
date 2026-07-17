@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-2022]
 
     steps:
       - name: Checkout
@@ -25,30 +25,34 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential gcc-13 g++-13
+          sudo apt-get install -y build-essential gcc-13 g++-13 ninja-build
 
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install llvm
+          brew install llvm ninja
 
-      - name: Install toolchain (Windows)
+      - name: Set up MSVC (Windows)
         if: runner.os == 'Windows'
-        run: |
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
-      - name: Configure CMake (Linux, Makefiles)
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Configure CMake (Linux)
         if: runner.os == 'Linux'
         run: |
           cmake -S . -B build \
-            -G "Unix Makefiles" \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER=gcc-13 \
-            -DCMAKE_CXX_COMPILER=g++-13 \
-            -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_COMPILER=g++-13
 
-      - name: Configure CMake (macOS, Ninja)
+      - name: Configure CMake (macOS)
         if: runner.os == 'macOS'
         run: |
           LLVM_PREFIX="$(brew --prefix llvm)"
@@ -58,24 +62,16 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="$LLVM_PREFIX/bin/clang" \
-            -DCMAKE_CXX_COMPILER="$LLVM_PREFIX/bin/clang++" \
-            -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_COMPILER="$LLVM_PREFIX/bin/clang++"
 
-      - name: Configure CMake (Windows, MSVC)
+      - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_C_COMPILER=cl `
+            -DCMAKE_CXX_COMPILER=cl
 
-      - name: Build (Linux)
-        if: runner.os == 'Linux'
+      - name: Build
         run: cmake --build build --parallel
-
-      - name: Build (macOS)
-        if: runner.os == 'macOS'
-        run: cmake --build build --parallel
-
-      - name: Build (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: cmake --build build --config Release
