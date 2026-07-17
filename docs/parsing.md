@@ -1,74 +1,70 @@
 # Parsing
 
-HTTP/1 parsing is implemented as incremental state machines.
+The HTTP/1 wire parsers are incremental state machines. Feed them bytes; they either advance state, return control asking for more bytes, or fail with a `ParseError`.
 
-## Request Parsing
+## HTTP/1 request parser
 
-Type: `usub::unet::http::v1::RequestParser`
+`usub::unet::http::v1::RequestParser` in `include/unet/http/v1/wire/request_parser.hpp`.
 
-Primary APIs:
+Primary entry:
 
-- `static parse(std::string_view)` for one-shot parse
-- `step(Request&, begin, end)` for incremental parse
+```cpp
+std::expected<void, ParseError>
+step(RequestReader &request,
+     std::string_view::const_iterator &begin,
+     const std::string_view::const_iterator end);
+```
 
-Parser emits `ParseStep` kinds:
+`begin` is advanced in place. Call `step` repeatedly with `[begin, end)` from your socket buffer until the state reaches `HEADERS_DONE` (headers ready, dispatch the handler) or `COMPLETE` (whole request done).
 
-- `CONTINUE`
-- `HEADERS`
-- `BODY`
-- `COMPLETE`
+### State machine (subset)
 
-### Validation Highlights
+- `METHOD_TOKEN` -> `URI` -> `ORIGIN_PATH` / `ABSOLUTE_FORM` / `AUTHORITY_FORM` / `ASTERISK_FORM` -> `VERSION` -> header pairs -> `HEADERS_VALIDATION` -> `HEADERS_DONE`.
+- Body branches out of `HEADERS_DONE`: `DATA_CONTENT_LENGTH` for content-length bodies, `DATA_CHUNKED_*` for chunked transfer.
+- `COMPLETE` when the body reaches EOF.
+- `FAILED` if any check fails.
 
-Current request parser behavior includes:
+### What it enforces
 
-- requires `Host` header for HTTP/1.1 flow
-- validates method token and version token
-- accepts all four RFC 9112 §3.2 request-target forms:
-  - **origin-form**: `/path?query` — for direct origin-server requests
-  - **absolute-form**: `http://host:port/path?query` — typically proxy traffic; per
-    RFC 9112 §3.3 an origin server treats authority/path as the request target
-  - **authority-form**: `host:port` — only with `CONNECT`
-  - **asterisk-form**: `*` — only with `OPTIONS`
-- enforces RFC 9110 §16.1.1 method/form pairing: rejects `CONNECT` with
-  origin-form, `*` with anything other than `OPTIONS`, etc.
-- supports IPv4 / reg-name / bracketed IPv6 hosts in authority parsing
-- accepts URI fragments on the wire and parses them (RFC 9110 §7.1 says clients
-  MUST NOT send, but the parser is lenient; the fragment is captured into
-  `metadata.uri.fragment`)
-- enforces a single URI size budget across scheme + authority + path + query +
-  fragment so an attacker can't split an oversized URI across sections
-- supports content-length and chunked parsing
-- validates conflicting or invalid `Content-Length`
-- enforces method/URI/header limits via global settings
+- All four RFC 9112 §3.2 request-target forms:
+  - origin-form (`/path?query`)
+  - absolute-form (`http://host:port/path`)
+  - authority-form (`host:port`, only with `CONNECT`)
+  - asterisk-form (`*`, only with `OPTIONS`)
+- RFC 9110 §16.1.1 method/form pairing (rejects `CONNECT` in origin-form etc.).
+- IPv4, reg-name, & bracketed IPv6 hosts in authority parsing.
+- URI fragment is captured into `metadata.uri.fragment` even though RFC 9110 §7.1 says clients MUST NOT send one.
+- Single URI size budget across scheme + authority + path + query + fragment - can't split a giant URI across sections to sneak past a per-part limit.
+- `Content-Length`: multiple identical values allowed, conflicting values rejected.
+- `Transfer-Encoding: chunked` accepted. Other encodings rejected. Both `Content-Length` & `Transfer-Encoding` together = 400.
+- `Host` header required for HTTP/1.1.
+- Global limits: `max_headers_size` (256 KiB), `max_method_token_size` (uint8 max), `max_uri_size` (uint16 max).
 
-## Response Parsing
+## HTTP/1 response parser
 
-Type: `usub::unet::http::v1::ResponseParser`
+`usub::unet::http::v1::ResponseParser` in `include/unet/http/v1/wire/response_parser.hpp`. Same shape as the request parser, used by the client.
 
-Supports:
+Body framing modes: content-length, chunked, until-close.
 
-- status line parsing
-- header parsing and validation
-- body framing by content-length, chunked, or until-close mode
+## HTTP/2 request parser
 
-Used directly by `ClientImpl` to decode responses.
+`usub::unet::http::v2::RequestParser` in `include/unet/http/v2/wire/request_parser.hpp` is smaller in scope than the h1 parser because framing is handled at the frame layer. It only tracks the header-block phases: `HEADERS`, `HEADERS_DONE`, `TRAILERS`, `DONE`, `FAILED`.
 
-## Parse Errors
+Body bytes bypass the parser entirely; they stream through `request.getBodyChannel()`. The parser only owns the HPACK accumulator & the content-length invariant (RFC 9113 §8.1.2.6).
 
-Common error container:
+## `ParseError`
 
 ```cpp
 struct ParseError {
-    CODE code;
-    STATUS_CODE expected_status;
-    std::string message;
-    std::array<char, 256> tail;
+    CODE code;                       // GENERIC_ERROR for now; more later
+    STATUS_CODE expected_status;     // suggested HTTP status to return
+    std::string message;             // human-readable
+    std::array<char, 256> tail;      // last bytes seen, for context
 };
 ```
 
-For handling guidance, see [Experimental Parse Error Notes](Experimental/parse_error_handling.md).
+The session uses `expected_status` for the response status when a request parse fails, then invokes the matching error handler.
 
-## Coverage Note
+## Coverage
 
-Tests under `tests/` provide behavior coverage signals, but they are not exhaustive.
+Tests under `tests/` exercise the parsers. Coverage is useful, not exhaustive. When you fix a parser bug, add a regression test alongside.

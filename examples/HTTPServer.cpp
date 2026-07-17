@@ -191,15 +191,6 @@ namespace streaming_file_and_metadata {
 namespace error_handler_overrides {
 
     usub::uvent::task::Awaitable<void>
-    logAnyError(usub::unet::http::RequestReader &req,
-                usub::unet::http::ResponseWriter &res) {
-        std::cout << "[err] " << req.metadata.method_token
-                  << " " << req.metadata.uri.path
-                  << " -> " << res.metadata.status_code << std::endl;
-        co_return;
-    }
-
-    usub::uvent::task::Awaitable<void>
     notFoundAsJson(usub::unet::http::RequestReader &req,
                    usub::unet::http::ResponseWriter &res) {
         res.headers.addHeader(std::string_view{"content-type"}, std::string_view{"application/json"});
@@ -233,7 +224,6 @@ namespace error_handler_overrides {
 
     template<class Server>
     void install(Server &server) {
-        server.addErrorHandler("log", logAnyError);
         server.addErrorHandler("404", notFoundAsJson);
         server.addErrorHandler("405", methodNotAllowed);
         server.addErrorHandler("408", timeoutStreamed);

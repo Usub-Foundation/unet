@@ -164,7 +164,6 @@ namespace usub::unet::http::v1 {
                         if (!match) {
                             request_parser.getContext().state = v1::RequestParser::STATE::FAILED;
                             response.metadata.status_code = match.error();
-                            // co_await this->router_->error("log", request, response);
                             co_await this->router_->error(std::to_string(response.metadata.status_code), request,
                                                           response);
                             goto send_error;

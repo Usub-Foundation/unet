@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "unet/http/error_defaults.hpp"
+
 namespace usub::unet::http::router {
 
     namespace {
@@ -351,16 +353,17 @@ namespace usub::unet::http::router {
     MiddlewareChain &Radix::getMiddlewareChain() { return this->middleware_chain_; }
 
     Radix &Radix::addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn) {
-        this->error_handlers_map.emplace(level, error_handler_fn);
+        this->error_handlers_map.insert_or_assign(level, std::move(error_handler_fn));
         return *this;
     }
 
     usub::uvent::task::Awaitable<void>
     Radix::error(const std::string &level, RequestReader &request, ResponseWriter &response) {
-        if (this->error_handlers_map.contains(level)) {
-            co_await this->error_handlers_map.at(level)(request, response);
+        if (auto it = this->error_handlers_map.find(level); it != this->error_handlers_map.end()) {
+            co_await it->second(request, response);
+            co_return;
         }
-        co_return;
+        co_await defaultErrorResponse(request, response);
     }
 
     // ---- dump ---------------------------------------------------------------

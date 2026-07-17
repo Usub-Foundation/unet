@@ -1,110 +1,83 @@
-# Webserver
+# unet
 
-**Fast and versatile web framework in modern C++**
+C++23 networking library. HTTP/1.1, HTTP/2, WebSocket (RFC 6455 + RFC 8441 over h2), and a VLESS proxy example, all sitting on the [uvent](https://github.com/Usub-development/uvent) coroutine runtime.
 
-Webserver is a lightweight, high-performance framework built on top of [Uvent](https://github.com/Usub-development/uvent).  
-It supports HTTP/1.0, HTTP/1.1, and HTTP/2 (prior-knowledge and `Upgrade: h2c`), with HTTP/3 planned.
+Everything is coroutine-based. Handlers are `Awaitable<void>`. Request bodies stream through a channel you can `co_await` on. Responses can be sent whole, chunked, sendfile-zero-copy, or as a raw byte tunnel after protocol upgrade.
 
----
+## What works today
 
-## Features
-- 🚀 High-performance async event loop (via Uvent)
-- 📦 RFC-compliant HTTP/1 parser (all four request-target forms)
-- ⚡ HTTP/2 server with HPACK, multiplexed streams, SETTINGS exchange
-- 🌲 Byte-level radix router with named params, inline regex constraints, named wildcards
-- 🔌 Middleware system (header/body/response phases, global + per-route)
-- 🧩 Modular and extensible design
-- 🔒 TLS/SSL support (optional, OpenSSL or Windows SChannel)
+- HTTP/1.1 server & client. Full RFC 9112 request-target parsing (origin, absolute, authority, asterisk forms), chunked transfer, keep-alive, Slowloris timeouts.
+- HTTP/2 server (RFC 9113). HPACK, per-stream flow control, SETTINGS with extensions, CONTINUATION-storm defense, extended CONNECT (RFC 8441).
+- WebSocket. Server side over h1 & h2 tunnel. `permessage-deflate` is not wired yet.
+- VLESS proxy example that rides on the h2 tunnel path.
+- Radix router with named params, inline regex constraints, wildcard tails.
+- TLS via OpenSSL (POSIX) or SChannel (Windows), both with ALPN.
 
----
+## What's missing
 
-## Quick Start
+- HTTP/2 client.
+- WebSocket compression (RFC 7692).
+- HTTP/3.
+- Response-phase middleware in the h1 send path (declared, not invoked).
 
-Minimal server:
+## Minimal server
 
 ```cpp
-#include <cstdint>
-#include <iostream>
-
 #include <uvent/Uvent.h>
-
-#include <unet/core/config.hpp>
 #include <unet/http.hpp>
-#include <unet/http/router/radix.hpp>
 
-using Request = usub::unet::http::Request;
-using Response = usub::unet::http::Response;
-
-usub::uvent::task::Awaitable<void> handle_any(Request &, Response &response) {
-    response.setStatus(200)
-            .addHeader("content-type", "application/json")
-            .setBody(R"({"status":"success"})");
-    co_return;
-}
-
-usub::unet::core::Config make_server_config() {
-    usub::unet::core::Config config{};
-
-    usub::unet::core::Config::Object stream_cfg{};
-    stream_cfg["host"] = usub::unet::core::Config::Value{std::string{"0.0.0.0"}};
-    stream_cfg["port"] = usub::unet::core::Config::Value{static_cast<std::uint64_t>(45901)};
-    stream_cfg["backlog"] = usub::unet::core::Config::Value{static_cast<std::uint64_t>(128)};
-    stream_cfg["version"] = usub::unet::core::Config::Value{static_cast<std::uint64_t>(4)};
-    stream_cfg["tcp"] = usub::unet::core::Config::Value{std::string{"tcp"}};
-
-    usub::unet::core::Config::Object http_cfg{};
-    http_cfg["PlainTextStream"] = usub::unet::core::Config::Value{std::move(stream_cfg)};
-    config.root["HTTP"] = usub::unet::core::Config::Value{std::move(http_cfg)};
-
-    return config;
+usub::uvent::task::Awaitable<void>
+hello(usub::unet::http::RequestReader &,
+      usub::unet::http::ResponseWriter &res) {
+    res.metadata.status_code = 200;
+    res.headers.addHeader("content-type", "text/plain");
+    co_await res.send(std::string{"hello\n"});
 }
 
 int main() {
-    usub::Uvent runtime{8};
-    auto config = make_server_config();
-    usub::unet::http::ServerRadix server{runtime, config};
-
-    server.handle("*", "/", handle_any);
-
-    std::cout << "minimal http server listening on http://127.0.0.1:45901\n";
-    std::cout << "quick check: curl -i http://127.0.0.1:45901/\n";
-
+    usub::Uvent runtime{4};
+    usub::unet::http::ServerRadix server{runtime};
+    server.handle("GET", "/hello", hello);
     runtime.run();
-    return 0;
 }
 ```
 
-Run:
+`ServerRadix` defaults to `127.0.0.1:22813` when you don't pass a config. Curl:
 
-```bash
-curl http://127.0.0.1:45901/
+```
+$ curl -i http://127.0.0.1:22813/hello
+HTTP/1.1 200 OK
+content-type: text/plain
+content-length: 6
+
+hello
 ```
 
----
+For TLS, HTTP/2, WebSockets, upgrades, & the VLESS example, see [examples/HTTPServer.cpp](examples/HTTPServer.cpp) & [examples/VLESS.cpp](examples/VLESS.cpp) which cover every registered path the framework can serve.
 
-## Documentation
+## Build
 
-Full documentation:
-* [Getting Started Guide](https://usub-development.github.io/webserver/getting-started/)
-* [Installation](https://usub-development.github.io/webserver/installation/)
-* [Middleware](https://usub-development.github.io/webserver/middlewares/)
-* [Request & Response](https://usub-development.github.io/webserver/request-response/)
+```
+git clone https://github.com/Usub-development/unet.git
+cd unet
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DUNET_BUILD_EXAMPLES=ON
+cmake --build build --parallel
+```
 
----
+Requires CMake 3.22+, GCC 13 / Clang 17 / MSVC 19.36+, & OpenSSL if you want the TLS examples on POSIX.
 
-## Roadmap
+## Docs
 
-See [Roadmap](https://usub-development.github.io/webserver/roadmap/).
-
----
-
-## Contributing
-
-We welcome contributions! Please see the [Contributing Guide](https://usub-development.github.io/webserver/contributing/).
-
----
+- [docs/index.md](docs/index.md) - full documentation index
+- [docs/quick-start.md](docs/quick-start.md) - first server in five minutes
+- [docs/architecture.md](docs/architecture.md) - how the runtime is wired
+- [docs/routing.md](docs/routing.md) - route patterns & constraints
+- [docs/handler.md](docs/handler.md) - handler shapes, streaming, sendfile
+- [docs/middlewares.md](docs/middlewares.md) - phases & invocation order
+- [docs/client.md](docs/client.md) - HTTP client, keep-alive, proxies
+- [docs/websockets.md](docs/websockets.md) - RFC 6455 & extended CONNECT
+- [docs/upgrade.md](docs/upgrade.md) - custom protocols riding on HTTP/2
 
 ## License
 
-MIT
-
+MIT.

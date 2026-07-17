@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "unet/http/error_defaults.hpp"
+
 namespace usub::unet::http::router {
     RegexRoute::RegexRoute(const std::set<std::string> &methods, std::string regex_pattern,
                            std::function<HandlerFunctionType> handler_fn, bool accept_all)
@@ -104,16 +106,17 @@ namespace usub::unet::http::router {
     MiddlewareChain &Regex::getMiddlewareChain() { return this->middleware_chain_; }
 
     Regex &Regex::addErrorHandler(const std::string &level, std::function<ErrorFunctionType> error_handler_fn) {
-        this->error_handlers_map_.emplace(level, std::move(error_handler_fn));
+        this->error_handlers_map_.insert_or_assign(level, std::move(error_handler_fn));
         return *this;
     }
 
     usub::uvent::task::Awaitable<void>
     Regex::error(const std::string &level, RequestReader &request, ResponseWriter &response) {
-        if (this->error_handlers_map_.contains(level)) {
-            co_await this->error_handlers_map_.at(level)(request, response);
+        if (auto it = this->error_handlers_map_.find(level); it != this->error_handlers_map_.end()) {
+            co_await it->second(request, response);
+            co_return;
         }
-        co_return;
+        co_await defaultErrorResponse(request, response);
     }
 
     std::string Regex::dump() const {

@@ -2,37 +2,48 @@
 
 ## Requirements
 
-- Linux environment (current project target)
-- C++23 compiler
+- C++23 compiler (GCC 13+, Clang 17+, MSVC 19.36+)
 - CMake 3.22+
 - Git
 
 Optional:
 
-- OpenSSL (required for TLS stream features/tests)
+- OpenSSL 1.1.1+ for TLS on POSIX (SChannel is used on Windows).
+- Ninja for faster builds.
 
-## Build From Source
+## Build from source
 
-```bash
+```
 git clone https://github.com/Usub-development/unet.git
 cd unet
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
+
+To build the examples & tests:
+
+```
+cmake -S . -B build -G Ninja \
+      -DUNET_BUILD_EXAMPLES=ON \
+      -DUNET_BUILD_TESTS=ON
+cmake --build build --parallel
 ```
 
 ## Install
 
-```bash
+```
 cmake --install build
 ```
 
-By default, headers are installed under your CMake install prefix (for example `/usr/local/include`) and CMake package files are installed under `lib/cmake/unet`.
+Headers go under `${CMAKE_INSTALL_PREFIX}/include`, the static lib under `lib/`, & CMake package files under `lib/cmake/unet/`.
 
-## Use From Another CMake Project
+## Consume from your own CMake project
 
 ```cmake
 cmake_minimum_required(VERSION 3.22)
 project(my_app LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(unet REQUIRED)
 
@@ -40,42 +51,39 @@ add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE usub::unet)
 ```
 
-## FetchContent (Development)
+Or via FetchContent, for a development pin:
 
 ```cmake
 include(FetchContent)
-
 FetchContent_Declare(
   unet
   GIT_REPOSITORY https://github.com/Usub-development/unet.git
   GIT_TAG main
 )
-
 FetchContent_MakeAvailable(unet)
 
 add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE usub::unet)
 ```
 
-## Build Options (Current State)
+## Build options
 
-Declared options in `CMakeLists.txt`:
+Defined in the top-level `CMakeLists.txt`:
 
-- `UNET_BUILD_EXAMPLES` (default `OFF`)
-- `UNET_BUILD_TESTS` (default `ON`)
+| Option                 | Default | Effect                                      |
+|------------------------|---------|---------------------------------------------|
+| `UNET_BUILD_EXAMPLES`  | `OFF`   | Adds the `examples/` subdirectory.          |
+| `UNET_BUILD_TESTS`     | `ON`    | Adds the `tests/` subdirectory.             |
 
-Current top-level conditions still check `BUILD_EXAMPLES` for enabling subdirectories, so if you want examples/tests added by this file as-is, use:
+Enable at configure time with `-DUNET_BUILD_EXAMPLES=ON` etc.
 
-```bash
-cmake -B build -DBUILD_EXAMPLES=ON
+## Docs site
+
+If you have MkDocs:
+
 ```
-
-## Generate Documentation Site
-
-If MkDocs is installed:
-
-```bash
-mkdocs build -f docs/mkdocs.yml
-# or
+pip install mkdocs mkdocs-material
 mkdocs serve -f docs/mkdocs.yml
 ```
+
+Then open `http://127.0.0.1:8000/`. `mkdocs build -f docs/mkdocs.yml` writes the static site to `site/`.

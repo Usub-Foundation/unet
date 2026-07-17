@@ -493,7 +493,6 @@ namespace usub::unet::http::v2 {
 
             if (!match) {
                 stream.response.metadata.status_code = match.error();
-                // co_await router_->error("log", stream.request, stream.response);
                 co_await router_->error(std::to_string(stream.response.metadata.status_code), stream.request,
                                         stream.response);
                 co_await finalizeStreamResponse(stream, transport);

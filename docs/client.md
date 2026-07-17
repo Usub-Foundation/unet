@@ -1,73 +1,88 @@
 # HTTP Client
 
-Client API is `usub::unet::http::ClientImpl<Streams...>`.
+`usub::unet::http::ClientImpl<Streams...>` sends HTTP requests. HTTP/1.1 only for now; the h2 client is on the roadmap.
 
-## Core Types
+## Core types
 
-- `ClientImpl<...>`
-- `ClientSession<VERSION::HTTP_1_1>` (internal protocol session used by the client runtime)
-- `ClientProxyOptions`
-- `ClientRequestOptions` (connection timeout)
-- `ClientError`
+- `ClientImpl<Streams...>` - the client. Owns per-endpoint connection reuse & routes requests through one of its template streams.
+- `ClientSession<VERSION::HTTP_1_1>` - internal per-connection parser session. You won't touch it directly.
+- `ClientRequestOptions` - per-call options (proxy, timeout).
+- `ClientProxyOptions` - proxy address & optional credentials.
+- `ClientError` - failure code + optional message + optional parse detail.
 
-`request(...)` returns:
+`client.request(req, opts?)` returns `Awaitable<std::expected<Response, ClientError>>`. Success = a `Response`. Failure = a `ClientError` you can switch on.
 
-- `Awaitable<std::expected<Response, ClientError>>`
+## Building a request
 
-## Required Request Fields
+`Request` is defined in `unet/http/core/request.hpp`. Minimum fields for a working request:
 
-Set at minimum:
+```cpp
+usub::unet::http::Request req;
+req.metadata.method_token       = "GET";
+req.metadata.version            = usub::unet::http::VERSION::HTTP_1_1;
+req.metadata.uri.scheme         = "https";
+req.metadata.uri.authority.host = "example.com";
+req.metadata.uri.authority.port = 443;
+req.metadata.uri.path           = "/";
+req.metadata.authority          = "example.com";   // used as Host header
+```
 
-- `request.metadata.authority` (required)
-- `request.metadata.uri.authority.host`
+Defaults the client fills in if you leave them empty:
 
-Common explicit fields:
+| Field                   | Default                                            |
+|-------------------------|----------------------------------------------------|
+| `method_token`          | `"GET"`                                            |
+| `version`               | `HTTP_1_1`                                         |
+| `uri.path`              | `"/"`                                              |
+| `uri.scheme`            | Inferred from the available template streams.      |
+| `Host` header           | Filled from `authority` when missing.              |
+| TLS SNI                 | Filled from `uri.authority.host` when not configured. |
 
-- `method_token` (`GET`, `POST`, ...)
-- `uri.scheme` (`http` / `https`)
-- `uri.path`
-- `uri.authority.port`
+## Sending & consuming
 
-## Defaults Applied By Client
+```cpp
+using Client = usub::unet::http::ClientImpl<
+    usub::unet::core::stream::PlainText,
+    usub::unet::core::stream::OpenSSLStream<>
+>;
 
-If omitted, current client logic defaults:
+usub::uvent::task::Awaitable<void>
+fetch_example(Client &client) {
+    usub::unet::http::Request req = build_request();
 
-- method -> `GET`
-- version -> `HTTP/1.1`
-- path -> `/`
-- scheme -> inferred from available stream types
-- `host` header -> auto-added when missing and authority host is available
-- HTTP/1.1 connections are kept alive by default when the server allows it
-- HTTP/1.0 connections are only reused when keep-alive is explicitly negotiated
-- `Keep-Alive: timeout=...` is respected by expiring idle client connections before reuse
-- TLS client hostname / SNI is derived from the request host when no explicit managed stream config is provided
-- Optional HTTP proxy support is available for both plain HTTP requests and HTTPS `CONNECT` tunneling
+    auto result = co_await client.request(std::move(req));
+    if (!result) {
+        // result.error().code / .message / .parse_error
+        std::cerr << "http error\n";
+        co_return;
+    }
 
-## Persistent Connections
+    const auto &resp = *result;
+    std::cout << "status " << resp.metadata.status_code << "\n";
+    std::cout << resp.body << "\n";
 
-The client now keeps one reusable connection per stream type and target endpoint.
+    co_await client.close();   // close reusable connections
+}
+```
 
-- Reuse is attempted automatically for HTTP/1.1 unless either side sends `Connection: close`
-- For HTTP/1.0, reuse only happens when `Connection: keep-alive` is negotiated
-- Responses that are framed `until close` are never reused
-- If an idle keep-alive timeout has elapsed, the client closes and reconnects before the next request
+## Persistent connections
 
-You can explicitly close any live client-side connections with:
+The client keeps one reusable connection per `{stream type, endpoint}`. Behavior:
+
+- HTTP/1.1: reused by default unless either side sends `Connection: close`.
+- HTTP/1.0: reused only when `Connection: keep-alive` is explicitly negotiated.
+- `Keep-Alive: timeout=...` from the server is respected - idle connections past the timeout are closed & rebuilt.
+- Responses framed "until close" are never reused.
+
+Force-close all reusable connections:
 
 ```cpp
 co_await client.close();
 ```
 
-## Session Structure
+## Stream config (TLS)
 
-The client runtime now delegates HTTP/1.1 response parsing to a dedicated session implementation.
-
-- `ClientImpl` owns connection reuse, proxy routing, and stream selection
-- `ClientSession<VERSION::HTTP_1_1>` owns incremental HTTP/1.1 response parsing through `onBytes(...)` / `onClose()`
-
-## Managed Stream Config
-
-For configurable streams such as `OpenSSLStream<>`, you can set a default client-managed config once:
+For configurable streams like `OpenSSLStream<>`, set a client-managed default once:
 
 ```cpp
 usub::unet::core::stream::OpenSSLStream<>::Config tls_cfg{};
@@ -76,91 +91,63 @@ tls_cfg.verify_peer = true;
 client.setStreamConfig<usub::unet::core::stream::OpenSSLStream<>>(std::move(tls_cfg));
 ```
 
-To customize ALPN at compile time, pass one or more string literal template arguments:
+ALPN goes on the template arguments as string literals:
 
 ```cpp
-using H2Tls = usub::unet::core::stream::OpenSSLStream<"h2">;
-using H2OrHttp1Tls = usub::unet::core::stream::OpenSSLStream<"h2", "http/1.1">;
+using H2Tls        = usub::unet::core::stream::OpenSSLStream<"h2">;
+using H2OrH1Tls    = usub::unet::core::stream::OpenSSLStream<"h2", "http/1.1">;
 ```
 
-If `server_name` is left empty, the client fills it from `request.metadata.uri.authority.host` when opening a new TLS connection.
-Prefer `client.setStreamConfig<...>(...)` for client-side TLS defaults so the client can keep that config aligned with connection reuse.
+If `server_name` is empty in the managed config, the client fills it from `request.metadata.uri.authority.host` when opening a new TLS connection.
 
-On Windows, there is also a native client TLS stream:
+### Windows-native TLS
 
 ```cpp
 using NativeTls = usub::unet::core::stream::SChannelStream<"http/1.1">;
 ```
 
-`SChannelStream` is a Windows-native TLS stream and follows the same managed `server_name` / `verify_peer` config pattern for client usage.
-Consumers that use it should link the Windows system libraries themselves, typically `Secur32` and `Crypt32`.
-The template ALPN shape is shared with `OpenSSLStream`, but native Schannel ALPN negotiation is not wired yet in this first implementation.
+Same managed-config pattern (`server_name`, `verify_peer`). Link `Secur32` & `Crypt32` yourself. ALPN template arguments accepted but native SChannel ALPN negotiation isn't wired in this first pass.
 
-## Proxy Support
+## Proxies
 
-Set a proxy per request through `ClientRequestOptions`:
+Per-request proxy through `ClientRequestOptions`:
 
 ```cpp
-usub::unet::http::ClientRequestOptions options{};
-options.proxy = usub::unet::http::ClientProxyOptions{
+usub::unet::http::ClientRequestOptions opts{};
+opts.proxy = usub::unet::http::ClientProxyOptions{
     .host = "127.0.0.1",
     .port = 8080,
     .username = "user",
     .password = "pass",
 };
+
+auto result = co_await client.request(std::move(req), opts);
 ```
 
-Current client proxy behavior:
+Behavior:
 
-- Plain HTTP over proxy: sends absolute-form requests, for example `GET http://host:port/path HTTP/1.1`
-- HTTPS over proxy: opens a TCP connection to the proxy, sends `CONNECT host:port HTTP/1.1`, then runs TLS over the established tunnel
-- If credentials are present, the client sends `Proxy-Authorization: Basic ...`
-- Proxy connections participate in the same client-side persistence logic as direct connections
+- Plain HTTP over proxy: absolute-form request (`GET http://host:port/path HTTP/1.1`).
+- HTTPS over proxy: `CONNECT host:port HTTP/1.1` first, TLS over the tunnel.
+- Credentials become `Proxy-Authorization: Basic ...`.
+- Proxy connections participate in the same persistence pool as direct connections.
 
-## Plain + TLS Example
+## Timeouts
 
-```cpp
-using Client = usub::unet::http::ClientImpl<
-    usub::unet::core::stream::PlainText,
-    usub::unet::core::stream::OpenSSLStream<>
->;
+`ClientRequestOptions::connect_timeout_ms` bounds the connection dial. Read/write timeouts are inherited from the transport defaults on the stream config.
 
-usub::uvent::task::Awaitable<void> run(Client& client) {
-    usub::unet::http::Request req{};
-    req.metadata.method_token = "GET";
-    req.metadata.version = usub::unet::http::VERSION::HTTP_1_1;
-    req.metadata.uri.scheme = "https";
-    req.metadata.uri.authority.host = "example.com";
-    req.metadata.uri.authority.port = 443;
-    req.metadata.authority = "example.com";
-    req.metadata.uri.path = "/";
+## Error codes
 
-    auto result = co_await client.request(std::move(req));
-    if (!result) {
-        // inspect result.error().code / .message
-        co_return;
-    }
+`ClientError::CODE`:
 
-    const auto status = result->metadata.status_code;
-    const auto& body = result->body;
-    (void)status;
-    (void)body;
+- `INVALID_REQUEST` - the `Request` was missing required fields (authority/host).
+- `CONNECT_FAILED` - direct TCP/TLS connect failed.
+- `PROXY_FAILED` - proxy dial or `CONNECT` response failed.
+- `WRITE_FAILED` - socket write failed mid-request.
+- `READ_FAILED` - socket read failed / connection went away mid-response.
+- `PARSE_FAILED` - `ResponseParser` rejected the bytes. `parse_error` on the error object may carry line/state detail.
+- `CLOSE_FAILED` - shutdown failed on an outgoing connection.
 
-    co_await client.close();
-    co_return;
-}
-```
+## Notes
 
-## Error Codes
-
-`ClientError::CODE` values:
-
-- `INVALID_REQUEST`
-- `CONNECT_FAILED`
-- `PROXY_FAILED`
-- `WRITE_FAILED`
-- `READ_FAILED`
-- `PARSE_FAILED`
-- `CLOSE_FAILED`
-
-When parse fails, `parse_error` may include lower-level parse details.
+- `Request` still has the legacy fluent `setBody` / `addHeader` helpers marked `[[deprecated]]` - use the public `metadata` / `headers` / `body` fields directly.
+- Client is HTTP/1.1 only. A `Client::request` to an h2-only endpoint won't negotiate h2; it'll just try h1.

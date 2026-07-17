@@ -1,44 +1,59 @@
-# Multipart Form Data
+# Multipart form data
 
-Multipart parser utility lives in:
+Whole-buffer parser for `multipart/form-data` bodies. Lives in `unet/mime/multipart/form_data/generic.hpp` as `usub::unet::mime::multipart::FormData`.
 
-- `unet/mime/multipart/form_data/generic.hpp`
+Not streaming. Read the whole request body first (`req.collect(limit)`), then hand it to the parser.
 
-Main type: `usub::unet::mime::multipart::FormData`
-
-## Basic Usage
+## Usage
 
 ```cpp
+#include <unet/mime/multipart/form_data/generic.hpp>
+
 using usub::unet::mime::multipart::FormData;
 
-std::string boundary = "----MyBoundary";
-std::string body = /* raw multipart payload */;
+usub::uvent::task::Awaitable<void>
+upload(usub::unet::http::RequestReader &req,
+       usub::unet::http::ResponseWriter &res) {
+    auto body = co_await req.collect(16 * 1024 * 1024);
+    if (!body) { res.metadata.status_code = 413; co_await res.send(std::string{"too big\n"}); co_return; }
 
-FormData form(boundary);
-auto result = form.parse(body);
-if (!result) {
-    // result.error() has an error string
-}
+    std::string boundary = extract_boundary(req);   // parse Content-Type header
+    FormData form(boundary);
+    auto ok = form.parse(*body);
+    if (!ok) { res.metadata.status_code = 400; co_await res.send(*ok.error()); co_return; }
 
-if (form.contains("file")) {
-    const auto& parts = form.at("file");
-    // parts[i].data, parts[i].content_type, parts[i].disposition
+    if (form.contains("file")) {
+        const auto &parts = form.at("file");
+        for (const auto &p : parts) {
+            // p.data, p.content_type, p.disposition, p.headers
+        }
+    }
+
+    res.metadata.status_code = 200;
+    co_await res.send(std::string{"ok\n"});
 }
 ```
 
-## Parsed Part Structure
+## Part shape
 
-Each `Part` includes:
+Each `Part`:
 
-- `content_type`
-- `disposition` map
-- `data`
-- extra `headers` map
+- `content_type` (`std::string`).
+- `disposition` (`std::unordered_map<std::string, std::string>` - the `Content-Disposition` parameters).
+- `data` (`std::string` - raw part body).
+- `headers` (`std::unordered_map<std::string, std::string>` - anything else in the part's header block).
 
-Parts are indexed by `name` from `Content-Disposition`.
+Parts are indexed by the `name` parameter of `Content-Disposition`.
+
+## API
+
+- `FormData(std::string boundary)` - construct with the boundary from `Content-Type`.
+- `parse(std::string_view body) -> std::expected<void, std::string>` - run the parser.
+- `contains(std::string_view name)` - does at least one part exist with this name?
+- `at(std::string_view name) -> const std::vector<Part> &` - all parts with this name.
 
 ## Notes
 
-- boundary must be provided explicitly
-- parsing is whole-buffer (not streaming)
-- error type is `std::expected<void, std::string>`
+- Boundary must be extracted from the request `Content-Type` header (`multipart/form-data; boundary=...`) before construction. Quoted-boundary support is on the caller side.
+- Parsing is whole-buffer. Files larger than what you're willing to collect need a streaming multipart parser, which we don't ship yet.
+- Error is `std::string` inside the `std::expected` failure branch - not a typed error.

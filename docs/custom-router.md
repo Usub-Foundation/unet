@@ -1,27 +1,30 @@
-# Writing Custom Routers
+# Custom routers
 
-You can plug your own router into `ServerImpl` by replacing `router::Radix` with your own type.
+`ServerImpl` is templated on the router type. You can swap `router::Radix` for your own & keep the rest of the framework.
 
-## Where It Is Used
+## Where the router is used
 
-`ServerImpl<RouterType, ...>`, `v1::ServerSession<RouterType>`, and `v2::ServerSession<RouterType>` call router methods directly.  
-So your router must provide a compatible API surface.
+`ServerImpl<Router, ...>`, `v1::ServerSession<Router>`, & `v2::ServerSession<Router>` all call into the router directly. Your type has to expose a compatible surface, listed below.
 
-## Required Router Interface
+## Required interface
 
-Your router type must provide:
+Your router must provide:
 
 - `using MatchResult = ...;`
-- `addRoute(...)` (used by `server.handle(...)`)
+- `addRoute(...)` - what `server.handle(...)` forwards to.
+- `addUpgradeRoute(...)` - what `server.handleUpgrade(...)` forwards to.
 - `addMiddleware(MIDDLEWARE_PHASE, std::function<MiddlewareFunctionType>)`
-- `addErrorHandler(const std::string&, std::function<void(const Request&, Response&)>)`
-- `error(const std::string&, const Request&, Response&)`
-- `match(const Request&) -> std::expected<MatchResult, STATUS_CODE>`
-- `getMiddlewareChain() -> MiddlewareChain&`
-- `runRouteMiddleware(MIDDLEWARE_PHASE, MatchResult&, Request&, Response&) -> bool`
-- `invoke(MatchResult&, Request&, Response&) -> Awaitable<void>`
+- `addErrorHandler(std::string, error_handler_fn)`
+- `error(std::string level, RequestReader &, ResponseWriter &) -> Awaitable<void>`
+- `match(const RequestReader &) -> std::expected<MatchResult, STATUS_CODE>`
+- `getMiddlewareChain() -> MiddlewareChain &`
+- `runRouteMiddleware(MIDDLEWARE_PHASE, MatchResult &, RequestReader &, ResponseWriter &) -> Awaitable<bool>`
+- `invoke(MatchResult &, RequestReader &, ResponseWriter &) -> Awaitable<void>`
+- `invokeUpgrade(MatchResult &, RequestReader &, ResponseWriter &, UpgradeContext &) -> Awaitable<void>`
 
-## Minimal Skeleton
+`MiddlewareFunctionType` is `Awaitable<bool>(RequestReader &, ResponseWriter &)`.
+
+## Minimal skeleton
 
 ```cpp
 #include <expected>
@@ -32,73 +35,101 @@ Your router type must provide:
 #include "unet/http/core/request.hpp"
 #include "unet/http/core/response.hpp"
 #include "unet/http/middleware.hpp"
+#include "unet/http/upgrade_context.hpp"
 
 namespace usub::unet::http::router {
+
     class MyRouter {
     public:
         struct MatchResult {
-            // put route-specific match context here
+            // Per-request match context. Kept in session state.
         };
 
         template<typename... Args>
-        auto &addRoute(Args &&... /*unused*/) {
-            // register route, return route object if you want chaining
+        auto &addRoute(Args &&...) {
+            // Register route. Return route object if you want per-route chaining.
             return *this;
         }
 
-        MyRouter &addMiddleware(MIDDLEWARE_PHASE phase, std::function<MiddlewareFunctionType> middleware) {
-            this->middleware_chain_.addMiddleware(phase, std::move(middleware));
+        template<typename... Args>
+        auto &addUpgradeRoute(Args &&...) {
             return *this;
         }
 
-        MyRouter &addErrorHandler(const std::string &level, std::function<void(const Request &, Response &)> fn) {
-            this->error_handlers_[level] = std::move(fn);
+        MyRouter &addMiddleware(MIDDLEWARE_PHASE phase,
+                                std::function<MiddlewareFunctionType> mw) {
+            this->chain_.addMiddleware(phase, std::move(mw));
             return *this;
         }
 
-        void error(const std::string &level, const Request &req, Response &res) {
-            if (auto it = this->error_handlers_.find(level); it != this->error_handlers_.end()) {
-                it->second(req, res);
-            }
+        template<typename Fn>
+        MyRouter &addErrorHandler(std::string key, Fn fn) {
+            this->error_handlers_[std::move(key)] = std::move(fn);
+            return *this;
         }
 
-        std::expected<MatchResult, STATUS_CODE> match(const Request &request) {
-            (void) request;
+        usub::uvent::task::Awaitable<void>
+        error(std::string key,
+              usub::unet::http::RequestReader &req,
+              usub::unet::http::ResponseWriter &res) {
+            auto it = this->error_handlers_.find(key);
+            if (it != this->error_handlers_.end()) co_await it->second(req, res);
+            co_return;
+        }
+
+        std::expected<MatchResult, STATUS_CODE>
+        match(const usub::unet::http::RequestReader &) {
             return MatchResult{};
         }
 
-        MiddlewareChain &getMiddlewareChain() { return this->middleware_chain_; }
+        MiddlewareChain &getMiddlewareChain() { return this->chain_; }
 
-        bool runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &match, Request &req, Response &res) {
-            (void) match;
-            return this->middleware_chain_.execute(phase, req, res);
+        usub::uvent::task::Awaitable<bool>
+        runRouteMiddleware(MIDDLEWARE_PHASE phase, MatchResult &,
+                           usub::unet::http::RequestReader &req,
+                           usub::unet::http::ResponseWriter &res) {
+            co_return co_await this->chain_.execute(phase, req, res);
         }
 
-        usub::uvent::task::Awaitable<void> invoke(MatchResult &match, Request &req, Response &res) {
-            (void) match;
-            (void) req;
-            (void) res;
+        usub::uvent::task::Awaitable<void>
+        invoke(MatchResult &,
+               usub::unet::http::RequestReader &,
+               usub::unet::http::ResponseWriter &) {
+            co_return;
+        }
+
+        usub::uvent::task::Awaitable<void>
+        invokeUpgrade(MatchResult &,
+                      usub::unet::http::RequestReader &,
+                      usub::unet::http::ResponseWriter &,
+                      usub::unet::http::UpgradeContext &) {
             co_return;
         }
 
     private:
-        MiddlewareChain middleware_chain_{};
-        std::unordered_map<std::string, std::function<void(const Request &, Response &)>> error_handlers_{};
+        MiddlewareChain chain_{};
+        std::unordered_map<std::string,
+            std::function<usub::uvent::task::Awaitable<void>(RequestReader &, ResponseWriter &)>>
+                error_handlers_{};
     };
+
 }// namespace usub::unet::http::router
 ```
 
-## Use It In Server
+## Wire it into a server
 
 ```cpp
 using MyServer = usub::unet::http::ServerImpl<
     usub::unet::http::router::MyRouter,
     usub::unet::core::stream::PlainText
 >;
+
+MyServer server{runtime, config};
 ```
 
-## Practical Advice
+## Practical notes
 
-- Start by copying `router::Radix` behavior that your app needs.
-- Keep `MatchResult` lightweight; it is stored in session state.
-- If you support route-level middleware, ensure `runRouteMiddleware(...)` uses the route matched in `match(...)`.
+- Start by looking at `router::Radix` in `include/unet/http/router/radix.hpp` & copying the parts you need.
+- Keep `MatchResult` cheap - it's copied around per request.
+- If you support route-level middleware, `runRouteMiddleware` must dispatch through the matched route's chain, not the global chain.
+- `RouteKind::Upgrade` on the route lets sessions branch to `invokeUpgrade` instead of `invoke`. Your router should tag upgrade routes accordingly.

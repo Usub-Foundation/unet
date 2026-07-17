@@ -1,46 +1,65 @@
 # unet Documentation
 
-> **Disclaimer:** Due to life constraints, I could not write this documentation myself. This documentation was generated from the current repository state. We will review this documentation later.
+C++23 coroutine-based HTTP / HTTP2 / WebSocket library on top of [uvent](https://github.com/Usub-development/uvent). This doc set describes what the code actually does today, not what a marketing page would say it does.
 
-`unet` is a coroutine-based C++ networking library focused on HTTP request/response handling, routing, middleware, parsing, and client/server primitives on top of `uvent`.
+## Where to start
 
-## Scope Of This Documentation
+New here?
 
-This documentation focuses on the parts that are currently practical to use:
+- [Installation](installation.md) - build & consume from CMake.
+- [Quick Start](quick-start.md) - the smallest working server, in five minutes.
+- [Architecture](architecture.md) - how connections turn into handler calls.
 
-- HTTP/1 server flow (`ServerImpl` / `ServerRadix`, `v1::ServerSession<R>`)
-- HTTP/2 server flow (`v2::ServerSession<R>`) — prior-knowledge preface and
-  `Upgrade: h2c` are both wired; frame layer, HPACK, and SETTINGS exchange are
-  in place; per-stream tunneling (CONNECT, Extended CONNECT, gRPC trailers) is
-  not yet implemented.
-- HTTP/1 wire parser and serializer
-- HTTP client (`ClientImpl`) with plain and TLS streams (HTTP/1 only on the
-  client side for now)
-- Byte-level radix router with named params, inline regex constraints, and
-  named wildcards
-- Middleware, headers, and multipart helpers
+Building something?
 
-Out of scope in this docs set:
+- [Routing](routing.md) - radix patterns, params, constraints.
+- [Handlers](handler.md) - handler signatures, streaming, sendfile.
+- [Middlewares](middlewares.md) - phases, order, per-route vs global.
+- [Request & Response](request-response.md) - the reader/writer types your handlers touch.
+- [Configuration](config.md) - `Config` object shape & recognized keys.
 
-- mail/IMAP model headers (not part of active HTTP runtime)
-- old `examples/` behavior (mostly legacy)
+Beyond plain HTTP?
 
-## Quick Links
+- [WebSockets](websockets.md) - RFC 6455 over h1, RFC 8441 over h2.
+- [Upgrade routes](upgrade.md) - hand the transport off to your own protocol (VLESS example).
+- [HTTP Client](client.md) - outbound requests, keep-alive, TLS, proxies.
 
-- Getting started: [Installation](installation.md), [Quick Start](quick-start.md)
-- Runtime setup: [Architecture](architecture.md), [Configuration](config.md)
-- Request handling: [Routing](routing.md), [Writing Custom Routers](custom-router.md), [Middlewares](middlewares.md), [Request and Response](request-response.md), [Handlers](handler.md)
-- Outbound requests: [HTTP Client](client.md)
-- Parsing internals: [Parsing](parsing.md), [Experimental Parse Error Notes](Experimental/parse_error_handling.md)
-- Utilities: [Multipart Form Data](multipart-form-data.md)
-- Project process: [Roadmap](roadmap.md), [Contributing](contributing.md)
+Reference:
 
-## Current Reality Snapshot
+- [Parsing](parsing.md) - h1 wire parsers, error surface.
+- [Multipart Form Data](multipart-form-data.md) - `multipart/form-data` decoder.
+- [Custom Routers](custom-router.md) - swap `Radix` for your own type.
 
-- HTTP/1 parser, core flow, router, and middleware chain are the most mature paths.
-- HTTP/2 server can speak prior-knowledge and h2c-upgrade traffic end-to-end.
-  CONNECT/Extended-CONNECT and gRPC trailers are not implemented yet.
-- HTTP/2 client is not implemented.
-- Middleware phases exist, but runtime invocation details matter (see [Middlewares](middlewares.md)).
-- Tests are present and useful for behavior clues, but they are not exhaustive quality gates yet.
-- API names in these docs match current headers under `include/unet/**`.
+Project process:
+
+- [Roadmap](roadmap.md) - what's next, what's out of scope.
+- [Contributing](contributing.md) - workflow & style.
+
+## What's real vs aspirational
+
+Working & tested:
+
+- HTTP/1.1 server (RFC 9112), including all four request-target forms & chunked transfer.
+- HTTP/2 server (RFC 9113) with HPACK, per-stream flow control, extensions.
+- WebSocket server (RFC 6455) with fragmented messages, ping/pong, close frames.
+- WebSocket-over-HTTP/2 via extended CONNECT (RFC 8441).
+- Radix router.
+- Middleware chain (HEADER & BODY phases invoke).
+
+Working but partial:
+
+- HTTP/1 client. Keep-alive, TLS, proxies, `CONNECT` tunneling. HTTP/2 client is not implemented.
+- h2c upgrade (RFC 7540 §3.2). Wired, may get retired since RFC 9113 deprecates it.
+- h2c prior-knowledge sniff. Optional, off by default.
+
+Not yet:
+
+- HTTP/2 client.
+- WebSocket `permessage-deflate` (RFC 7692).
+- HTTP/3.
+- Response-phase middleware invocation in the h1 send path.
+- Body-trickle timeout (only header-trickle is guarded today).
+
+## API stability
+
+Names in these docs match `include/unet/**`. When the header changes, these files should change with it. If you spot drift, open an issue or PR - see [Contributing](contributing.md).
