@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="HTTP/1-focused documentation for the unet C++ networking library">
+        <meta name="description" content="C++23 HTTP/1, HTTP/2, & WebSocket library on the uvent runtime">
       
       
       
@@ -192,13 +192,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
       </div>
@@ -259,6 +259,46 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../websockets/" class="md-tabs__link">
+          
+  
+  
+  Beyond HTTP
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../client/" class="md-tabs__link">
+          
+  
+  
+  Client
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -291,13 +331,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
     </div>
@@ -512,10 +552,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#runtime-pieces" class="md-nav__link">
+  <a href="#the-runtime-pieces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Runtime Pieces
+        The runtime pieces
       
     </span>
   </a>
@@ -526,7 +566,7 @@
   <a href="#server-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server Lifecycle
+        Server lifecycle
       
     </span>
   </a>
@@ -534,10 +574,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#connection-pipeline" class="md-nav__link">
+  <a href="#what-happens-per-connection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connection Pipeline
+        What happens per connection
       
     </span>
   </a>
@@ -545,10 +585,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#router-and-middleware-placement" class="md-nav__link">
+  <a href="#http1-path" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Router and Middleware Placement
+        HTTP/1 path
       
     </span>
   </a>
@@ -556,10 +596,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#streams-and-acceptors" class="md-nav__link">
+  <a href="#http2-path" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Streams and Acceptors
+        HTTP/2 path
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HTTP/2 path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stream-retirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stream retirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#websocket-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#router-middleware-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Router &amp; middleware placement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptors-streams-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptors, streams, &amp; config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-h2-outbound-channel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The h2 outbound channel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#body-streaming-under-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Body streaming under upgrade
       
     </span>
   </a>
@@ -867,14 +979,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../client/" class="md-nav__link">
+      <a href="../parsing/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Client API
+    Parsing
   
 
     
@@ -916,6 +1028,67 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Beyond HTTP
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Beyond HTTP
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -923,14 +1096,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../parsing/" class="md-nav__link">
+      <a href="../websockets/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Parsing
+    WebSockets
   
 
     
@@ -951,14 +1124,103 @@
   
   
     <li class="md-nav__item">
-      <a href="../Experimental/parse_error_handling.md" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Experimental Parse Error Notes
+    Upgrade Routes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Client
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Client
   
 
     
@@ -1006,10 +1268,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#runtime-pieces" class="md-nav__link">
+  <a href="#the-runtime-pieces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Runtime Pieces
+        The runtime pieces
       
     </span>
   </a>
@@ -1020,7 +1282,7 @@
   <a href="#server-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server Lifecycle
+        Server lifecycle
       
     </span>
   </a>
@@ -1028,10 +1290,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#connection-pipeline" class="md-nav__link">
+  <a href="#what-happens-per-connection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Connection Pipeline
+        What happens per connection
       
     </span>
   </a>
@@ -1039,10 +1301,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#router-and-middleware-placement" class="md-nav__link">
+  <a href="#http1-path" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Router and Middleware Placement
+        HTTP/1 path
       
     </span>
   </a>
@@ -1050,10 +1312,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#streams-and-acceptors" class="md-nav__link">
+  <a href="#http2-path" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Streams and Acceptors
+        HTTP/2 path
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HTTP/2 path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stream-retirement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stream retirement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#websocket-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#router-middleware-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Router &amp; middleware placement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptors-streams-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptors, streams, &amp; config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-h2-outbound-channel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The h2 outbound channel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#body-streaming-under-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Body streaming under upgrade
       
     </span>
   </a>
@@ -1081,60 +1415,92 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<h2 id="runtime-pieces">Runtime Pieces<a class="headerlink" href="#runtime-pieces" title="Permanent link">&para;</a></h2>
-<p>The current HTTP runtime is composed of:</p>
+<h2 id="the-runtime-pieces">The runtime pieces<a class="headerlink" href="#the-runtime-pieces" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>usub::Uvent</code>: event loop and coroutine scheduler</li>
-<li><code>usub::unet::http::ServerImpl&lt;Router, Streams...&gt;</code>: acceptor bootstrap and connection loop</li>
-<li><code>usub::unet::http::router::Radix</code>: route matching, middleware containers, and error handlers</li>
-<li>stream types such as <code>PlainText</code> and <code>OpenSSLStream&lt;&gt;</code></li>
-<li>HTTP session implementations for <code>HTTP/1.1</code> (<code>v1::ServerSession&lt;R&gt;</code>) and <code>HTTP/2.0</code> (<code>v2::ServerSession&lt;R&gt;</code>)</li>
+<li><code>usub::Uvent</code> - the coroutine scheduler &amp; event loop.</li>
+<li><code>usub::unet::http::ServerImpl&lt;Router, Streams...&gt;</code> - accept loop, protocol dispatch, &amp; handler wiring.</li>
+<li><code>usub::unet::http::router::Radix</code> - default router with middleware &amp; error-handler slots.</li>
+<li>Streams: <code>PlainText</code>, <code>OpenSSLStream&lt;ALPN...&gt;</code>, <code>SChannelStream&lt;ALPN...&gt;</code>.</li>
+<li>Sessions: <code>v1::ServerSession&lt;R&gt;</code> for HTTP/1.1, <code>v2::ServerSession&lt;R&gt;</code> for HTTP/2. WebSocket runs its own <code>ws::Session&lt;HandlerT&gt;</code>.</li>
 </ul>
-<h2 id="server-lifecycle">Server Lifecycle<a class="headerlink" href="#server-lifecycle" title="Permanent link">&para;</a></h2>
-<p>Typical startup sequence:</p>
+<p><code>ServerRadix</code> &amp; <code>ServerRegex</code> are convenience typedefs for the common configs.</p>
+<h2 id="server-lifecycle">Server lifecycle<a class="headerlink" href="#server-lifecycle" title="Permanent link">&para;</a></h2>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">Uvent</span><span class="w"> </span><span class="n">runtime</span><span class="p">{</span><span class="n">n_threads</span><span class="p">};</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ServerRadix</span><span class="w"> </span><span class="n">server</span><span class="p">{</span><span class="n">runtime</span><span class="p">,</span><span class="w"> </span><span class="n">config</span><span class="p">};</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">server</span><span class="p">.</span><span class="n">handle</span><span class="p">(</span><span class="s">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/path&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">handler</span><span class="p">);</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">server</span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">middleware</span><span class="p">);</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">server</span><span class="p">.</span><span class="n">onHTTP2Connection</span><span class="p">([](</span><span class="n">v2</span><span class="o">::</span><span class="n">Connection</span><span class="w"> </span><span class="o">&amp;</span><span class="n">c</span><span class="p">){</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">runtime</span><span class="p">.</span><span class="n">run</span><span class="p">();</span><span class="w">   </span><span class="c1">// blocks; the runtime drives everything from here</span>
+</code></pre></div>
+<p>There's no <code>server.run()</code>. The event loop belongs to <code>Uvent</code>, &amp; the acceptors register themselves onto it in the server's constructor. When <code>runtime.run()</code> returns, all acceptors &amp; sessions have wound down.</p>
+<h2 id="what-happens-per-connection">What happens per connection<a class="headerlink" href="#what-happens-per-connection" title="Permanent link">&para;</a></h2>
+<p>For each accepted socket, <code>ServerImpl::dispatchProtocol</code> decides:</p>
 <ol>
-<li>Construct <code>usub::Uvent</code>.</li>
-<li>Construct a server (<code>ServerRadix</code> or custom <code>ServerImpl&lt;...&gt;</code>).</li>
-<li>Register routes, middleware, and error handlers.</li>
-<li>Run <code>uvent</code> with <code>runtime.run()</code>.</li>
+<li>TLS with ALPN? Use the negotiated protocol.</li>
+<li><code>h2</code> -&gt; <code>v2::ServerSession</code>.</li>
+<li><code>http/1.1</code> -&gt; <code>v1::ServerSession</code>.</li>
+<li>No ALPN (plain socket)?</li>
+<li>If h2c prior-knowledge is enabled &amp; the first bytes match the h2 preface, promote to <code>v2::ServerSession</code>.</li>
+<li>Otherwise <code>v1::ServerSession</code>.</li>
 </ol>
-<p>There is no <code>server.run()</code> API in the current <code>unet</code> server implementation.</p>
-<h2 id="connection-pipeline">Connection Pipeline<a class="headerlink" href="#connection-pipeline" title="Permanent link">&para;</a></h2>
-<p>For each accepted socket:</p>
+<p>Both sessions capture <code>PeerInfo</code> (ip, port, alpn, ssl) once at bootstrap &amp; attach it to every <code>RequestReader</code>. Handlers read <code>req.peer.ip</code> without asking the transport.</p>
+<h2 id="http1-path">HTTP/1 path<a class="headerlink" href="#http1-path" title="Permanent link">&para;</a></h2>
+<p><code>v1::ServerSession::loop</code>:</p>
 <ol>
-<li><code>Bootstrap</code> receives initial bytes and decides which protocol the client speaks.</li>
-<li>HTTP/2 prior-knowledge preface → <code>v2::ServerSession&lt;RouterType&gt;</code>.</li>
-<li>Anything else → <code>v1::ServerSession&lt;RouterType&gt;</code>. From there a client may still
-     ask for h2c via <code>Upgrade: h2c</code>, which swaps the session to <code>v2</code>.</li>
-<li>The chosen session takes over and runs version-specific logic:</li>
-<li><strong>HTTP/1</strong>: request parser consumes bytes incrementally; on <code>STEP::HEADERS</code>
-     the router matches, then global/route header middleware run; body parsing
-     and middleware follow; handler executes on <code>STEP::COMPLETE</code>; response is
-     serialized via <code>v1::ResponseSerializer</code>.</li>
-<li><strong>HTTP/2</strong>: a frame loop reads the preface (or accepts the upgrade-seeded
-     stream), exchanges SETTINGS, dispatches builtin frame handlers (DATA,
-     HEADERS, SETTINGS, WINDOW_UPDATE, PING, GOAWAY, RST_STREAM, CONTINUATION,
-     PRIORITY). Stream completion (END_STREAM) queues for dispatch. The router
-     match + handler invoke happen once per stream; multiple streams multiplex
-     on one connection.</li>
-<li>Both sessions reset per-request state to keep the connection alive when
-   permitted; both expose <code>connection()</code> returning a user-facing handle
-   (<code>v1::Connection&amp;</code> or <code>v2::Connection</code>) delivered to the <code>on_http1_connection</code>
-   / <code>on_http2_connection</code> hooks held on the <code>MiddlewareChain</code>.</li>
+<li>Slowloris guard: whole header phase must finish inside <code>keep_alive_deadline</code> on the first byte, then <code>idle_header_timeout</code> after.</li>
+<li><code>RequestParser::step(request, begin, end)</code> runs incrementally until state == <code>HEADERS_DONE</code>.</li>
+<li><code>negotiateKeepAlive</code> reads <code>Connection</code> &amp; <code>Keep-Alive</code> headers, decides whether to reuse the socket.</li>
+<li>Optional h2c upgrade: if <code>Upgrade: h2c</code> is present, hand the transport to the h2 upgrade handler &amp; return.</li>
+<li>Router match -&gt; global HEADER middleware -&gt; route HEADER middleware.</li>
+<li>Handler spawned as a separate coroutine. The main loop keeps parsing the body &amp; pushing chunks into <code>req.getBodyChannel()</code> for the handler to read.</li>
+<li>On body EOF (<code>STATE::COMPLETE</code>), the body channel closes. Handler runs to completion. Response is serialized by <code>v1::ResponseSerializer</code>.</li>
+<li>Loop back to step 1 if keep-alive is on.</li>
 </ol>
-<h2 id="router-and-middleware-placement">Router and Middleware Placement<a class="headerlink" href="#router-and-middleware-placement" title="Permanent link">&para;</a></h2>
+<h2 id="http2-path">HTTP/2 path<a class="headerlink" href="#http2-path" title="Permanent link">&para;</a></h2>
+<p><code>v2::ServerSession::loop</code>:</p>
+<ol>
+<li>Read the preface (unless the connection came in via the h2c upgrade, in which case stream 1 is preseeded).</li>
+<li>Send our initial <code>SETTINGS</code>. Peer must ACK inside <code>settings_ack_timeout</code>.</li>
+<li>Frame loop reads whole frames via <code>tryDispatchOneFrame</code>, dispatches by type: DATA / HEADERS / CONTINUATION / SETTINGS / WINDOW_UPDATE / PING / GOAWAY / RST_STREAM / PRIORITY.</li>
+<li>HEADERS + optional CONTINUATION accumulate into one HPACK block. When END_HEADERS is set, decode &amp; dispatch the request (spawn <code>dispatchRequest</code>).</li>
+<li>DATA frames flow into <code>stream.request.getBodyChannel()</code> while the handler runs.</li>
+<li>HEADERS after HEADERS_DONE = trailers. Second HEADERS block MUST carry END_STREAM (RFC 9113 §8.1).</li>
+<li>Handler writes a response via <code>bindStreamOps</code> (headers + DATA frames + optional trailers). All frames go through <code>pushOutbound</code> into a 2048-slot channel; a single <code>writerLoop</code> coroutine drains it &amp; does the socket send.</li>
+</ol>
+<h3 id="stream-retirement">Stream retirement<a class="headerlink" href="#stream-retirement" title="Permanent link">&para;</a></h3>
+<p>Streams leave <code>streams_</code> via <code>retireStream</code> (closes the body channel &amp; erases). Paths that call it: RST_STREAM in or out, close_stream on tunnels, content-length mismatch, STREAM_CLOSED errors. Normal request/response streams are erased in <code>finalizeStreamResponse</code> after the response completes.</p>
+<h2 id="websocket-path">WebSocket path<a class="headerlink" href="#websocket-path" title="Permanent link">&para;</a></h2>
+<p><code>ws::Session&lt;HandlerT&gt;</code> reads frames via <code>FrameParser</code>, enforces:</p>
 <ul>
-<li>Global middleware: <code>Radix::middleware_chain_</code></li>
-<li>Route middleware: <code>RadixRoute::middleware_chain</code></li>
-<li>Error handlers: string-keyed (<code>addErrorHandler(level, fn)</code>)</li>
+<li>Every client frame MUST be masked (RFC 6455 §5.1).</li>
+<li>No overlapping fragmented messages (RFC 6455 §5.4).</li>
+<li>Control frames may interleave inside a fragmented data message.</li>
 </ul>
-<h2 id="streams-and-acceptors">Streams and Acceptors<a class="headerlink" href="#streams-and-acceptors" title="Permanent link">&para;</a></h2>
-<p><code>ServerImpl</code> owns an <code>Acceptor&lt;T&gt;</code> for each stream in template parameters.</p>
+<p>Data frames spawn the handler method once per message; payload bytes stream into a per-message <code>ClientReaderChannel</code> the handler pops.</p>
+<p>Runs on top of either a <code>TCP&lt;Stream, Socket&gt;</code> transport (h1 upgrade) or a <code>v2::StreamTransport</code> (extended CONNECT over h2).</p>
+<h2 id="router-middleware-placement">Router &amp; middleware placement<a class="headerlink" href="#router-middleware-placement" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>Acceptor&lt;PlainText&gt;</code> reads <code>HTTP.PlainTextStream</code> config section</li>
-<li><code>Acceptor&lt;OpenSSLStream&lt;...&gt;&gt;</code> reads <code>HTTP.OpenSSLStream</code> config section</li>
+<li>Global middleware: <code>Radix::middleware_chain_</code>, phase-keyed. HEADER phase runs before match, BODY phase currently runs from the h1 body-read loop.</li>
+<li>Route middleware: attached to the matched <code>RadixRoute</code>, run after the route matches but before the handler.</li>
+<li>Error handlers: string-keyed via <code>addErrorHandler("&lt;code&gt;", fn)</code>. The runtime dispatches by the response status code as a string (<code>"404"</code>, <code>"405"</code>, <code>"500"</code>, ...). Unhandled codes fall through to <code>defaultErrorResponse</code> which emits a minimal plain-text body so nothing hangs.</li>
 </ul>
-<p>If config is empty, each acceptor falls back to built-in defaults.</p>
+<h2 id="acceptors-streams-config">Acceptors, streams, &amp; config<a class="headerlink" href="#acceptors-streams-config" title="Permanent link">&para;</a></h2>
+<p><code>ServerImpl</code> holds one <code>Acceptor&lt;Stream&gt;</code> per template stream. Each acceptor reads its own config section:</p>
+<ul>
+<li><code>Acceptor&lt;PlainText&gt;</code> reads <code>HTTP.PlainTextStream</code>.</li>
+<li><code>Acceptor&lt;OpenSSLStream&lt;...&gt;&gt;</code> reads <code>HTTP.OpenSSLStream</code>.</li>
+<li><code>Acceptor&lt;SChannelStream&lt;...&gt;&gt;</code> reads <code>HTTP.SChannelStream</code>.</li>
+</ul>
+<p>Missing sections fall back to built-in defaults. Full key list: <a href="../config/">Configuration</a>.</p>
+<h2 id="the-h2-outbound-channel">The h2 outbound channel<a class="headerlink" href="#the-h2-outbound-channel" title="Permanent link">&para;</a></h2>
+<p>All h2 frame writes go through one point:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">pushOutbound</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">bytes</span><span class="p">);</span><span class="w">   </span><span class="c1">// try_send into outbound_channel_ (2048 slots)</span>
+</code></pre></div>
+<p>Non-blocking. If the channel is full, we flip <code>goaway_pending_</code> &amp; close the channel - the peer either isn't reading or the socket is congested past what the buffer absorbs, &amp; we bail. One <code>writerLoop</code> coroutine drains the channel &amp; is the only place <code>transport-&gt;send</code> is called; this is what preserves HEADERS + CONTINUATION atomicity on the wire.</p>
+<h2 id="body-streaming-under-upgrade">Body streaming under upgrade<a class="headerlink" href="#body-streaming-under-upgrade" title="Permanent link">&para;</a></h2>
+<p>For h2 tunnels (VLESS, WebSocket-over-h2), the same <code>BodyReaderChannel</code> the handler could read from is wrapped by <code>StreamTransport</code>. Bytes the handler didn't drain before calling <code>ctx.accept</code> are still there for the spawned protocol. One queue, two possible readers, no drain-and-carry.</p>
 
 
 

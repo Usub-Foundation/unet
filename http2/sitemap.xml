@@ -60,4 +60,12 @@
          <loc>https://usub-development.github.io/unet/http2/routing/</loc>
          <lastmod>2026-07-17</lastmod>
     </url>
+    <url>
+         <loc>https://usub-development.github.io/unet/http2/upgrade/</loc>
+         <lastmod>2026-07-17</lastmod>
+    </url>
+    <url>
+         <loc>https://usub-development.github.io/unet/http2/websockets/</loc>
+         <lastmod>2026-07-17</lastmod>
+    </url>
 </urlset>

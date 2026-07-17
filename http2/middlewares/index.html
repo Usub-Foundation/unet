@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="HTTP/1-focused documentation for the unet C++ networking library">
+        <meta name="description" content="C++23 HTTP/1, HTTP/2, & WebSocket library on the uvent runtime">
       
       
       
@@ -192,13 +192,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
       </div>
@@ -259,6 +259,46 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../websockets/" class="md-tabs__link">
+          
+  
+  
+  Beyond HTTP
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../client/" class="md-tabs__link">
+          
+  
+  
+  Client
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -291,13 +331,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
     </div>
@@ -741,17 +781,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#signature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Signature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#phases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -763,10 +792,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#registering-middleware" class="md-nav__link">
+  <a href="#registering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Registering Middleware
+        Registering
       
     </span>
   </a>
@@ -774,10 +803,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-runtime-behavior-important" class="md-nav__link">
+  <a href="#a-logging-middleware" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current Runtime Behavior (Important)
+        A logging middleware
       
     </span>
   </a>
@@ -785,10 +814,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#request-scoped-user-data" class="md-nav__link">
+  <a href="#an-auth-middleware-that-rejects-early" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Request-Scoped User Data
+        An auth middleware that rejects early
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passing-context-between-middleware-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Passing context between middleware &amp; handler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-stream-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection &amp; stream hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handlers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handlers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current limitations
       
     </span>
   </a>
@@ -867,14 +940,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../client/" class="md-nav__link">
+      <a href="../parsing/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Client API
+    Parsing
   
 
     
@@ -916,6 +989,67 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Beyond HTTP
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Beyond HTTP
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -923,14 +1057,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../parsing/" class="md-nav__link">
+      <a href="../websockets/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Parsing
+    WebSockets
   
 
     
@@ -951,14 +1085,103 @@
   
   
     <li class="md-nav__item">
-      <a href="../Experimental/parse_error_handling.md" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Experimental Parse Error Notes
+    Upgrade Routes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Client
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Client
   
 
     
@@ -1006,17 +1229,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#signature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Signature
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#phases" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1028,10 +1240,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#registering-middleware" class="md-nav__link">
+  <a href="#registering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Registering Middleware
+        Registering
       
     </span>
   </a>
@@ -1039,10 +1251,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-runtime-behavior-important" class="md-nav__link">
+  <a href="#a-logging-middleware" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current Runtime Behavior (Important)
+        A logging middleware
       
     </span>
   </a>
@@ -1050,10 +1262,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#request-scoped-user-data" class="md-nav__link">
+  <a href="#an-auth-middleware-that-rejects-early" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Request-Scoped User Data
+        An auth middleware that rejects early
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#passing-context-between-middleware-handler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Passing context between middleware &amp; handler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connection-stream-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection &amp; stream hooks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handlers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handlers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current limitations
       
     </span>
   </a>
@@ -1081,48 +1337,122 @@
 
 
 <h1 id="middlewares">Middlewares<a class="headerlink" href="#middlewares" title="Permanent link">&para;</a></h1>
-<p>Middleware functions intercept request/response handling phases.</p>
-<h2 id="signature">Signature<a class="headerlink" href="#signature" title="Permanent link">&para;</a></h2>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kt">bool</span><span class="p">(</span><span class="n">Request</span><span class="o">&amp;</span><span class="p">,</span><span class="w"> </span><span class="n">Response</span><span class="o">&amp;</span><span class="p">)</span>
+<p>Middleware is any coroutine matching this signature:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="p">,</span><span class="w"> </span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span>
 </code></pre></div>
-<p>Return value:</p>
-<ul>
-<li><code>true</code>: continue processing</li>
-<li><code>false</code>: stop middleware/handler flow for that phase chain</li>
-</ul>
+<p>Return <code>true</code> to continue the chain. Return <code>false</code> to stop it - the handler won't run, &amp; the response (whatever you wrote before returning <code>false</code>) is what the client gets.</p>
 <h2 id="phases">Phases<a class="headerlink" href="#phases" title="Permanent link">&para;</a></h2>
-<p><code>MIDDLEWARE_PHASE</code> values:</p>
-<ul>
-<li><code>HEADER</code></li>
-<li><code>BODY</code></li>
-<li><code>RESPONSE</code></li>
-</ul>
-<h2 id="registering-middleware">Registering Middleware<a class="headerlink" href="#registering-middleware" title="Permanent link">&para;</a></h2>
-<p>Global middleware:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">server</span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">globalHeaderMw</span><span class="p">);</span>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">enum</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MIDDLEWARE_PHASE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">BODY</span><span class="p">,</span><span class="w"> </span><span class="n">RESPONSE</span><span class="w"> </span><span class="p">};</span>
 </code></pre></div>
-<p>Route middleware:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">server</span><span class="p">.</span><span class="n">handle</span><span class="p">(</span><span class="s">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/hello&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">handler</span><span class="p">)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">      </span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">routeHeaderMw</span><span class="p">)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">      </span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">BODY</span><span class="p">,</span><span class="w"> </span><span class="n">routeBodyMw</span><span class="p">);</span>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Fires</th>
+<th>Invoked today?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEADER</code></td>
+<td>Right after headers parse, before the handler.</td>
+<td>Yes.</td>
+</tr>
+<tr>
+<td><code>BODY</code></td>
+<td>After each body chunk on the h1 body-read loop.</td>
+<td>Yes on h1.</td>
+</tr>
+<tr>
+<td><code>RESPONSE</code></td>
+<td>Around the response send path.</td>
+<td>Not yet on h1. See roadmap.</td>
+</tr>
+</tbody>
+</table>
+<p>Register globally (server-wide) or per-route (only for that route). Global HEADER middleware runs before route match, so it sees every request. Route middleware runs after the match, so it can rely on <code>RadixMatch</code>.</p>
+<h2 id="registering">Registering<a class="headerlink" href="#registering" title="Permanent link">&para;</a></h2>
+<p>Global:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">server</span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">log_request</span><span class="p">);</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">server</span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">require_auth</span><span class="p">);</span>
 </code></pre></div>
-<h2 id="current-runtime-behavior-important">Current Runtime Behavior (Important)<a class="headerlink" href="#current-runtime-behavior-important" title="Permanent link">&para;</a></h2>
-<p>In current <code>HTTP/1.1</code> session logic:</p>
-<ul>
-<li>header middleware is executed</li>
-<li>body middleware is executed</li>
-<li>response middleware is defined in API but is not currently invoked in the HTTP/1 send path</li>
-</ul>
-<p>Global middleware limitation in current radix implementation:</p>
-<ul>
-<li><code>Radix::addMiddleware(...)</code> supports global <code>HEADER</code> phase only</li>
-<li>non-header global registration logs a warning and is ignored</li>
-</ul>
-<h2 id="request-scoped-user-data">Request-Scoped User Data<a class="headerlink" href="#request-scoped-user-data" title="Permanent link">&para;</a></h2>
-<p><code>Request</code> includes:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w"> </span><span class="n">user_data</span><span class="p">;</span>
+<p>Per route:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">server</span><span class="p">.</span><span class="n">handle</span><span class="p">(</span><span class="s">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/admin&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">admin_handler</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">      </span><span class="p">.</span><span class="n">addMiddleware</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">MIDDLEWARE_PHASE</span><span class="o">::</span><span class="n">HEADER</span><span class="p">,</span><span class="w"> </span><span class="n">require_admin_role</span><span class="p">);</span>
 </code></pre></div>
-<p>Use this to pass context between middleware and handlers during one request lifecycle.</p>
+<p>Order: chain order == registration order.</p>
+<h2 id="a-logging-middleware">A logging middleware<a class="headerlink" href="#a-logging-middleware" title="Permanent link">&para;</a></h2>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">log_request</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">            </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;[req] &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">method_token</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">path</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; from &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">peer</span><span class="p">.</span><span class="n">ip</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">peer</span><span class="p">.</span><span class="n">port</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="k">co_return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="an-auth-middleware-that-rejects-early">An auth middleware that rejects early<a class="headerlink" href="#an-auth-middleware-that-rejects-early" title="Permanent link">&para;</a></h2>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">require_secret</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">               </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="n">res</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">path</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&quot;/secret&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">co_return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="s">&quot;x-auth&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">header</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">*</span><span class="n">header</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;please&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">co_return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">401</span><span class="p">;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;content-type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;text/plain&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{</span><span class="s">&quot;unauthorized</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">});</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="k">co_return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="p">}</span>
+</code></pre></div>
+<p>Returning <code>false</code> after writing the 401 body: the handler is skipped, the response goes as written.</p>
+<h2 id="passing-context-between-middleware-handler">Passing context between middleware &amp; handler<a class="headerlink" href="#passing-context-between-middleware-handler" title="Permanent link">&para;</a></h2>
+<p><code>RequestReader::user_data</code> is a <code>std::any</code> you can freely populate:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">AuthedUser</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">tenant_id</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">attach_user</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">            </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">user_data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AuthedUser</span><span class="p">{</span><span class="s">&quot;acme-corp&quot;</span><span class="p">};</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="k">co_return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">}</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">handler</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">        </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="n">res</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="o">*</span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">any_cast</span><span class="o">&lt;</span><span class="n">AuthedUser</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">req</span><span class="p">.</span><span class="n">user_data</span><span class="p">);</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="c1">// ...</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">    </span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{</span><span class="s">&quot;ok</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">});</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="p">}</span>
+</code></pre></div>
+<p>Type-safe within one request lifecycle. Reset per request.</p>
+<h2 id="connection-stream-hooks">Connection &amp; stream hooks<a class="headerlink" href="#connection-stream-hooks" title="Permanent link">&para;</a></h2>
+<p>Not middleware, but related. Fire once per connection / stream, not per request:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">server</span><span class="p">.</span><span class="n">onHTTP1Connection</span><span class="p">([](</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">v1</span><span class="o">::</span><span class="n">Connection</span><span class="w"> </span><span class="o">&amp;</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="c1">// Tune keep-alive, timeouts, whatever.</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="p">});</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">server</span><span class="p">.</span><span class="n">onHTTP2Connection</span><span class="p">([](</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">v2</span><span class="o">::</span><span class="n">Connection</span><span class="w"> </span><span class="o">&amp;</span><span class="n">c</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="n">c</span><span class="p">.</span><span class="n">max_continuations_per_header_block</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="p">});</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">server</span><span class="p">.</span><span class="n">onHTTP2Stream</span><span class="p">([](</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">v2</span><span class="o">::</span><span class="n">Connection</span><span class="w"> </span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">sid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;new h2 stream &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">sid</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; on &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">peer</span><span class="p">.</span><span class="n">ip</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">});</span>
+</code></pre></div>
+<h2 id="error-handlers">Error handlers<a class="headerlink" href="#error-handlers" title="Permanent link">&para;</a></h2>
+<p>Not middleware. Registered by string key equal to the HTTP status (<code>"404"</code>, <code>"405"</code>, <code>"408"</code>, <code>"500"</code>, ...), invoked when the runtime produces that error status:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">server</span><span class="p">.</span><span class="n">addErrorHandler</span><span class="p">(</span><span class="s">&quot;404&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">[](</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="p">,</span><span class="w"> </span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="n">res</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;content-type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span><span class="p">);</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{</span><span class="s">&quot;{</span><span class="se">\&quot;</span><span class="s">error</span><span class="se">\&quot;</span><span class="s">:</span><span class="se">\&quot;</span><span class="s">not_found</span><span class="se">\&quot;</span><span class="s">}</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">});</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="p">});</span>
+</code></pre></div>
+<p>Codes you don't register a handler for get a default plain-text response - see <a href="../routing/#error-handlers">Routing / Error handlers</a>. Handlers you do register overwrite any previous registration for the same code (<code>insert_or_assign</code>).</p>
+<h2 id="current-limitations">Current limitations<a class="headerlink" href="#current-limitations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>Radix::addMiddleware(...)</code> only accepts global registration for the <code>HEADER</code> phase. Non-HEADER global registration logs a warning &amp; is ignored. Per-route registration accepts any phase.</li>
+<li><code>RESPONSE</code> phase middleware never fires in the h1 send path. Declared, not wired. See <a href="../roadmap/">Roadmap</a>.</li>
+</ul>
 
 
 

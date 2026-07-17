@@ -6,17 +6,15 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="HTTP/1-focused documentation for the unet C++ networking library">
+        <meta name="description" content="C++23 HTTP/1, HTTP/2, & WebSocket library on the uvent runtime">
       
       
       
         <link rel="canonical" href="https://usub-development.github.io/unet/http2/client/">
       
       
-        <link rel="prev" href="../handler/">
+        <link rel="prev" href="../upgrade/">
       
-      
-        <link rel="next" href="../multipart-form-data/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Client API - unet Documentation</title>
+        <title>HTTP Client - unet Documentation</title>
       
     
     
@@ -112,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Client API
+              HTTP Client
             
           </span>
         </div>
@@ -192,13 +190,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
       </div>
@@ -241,17 +239,57 @@
   
   
   
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../routing/" class="md-tabs__link">
+          
+  
+  
+  HTTP
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../websockets/" class="md-tabs__link">
+          
+  
+  
+  Beyond HTTP
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
     
   
   
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../routing/" class="md-tabs__link">
+        <a href="./" class="md-tabs__link">
           
   
   
-  HTTP
+  Client
 
         </a>
       </li>
@@ -291,13 +329,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
     </div>
@@ -565,31 +603,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -607,7 +642,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -762,44 +797,17 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Client API
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../parsing/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Client API
+    Parsing
   
 
     
@@ -808,125 +816,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#core-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-request-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Required Request Fields
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#defaults-applied-by-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Defaults Applied By Client
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#persistent-connections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Persistent Connections
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#session-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Session Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#managed-stream-config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Managed Stream Config
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#proxy-support" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Proxy Support
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plain-tls-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plain + TLS Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error Codes
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -960,6 +849,67 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Beyond HTTP
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Beyond HTTP
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -967,14 +917,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../parsing/" class="md-nav__link">
+      <a href="../websockets/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Parsing
+    WebSockets
   
 
     
@@ -995,14 +945,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../Experimental/parse_error_handling.md" class="md-nav__link">
+      <a href="../upgrade/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Experimental Parse Error Notes
+    Upgrade Routes
   
 
     
@@ -1011,6 +961,261 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Client
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Client
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-a-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building a request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-consuming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sending &amp; consuming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#persistent-connections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persistent connections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stream-config-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stream config (TLS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stream config (TLS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows-native-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows-native TLS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeouts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1053,7 +1258,7 @@
   <a href="#core-types" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Types
+        Core types
       
     </span>
   </a>
@@ -1061,10 +1266,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#required-request-fields" class="md-nav__link">
+  <a href="#building-a-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Required Request Fields
+        Building a request
       
     </span>
   </a>
@@ -1072,10 +1277,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#defaults-applied-by-client" class="md-nav__link">
+  <a href="#sending-consuming" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Defaults Applied By Client
+        Sending &amp; consuming
       
     </span>
   </a>
@@ -1086,7 +1291,7 @@
   <a href="#persistent-connections" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Persistent Connections
+        Persistent connections
       
     </span>
   </a>
@@ -1094,10 +1299,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#session-structure" class="md-nav__link">
+  <a href="#stream-config-tls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Session Structure
+        Stream config (TLS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stream config (TLS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows-native-tls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows-native TLS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxies
       
     </span>
   </a>
@@ -1105,32 +1338,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#managed-stream-config" class="md-nav__link">
+  <a href="#timeouts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Managed Stream Config
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#proxy-support" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Proxy Support
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#plain-tls-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plain + TLS Example
+        Timeouts
       
     </span>
   </a>
@@ -1141,7 +1352,18 @@
   <a href="#error-codes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Error Codes
+        Error codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
       
     </span>
   </a>
@@ -1169,142 +1391,150 @@
 
 
 <h1 id="http-client">HTTP Client<a class="headerlink" href="#http-client" title="Permanent link">&para;</a></h1>
-<p>Client API is <code>usub::unet::http::ClientImpl&lt;Streams...&gt;</code>.</p>
-<h2 id="core-types">Core Types<a class="headerlink" href="#core-types" title="Permanent link">&para;</a></h2>
+<p><code>usub::unet::http::ClientImpl&lt;Streams...&gt;</code> sends HTTP requests. HTTP/1.1 only for now; the h2 client is on the roadmap.</p>
+<h2 id="core-types">Core types<a class="headerlink" href="#core-types" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>ClientImpl&lt;...&gt;</code></li>
-<li><code>ClientSession&lt;VERSION::HTTP_1_1&gt;</code> (internal protocol session used by the client runtime)</li>
-<li><code>ClientProxyOptions</code></li>
-<li><code>ClientRequestOptions</code> (connection timeout)</li>
-<li><code>ClientError</code></li>
+<li><code>ClientImpl&lt;Streams...&gt;</code> - the client. Owns per-endpoint connection reuse &amp; routes requests through one of its template streams.</li>
+<li><code>ClientSession&lt;VERSION::HTTP_1_1&gt;</code> - internal per-connection parser session. You won't touch it directly.</li>
+<li><code>ClientRequestOptions</code> - per-call options (proxy, timeout).</li>
+<li><code>ClientProxyOptions</code> - proxy address &amp; optional credentials.</li>
+<li><code>ClientError</code> - failure code + optional message + optional parse detail.</li>
 </ul>
-<p><code>request(...)</code> returns:</p>
-<ul>
-<li><code>Awaitable&lt;std::expected&lt;Response, ClientError&gt;&gt;</code></li>
-</ul>
-<h2 id="required-request-fields">Required Request Fields<a class="headerlink" href="#required-request-fields" title="Permanent link">&para;</a></h2>
-<p>Set at minimum:</p>
-<ul>
-<li><code>request.metadata.authority</code> (required)</li>
-<li><code>request.metadata.uri.authority.host</code></li>
-</ul>
-<p>Common explicit fields:</p>
-<ul>
-<li><code>method_token</code> (<code>GET</code>, <code>POST</code>, ...)</li>
-<li><code>uri.scheme</code> (<code>http</code> / <code>https</code>)</li>
-<li><code>uri.path</code></li>
-<li><code>uri.authority.port</code></li>
-</ul>
-<h2 id="defaults-applied-by-client">Defaults Applied By Client<a class="headerlink" href="#defaults-applied-by-client" title="Permanent link">&para;</a></h2>
-<p>If omitted, current client logic defaults:</p>
-<ul>
-<li>method -&gt; <code>GET</code></li>
-<li>version -&gt; <code>HTTP/1.1</code></li>
-<li>path -&gt; <code>/</code></li>
-<li>scheme -&gt; inferred from available stream types</li>
-<li><code>host</code> header -&gt; auto-added when missing and authority host is available</li>
-<li>HTTP/1.1 connections are kept alive by default when the server allows it</li>
-<li>HTTP/1.0 connections are only reused when keep-alive is explicitly negotiated</li>
-<li><code>Keep-Alive: timeout=...</code> is respected by expiring idle client connections before reuse</li>
-<li>TLS client hostname / SNI is derived from the request host when no explicit managed stream config is provided</li>
-<li>Optional HTTP proxy support is available for both plain HTTP requests and HTTPS <code>CONNECT</code> tunneling</li>
-</ul>
-<h2 id="persistent-connections">Persistent Connections<a class="headerlink" href="#persistent-connections" title="Permanent link">&para;</a></h2>
-<p>The client now keeps one reusable connection per stream type and target endpoint.</p>
-<ul>
-<li>Reuse is attempted automatically for HTTP/1.1 unless either side sends <code>Connection: close</code></li>
-<li>For HTTP/1.0, reuse only happens when <code>Connection: keep-alive</code> is negotiated</li>
-<li>Responses that are framed <code>until close</code> are never reused</li>
-<li>If an idle keep-alive timeout has elapsed, the client closes and reconnects before the next request</li>
-</ul>
-<p>You can explicitly close any live client-side connections with:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+<p><code>client.request(req, opts?)</code> returns <code>Awaitable&lt;std::expected&lt;Response, ClientError&gt;&gt;</code>. Success = a <code>Response</code>. Failure = a <code>ClientError</code> you can switch on.</p>
+<h2 id="building-a-request">Building a request<a class="headerlink" href="#building-a-request" title="Permanent link">&para;</a></h2>
+<p><code>Request</code> is defined in <code>unet/http/core/request.hpp</code>. Minimum fields for a working request:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">Request</span><span class="w"> </span><span class="n">req</span><span class="p">;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">method_token</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;GET&quot;</span><span class="p">;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">version</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">VERSION</span><span class="o">::</span><span class="n">HTTP_1_1</span><span class="p">;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">scheme</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https&quot;</span><span class="p">;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">authority</span><span class="p">.</span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;example.com&quot;</span><span class="p">;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">authority</span><span class="p">.</span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">443</span><span class="p">;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">path</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">authority</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;example.com&quot;</span><span class="p">;</span><span class="w">   </span><span class="c1">// used as Host header</span>
 </code></pre></div>
-<h2 id="session-structure">Session Structure<a class="headerlink" href="#session-structure" title="Permanent link">&para;</a></h2>
-<p>The client runtime now delegates HTTP/1.1 response parsing to a dedicated session implementation.</p>
+<p>Defaults the client fills in if you leave them empty:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>method_token</code></td>
+<td><code>"GET"</code></td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td><code>HTTP_1_1</code></td>
+</tr>
+<tr>
+<td><code>uri.path</code></td>
+<td><code>"/"</code></td>
+</tr>
+<tr>
+<td><code>uri.scheme</code></td>
+<td>Inferred from the available template streams.</td>
+</tr>
+<tr>
+<td><code>Host</code> header</td>
+<td>Filled from <code>authority</code> when missing.</td>
+</tr>
+<tr>
+<td>TLS SNI</td>
+<td>Filled from <code>uri.authority.host</code> when not configured.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sending-consuming">Sending &amp; consuming<a class="headerlink" href="#sending-consuming" title="Permanent link">&para;</a></h2>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">using</span><span class="w"> </span><span class="n">Client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ClientImpl</span><span class="o">&lt;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">PlainText</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;&gt;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">fetch_example</span><span class="p">(</span><span class="n">Client</span><span class="w"> </span><span class="o">&amp;</span><span class="n">client</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">Request</span><span class="w"> </span><span class="n">req</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">build_request</span><span class="p">();</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">request</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">req</span><span class="p">));</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="c1">// result.error().code / .message / .parse_error</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;http error</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="k">co_return</span><span class="p">;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">result</span><span class="p">;</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;status &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">resp</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">resp</span><span class="p">.</span><span class="n">body</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">close</span><span class="p">();</span><span class="w">   </span><span class="c1">// close reusable connections</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="persistent-connections">Persistent connections<a class="headerlink" href="#persistent-connections" title="Permanent link">&para;</a></h2>
+<p>The client keeps one reusable connection per <code>{stream type, endpoint}</code>. Behavior:</p>
 <ul>
-<li><code>ClientImpl</code> owns connection reuse, proxy routing, and stream selection</li>
-<li><code>ClientSession&lt;VERSION::HTTP_1_1&gt;</code> owns incremental HTTP/1.1 response parsing through <code>onBytes(...)</code> / <code>onClose()</code></li>
+<li>HTTP/1.1: reused by default unless either side sends <code>Connection: close</code>.</li>
+<li>HTTP/1.0: reused only when <code>Connection: keep-alive</code> is explicitly negotiated.</li>
+<li><code>Keep-Alive: timeout=...</code> from the server is respected - idle connections past the timeout are closed &amp; rebuilt.</li>
+<li>Responses framed "until close" are never reused.</li>
 </ul>
-<h2 id="managed-stream-config">Managed Stream Config<a class="headerlink" href="#managed-stream-config" title="Permanent link">&para;</a></h2>
-<p>For configurable streams such as <code>OpenSSLStream&lt;&gt;</code>, you can set a default client-managed config once:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;&gt;::</span><span class="n">Config</span><span class="w"> </span><span class="n">tls_cfg</span><span class="p">{};</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">tls_cfg</span><span class="p">.</span><span class="n">verify_peer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">client</span><span class="p">.</span><span class="n">setStreamConfig</span><span class="o">&lt;</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;&gt;&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">tls_cfg</span><span class="p">));</span>
+<p>Force-close all reusable connections:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
 </code></pre></div>
-<p>To customize ALPN at compile time, pass one or more string literal template arguments:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">using</span><span class="w"> </span><span class="n">H2Tls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;</span><span class="s">&quot;h2&quot;</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">using</span><span class="w"> </span><span class="n">H2OrHttp1Tls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;</span><span class="s">&quot;h2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;http/1.1&quot;</span><span class="o">&gt;</span><span class="p">;</span>
+<h2 id="stream-config-tls">Stream config (TLS)<a class="headerlink" href="#stream-config-tls" title="Permanent link">&para;</a></h2>
+<p>For configurable streams like <code>OpenSSLStream&lt;&gt;</code>, set a client-managed default once:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;&gt;::</span><span class="n">Config</span><span class="w"> </span><span class="n">tls_cfg</span><span class="p">{};</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">tls_cfg</span><span class="p">.</span><span class="n">verify_peer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">client</span><span class="p">.</span><span class="n">setStreamConfig</span><span class="o">&lt;</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;&gt;&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">tls_cfg</span><span class="p">));</span>
 </code></pre></div>
-<p>If <code>server_name</code> is left empty, the client fills it from <code>request.metadata.uri.authority.host</code> when opening a new TLS connection.
-Prefer <code>client.setStreamConfig&lt;...&gt;(...)</code> for client-side TLS defaults so the client can keep that config aligned with connection reuse.</p>
-<p>On Windows, there is also a native client TLS stream:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">using</span><span class="w"> </span><span class="n">NativeTls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">SChannelStream</span><span class="o">&lt;</span><span class="s">&quot;http/1.1&quot;</span><span class="o">&gt;</span><span class="p">;</span>
+<p>ALPN goes on the template arguments as string literals:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">using</span><span class="w"> </span><span class="n">H2Tls</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;</span><span class="s">&quot;h2&quot;</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">using</span><span class="w"> </span><span class="n">H2OrH1Tls</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;</span><span class="s">&quot;h2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;http/1.1&quot;</span><span class="o">&gt;</span><span class="p">;</span>
 </code></pre></div>
-<p><code>SChannelStream</code> is a Windows-native TLS stream and follows the same managed <code>server_name</code> / <code>verify_peer</code> config pattern for client usage.
-Consumers that use it should link the Windows system libraries themselves, typically <code>Secur32</code> and <code>Crypt32</code>.
-The template ALPN shape is shared with <code>OpenSSLStream</code>, but native Schannel ALPN negotiation is not wired yet in this first implementation.</p>
-<h2 id="proxy-support">Proxy Support<a class="headerlink" href="#proxy-support" title="Permanent link">&para;</a></h2>
-<p>Set a proxy per request through <code>ClientRequestOptions</code>:</p>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ClientRequestOptions</span><span class="w"> </span><span class="n">options</span><span class="p">{};</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">options</span><span class="p">.</span><span class="n">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ClientProxyOptions</span><span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="p">.</span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="p">.</span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8080</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="p">.</span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;user&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="p">.</span><span class="n">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;pass&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">};</span>
+<p>If <code>server_name</code> is empty in the managed config, the client fills it from <code>request.metadata.uri.authority.host</code> when opening a new TLS connection.</p>
+<h3 id="windows-native-tls">Windows-native TLS<a class="headerlink" href="#windows-native-tls" title="Permanent link">&para;</a></h3>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">using</span><span class="w"> </span><span class="n">NativeTls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">SChannelStream</span><span class="o">&lt;</span><span class="s">&quot;http/1.1&quot;</span><span class="o">&gt;</span><span class="p">;</span>
 </code></pre></div>
-<p>Current client proxy behavior:</p>
+<p>Same managed-config pattern (<code>server_name</code>, <code>verify_peer</code>). Link <code>Secur32</code> &amp; <code>Crypt32</code> yourself. ALPN template arguments accepted but native SChannel ALPN negotiation isn't wired in this first pass.</p>
+<h2 id="proxies">Proxies<a class="headerlink" href="#proxies" title="Permanent link">&para;</a></h2>
+<p>Per-request proxy through <code>ClientRequestOptions</code>:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ClientRequestOptions</span><span class="w"> </span><span class="n">opts</span><span class="p">{};</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">opts</span><span class="p">.</span><span class="n">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ClientProxyOptions</span><span class="p">{</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">.</span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="p">.</span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8080</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="p">.</span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;user&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="p">.</span><span class="n">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;pass&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="p">};</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">request</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">req</span><span class="p">),</span><span class="w"> </span><span class="n">opts</span><span class="p">);</span>
+</code></pre></div>
+<p>Behavior:</p>
 <ul>
-<li>Plain HTTP over proxy: sends absolute-form requests, for example <code>GET http://host:port/path HTTP/1.1</code></li>
-<li>HTTPS over proxy: opens a TCP connection to the proxy, sends <code>CONNECT host:port HTTP/1.1</code>, then runs TLS over the established tunnel</li>
-<li>If credentials are present, the client sends <code>Proxy-Authorization: Basic ...</code></li>
-<li>Proxy connections participate in the same client-side persistence logic as direct connections</li>
+<li>Plain HTTP over proxy: absolute-form request (<code>GET http://host:port/path HTTP/1.1</code>).</li>
+<li>HTTPS over proxy: <code>CONNECT host:port HTTP/1.1</code> first, TLS over the tunnel.</li>
+<li>Credentials become <code>Proxy-Authorization: Basic ...</code>.</li>
+<li>Proxy connections participate in the same persistence pool as direct connections.</li>
 </ul>
-<h2 id="plain-tls-example">Plain + TLS Example<a class="headerlink" href="#plain-tls-example" title="Permanent link">&para;</a></h2>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">using</span><span class="w"> </span><span class="n">Client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ClientImpl</span><span class="o">&lt;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">PlainText</span><span class="p">,</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">stream</span><span class="o">::</span><span class="n">OpenSSLStream</span><span class="o">&lt;&gt;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="w"> </span><span class="n">run</span><span class="p">(</span><span class="n">Client</span><span class="o">&amp;</span><span class="w"> </span><span class="n">client</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">Request</span><span class="w"> </span><span class="n">req</span><span class="p">{};</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">method_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;GET&quot;</span><span class="p">;</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">VERSION</span><span class="o">::</span><span class="n">HTTP_1_1</span><span class="p">;</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">scheme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https&quot;</span><span class="p">;</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">authority</span><span class="p">.</span><span class="n">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;example.com&quot;</span><span class="p">;</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">authority</span><span class="p">.</span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">443</span><span class="p">;</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">authority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;example.com&quot;</span><span class="p">;</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">;</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">request</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">req</span><span class="p">));</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">        </span><span class="c1">// inspect result.error().code / .message</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">        </span><span class="k">co_return</span><span class="p">;</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="o">-&gt;</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="p">;</span>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="o">-&gt;</span><span class="n">body</span><span class="p">;</span>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">    </span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">status</span><span class="p">;</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">    </span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">body</span><span class="p">;</span>
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">    </span><span class="k">co_await</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">    </span><span class="k">co_return</span><span class="p">;</span>
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="error-codes">Error Codes<a class="headerlink" href="#error-codes" title="Permanent link">&para;</a></h2>
-<p><code>ClientError::CODE</code> values:</p>
+<h2 id="timeouts">Timeouts<a class="headerlink" href="#timeouts" title="Permanent link">&para;</a></h2>
+<p><code>ClientRequestOptions::connect_timeout_ms</code> bounds the connection dial. Read/write timeouts are inherited from the transport defaults on the stream config.</p>
+<h2 id="error-codes">Error codes<a class="headerlink" href="#error-codes" title="Permanent link">&para;</a></h2>
+<p><code>ClientError::CODE</code>:</p>
 <ul>
-<li><code>INVALID_REQUEST</code></li>
-<li><code>CONNECT_FAILED</code></li>
-<li><code>PROXY_FAILED</code></li>
-<li><code>WRITE_FAILED</code></li>
-<li><code>READ_FAILED</code></li>
-<li><code>PARSE_FAILED</code></li>
-<li><code>CLOSE_FAILED</code></li>
+<li><code>INVALID_REQUEST</code> - the <code>Request</code> was missing required fields (authority/host).</li>
+<li><code>CONNECT_FAILED</code> - direct TCP/TLS connect failed.</li>
+<li><code>PROXY_FAILED</code> - proxy dial or <code>CONNECT</code> response failed.</li>
+<li><code>WRITE_FAILED</code> - socket write failed mid-request.</li>
+<li><code>READ_FAILED</code> - socket read failed / connection went away mid-response.</li>
+<li><code>PARSE_FAILED</code> - <code>ResponseParser</code> rejected the bytes. <code>parse_error</code> on the error object may carry line/state detail.</li>
+<li><code>CLOSE_FAILED</code> - shutdown failed on an outgoing connection.</li>
 </ul>
-<p>When parse fails, <code>parse_error</code> may include lower-level parse details.</p>
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>Request</code> still has the legacy fluent <code>setBody</code> / <code>addHeader</code> helpers marked <code>[[deprecated]]</code> - use the public <code>metadata</code> / <code>headers</code> / <code>body</code> fields directly.</li>
+<li>Client is HTTP/1.1 only. A <code>Client::request</code> to an h2-only endpoint won't negotiate h2; it'll just try h1.</li>
+</ul>
 
 
 

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://usub-development.github.io/unet/http2/request-response/">
+        <link rel="canonical" href="https://usub-development.github.io/unet/http2/upgrade/">
       
       
-        <link rel="prev" href="../middlewares/">
+        <link rel="prev" href="../websockets/">
       
       
-        <link rel="next" href="../handler/">
+        <link rel="next" href="../client/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Request and Response - unet Documentation</title>
+        <title>Upgrade Routes - unet Documentation</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#request-response" class="md-skip">
+        <a href="#upgrade-routes" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Request and Response
+              Upgrade Routes
             
           </span>
         </div>
@@ -241,12 +241,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../routing/" class="md-tabs__link">
           
   
@@ -263,10 +261,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../websockets/" class="md-tabs__link">
           
   
@@ -605,31 +605,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -647,7 +644,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -746,37 +743,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Request and Response
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../request-response/" class="md-nav__link">
         
   
   
@@ -792,148 +762,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requestreader" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RequestReader
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="RequestReader">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#body-reads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Body reads
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-headers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query &amp; headers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-as-a-typed-value" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query as a typed value
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#responsewriter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ResponseWriter
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ResponseWriter">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fixed-size-body" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed-size body
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#zero-copy-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Zero-copy file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chunked-streaming" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chunked / streaming
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-aborts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode &amp; aborts
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1034,28 +862,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -1073,7 +904,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1116,10 +947,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../upgrade/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Routes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1135,6 +993,131 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#registering-an-upgrade-route" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registering an upgrade route
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgradecontext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UpgradeContext
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-carry-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The carry buffer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#under-http1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Under HTTP/1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#under-http2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Under HTTP/2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registered-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registered examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Registered examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vless" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VLESS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1263,72 +1246,77 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requestreader" class="md-nav__link">
+  <a href="#registering-an-upgrade-route" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RequestReader
+        Registering an upgrade route
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="RequestReader">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#body-reads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Body reads
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-headers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query &amp; headers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-as-a-typed-value" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query as a typed value
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#responsewriter" class="md-nav__link">
+  <a href="#upgradecontext" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ResponseWriter
+        UpgradeContext
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ResponseWriter">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-carry-buffer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The carry buffer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#under-http1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Under HTTP/1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#under-http2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Under HTTP/2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registered-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registered examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Registered examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fixed-size-body" class="md-nav__link">
+  <a href="#vless" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fixed-size body
+        VLESS
       
     </span>
   </a>
@@ -1336,32 +1324,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#zero-copy-file" class="md-nav__link">
+  <a href="#websocket" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Zero-copy file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chunked-streaming" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chunked / streaming
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-aborts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode &amp; aborts
+        WebSocket
       
     </span>
   </a>
@@ -1404,187 +1370,89 @@
   
 
 
-<h1 id="request-response">Request &amp; Response<a class="headerlink" href="#request-response" title="Permanent link">&para;</a></h1>
-<p>Handlers see two types, both non-copyable, both moved onto the handler frame: <code>RequestReader</code> (incoming) &amp; <code>ResponseWriter</code> (outgoing). This page is the field &amp; method reference.</p>
-<h2 id="requestreader"><code>RequestReader</code><a class="headerlink" href="#requestreader" title="Permanent link">&para;</a></h2>
-<p>Defined in <code>unet/http/core/request.hpp</code>. Public fields:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>metadata</code></td>
-<td><code>RequestMetadata</code></td>
-<td>method, uri, version, authority.</td>
-</tr>
-<tr>
-<td><code>headers</code></td>
-<td><code>header::Headers</code></td>
-<td>lowercase-normalized; multi-value.</td>
-</tr>
-<tr>
-<td><code>trailers</code></td>
-<td><code>header::Headers</code></td>
-<td>filled for h2 trailer HEADERS block.</td>
-</tr>
-<tr>
-<td><code>peer</code></td>
-<td><code>PeerInfo</code></td>
-<td>ip, port, alpn, ssl. Marked experimental.</td>
-</tr>
-<tr>
-<td><code>user_data</code></td>
-<td><code>std::any</code></td>
-<td>Handler / middleware scratch slot.</td>
-</tr>
-</tbody>
-</table>
-<p><code>RequestMetadata</code>:</p>
-<ul>
-<li><code>method_token</code> (<code>std::string</code>, e.g. <code>"GET"</code>, <code>"POST"</code>, <code>"CONNECT"</code>).</li>
-<li><code>uri</code> - <code>uri::URI</code> with <code>scheme</code>, <code>authority</code>, <code>path</code>, <code>query</code>, <code>fragment</code>.</li>
-<li><code>version</code> - <code>VERSION::HTTP_1_0</code> / <code>HTTP_1_1</code> / <code>HTTP_2_0</code>.</li>
-<li><code>authority</code> - <code>:authority</code> on h2, <code>Host</code> on h1.</li>
-</ul>
-<p><code>PeerInfo</code>:</p>
-<ul>
-<li><code>ip</code> - dotted IPv4 or bracketed IPv6.</li>
-<li><code>port</code> - <code>uint16_t</code>.</li>
-<li><code>alpn</code> - <code>"h2"</code>, <code>"http/1.1"</code>, or empty.</li>
-<li><code>ssl</code> - whether TLS terminated on our side.</li>
-</ul>
-<h3 id="body-reads">Body reads<a class="headerlink" href="#body-reads" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Returns</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>chunk()</code></td>
-<td>Next chunk, or empty optional at EOF, or <code>BODY_ERROR</code>.</td>
-</tr>
-<tr>
-<td><code>readBody()</code></td>
-<td>Full body as one string (no size cap - risky on untrusted).</td>
-</tr>
-<tr>
-<td><code>collect(limit)</code></td>
-<td>Full body up to <code>limit</code>, or <code>FRAME_SIZE_ERROR</code> if bigger.</td>
-</tr>
-<tr>
-<td><code>readBodyBytes(std::size_t n)</code></td>
-<td>Exactly <code>n</code> bytes as a string (may return less at EOF).</td>
-</tr>
-<tr>
-<td><code>readBodyBytes(std::span&lt;std::byte&gt; dst)</code></td>
-<td>Fill <code>dst</code>, return byte count written.</td>
-</tr>
-<tr>
-<td><code>eof()</code></td>
-<td>True when no more bytes will arrive.</td>
-</tr>
-<tr>
-<td><code>getBodyChannel()</code> / <code>getBodyChannelPtr()</code></td>
-<td>Raw channel access. Use only from framework code / upgrades.</td>
-</tr>
-</tbody>
-</table>
-<p>Sample streaming read:</p>
+<h1 id="upgrade-routes">Upgrade routes<a class="headerlink" href="#upgrade-routes" title="Permanent link">&para;</a></h1>
+<p>An upgrade route hands the transport off to a different protocol once the request has been examined &amp; accepted. This is how WebSocket, VLESS, &amp; custom tunneled protocols run inside <code>unet</code>. Same mechanism, one protocol per registered route.</p>
+<p>Two things happen on a successful upgrade:</p>
+<ol>
+<li>The framework serializes the response you built up (typically a 101 or a 200 with special headers) &amp; flushes it.</li>
+<li>The framework calls <code>ctx.spawn(transport, carry_buffer)</code> with a moved-out transport. Your spawned coroutine now owns the wire.</li>
+</ol>
+<h2 id="registering-an-upgrade-route">Registering an upgrade route<a class="headerlink" href="#registering-an-upgrade-route" title="Permanent link">&para;</a></h2>
+<p>Same shape as <code>handle</code>, but the handler takes a third <code>UpgradeContext &amp;</code> argument, &amp; you register with <code>handleUpgrade</code>:</p>
 <div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">consume</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">        </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="n">res</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(;;)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">chunk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">co_await</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">chunk</span><span class="p">();</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">chunk</span><span class="p">)</span><span class="w">          </span><span class="p">{</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">400</span><span class="p">;</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">chunk</span><span class="o">-&gt;</span><span class="n">has_value</span><span class="p">())</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w">   </span><span class="c1">// EOF</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="c1">// handle **chunk here...</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">200</span><span class="p">;</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{</span><span class="s">&quot;done</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">});</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">my_upgrade</span><span class="p">(</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">           </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="n">res</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">           </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">UpgradeContext</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="c1">// Inspect req, decide whether to accept.</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">looks_ok</span><span class="p">(</span><span class="n">req</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">        </span><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">400</span><span class="p">;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{</span><span class="s">&quot;nope</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">});</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">        </span><span class="k">co_return</span><span class="p">;</span><span class="w">  </span><span class="c1">// ctx.accepted stays false, no upgrade happens</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="c1">// Set up the response headers your protocol wants clients to see.</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">101</span><span class="p">;</span><span class="w">   </span><span class="c1">// or 200 for h2 tunnels</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;upgrade&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;my-protocol&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;connection&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;upgrade&quot;</span><span class="p">);</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="c1">// Register the coroutine that takes over the wire.</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="n">accept</span><span class="p">([](</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">core</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Transport</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tr</span><span class="p">,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">                  </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">Buffer</span><span class="w"> </span><span class="n">carry</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">        </span><span class="c1">// tr is now yours. carry may have bytes that came in after the</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">        </span><span class="c1">// request headers but before we handed off.</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(;;)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">            </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">Buffer</span><span class="w"> </span><span class="n">buf</span><span class="p">;</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="kt">ssize_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">co_await</span><span class="w"> </span><span class="n">tr</span><span class="o">-&gt;</span><span class="n">read</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">co_return</span><span class="p">;</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">            </span><span class="c1">// ... your protocol logic</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">        </span><span class="p">}</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span><span class="p">});</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span><span class="k">co_return</span><span class="p">;</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="p">}</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="n">server</span><span class="p">.</span><span class="n">handleUpgrade</span><span class="p">(</span><span class="s">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/my-proto&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">my_upgrade</span><span class="p">);</span>
 </code></pre></div>
-<h3 id="query-headers">Query &amp; headers<a class="headerlink" href="#query-headers" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">auto</span><span class="w"> </span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">uri</span><span class="p">.</span><span class="n">query</span><span class="p">;</span><span class="w">                        </span><span class="c1">// raw string</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">auto</span><span class="w"> </span><span class="n">ua</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="s">&quot;user-agent&quot;</span><span class="p">);</span><span class="w">              </span><span class="c1">// std::optional&lt;std::string_view&gt;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">req</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="s">&quot;content-type&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">h</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">req</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">all</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span>
+<h2 id="upgradecontext"><code>UpgradeContext</code><a class="headerlink" href="#upgradecontext" title="Permanent link">&para;</a></h2>
+<p>Defined in <code>unet/http/upgrade_context.hpp</code>:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">UpgradeContext</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">accepted</span><span class="p">{</span><span class="nb">false</span><span class="p">};</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">upgrade_action</span><span class="o">&lt;</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Transport</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Buffer</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="n">spawn</span><span class="p">;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">accept</span><span class="p">(</span><span class="n">upgrade_action</span><span class="o">&lt;</span><span class="p">...</span><span class="o">&gt;</span><span class="w"> </span><span class="n">action</span><span class="p">);</span><span class="w">   </span><span class="c1">// sets accepted=true &amp; moves action into spawn</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">};</span>
 </code></pre></div>
-<p>Header names are already lowercased inside <code>Headers</code>. Pass any case in <code>value()</code> / <code>contains()</code>; the container normalizes on lookup.</p>
-<h3 id="query-as-a-typed-value">Query as a typed value<a class="headerlink" href="#query-as-a-typed-value" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">T</span><span class="w"> </span><span class="n">RequestReader</span><span class="o">::</span><span class="n">getQueryAs</span><span class="p">();</span><span class="w">   </span><span class="c1">// trivially constructs T from metadata.uri.query</span>
+<p>If <code>ctx.accepted</code> is <code>false</code> when your handler returns, the framework treats the response as a normal request/response cycle - the response goes out, connection stays or closes per HTTP semantics, no upgrade.</p>
+<p>If <code>ctx.accepted</code> is <code>true</code>, the framework flushes the response, releases the transport ownership, &amp; invokes <code>ctx.spawn(transport, carry)</code> on a new coroutine.</p>
+<h2 id="the-carry-buffer">The <code>carry</code> buffer<a class="headerlink" href="#the-carry-buffer" title="Permanent link">&para;</a></h2>
+<p>Right after headers, the parser may have read further into the socket than the request required. Those extra bytes are the <code>carry</code> argument. Your spawned protocol usually treats it as "what came in before I took over" &amp; processes it before reading more from the transport.</p>
+<p>Empty carry is common. Non-empty carry happens when the client pipelined data after the headers.</p>
+<h2 id="under-http1">Under HTTP/1<a class="headerlink" href="#under-http1" title="Permanent link">&para;</a></h2>
+<p>The transport handed to <code>spawn</code> is the raw <code>TCP&lt;Stream, Socket&gt;</code> - the same socket the request came in on. Reading &amp; writing goes straight to the wire.</p>
+<h2 id="under-http2">Under HTTP/2<a class="headerlink" href="#under-http2" title="Permanent link">&para;</a></h2>
+<p>The transport handed to <code>spawn</code> is a <code>v2::StreamTransport</code>. Reads pop from the h2 stream's <code>BodyReaderChannel</code> (DATA frames feed it). Writes go through <code>enqueueDataFrames</code> &amp; then the h2 outbound channel. Every read chunk is one or more DATA frames' worth of bytes; every write becomes DATA frames (chunked by <code>max_frame_size</code>).</p>
+<p><code>shutdown()</code> on a <code>StreamTransport</code> sends <code>RST_STREAM(CANCEL)</code> &amp; retires the stream from <code>streams_</code>. If you <code>co_return</code> without calling <code>shutdown</code>, the stream lingers until the connection tears down. Not a leak per se (bounded by <code>MAX_CONCURRENT_STREAMS</code>), but it's clutter.</p>
+<h2 id="registered-examples">Registered examples<a class="headerlink" href="#registered-examples" title="Permanent link">&para;</a></h2>
+<h3 id="vless">VLESS<a class="headerlink" href="#vless" title="Permanent link">&para;</a></h3>
+<p>The <a href="../examples/VLESS.cpp"><code>examples/VLESS.cpp</code></a> upgrade handler is a single call:</p>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">server</span><span class="p">.</span><span class="n">handleUpgrade</span><span class="p">(</span><span class="s">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/vless&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="p">[</span><span class="n">auth</span><span class="p">](</span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">RequestReader</span><span class="w"> </span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">           </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">ResponseWriter</span><span class="w"> </span><span class="o">&amp;</span><span class="n">res</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">           </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">http</span><span class="o">::</span><span class="n">UpgradeContext</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ctx</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">       </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">uvent</span><span class="o">::</span><span class="n">task</span><span class="o">::</span><span class="n">Awaitable</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="k">co_await</span><span class="w"> </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">vless</span><span class="o">::</span><span class="n">upgrade</span><span class="p">(</span><span class="n">req</span><span class="p">,</span><span class="w"> </span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">ctx</span><span class="p">,</span><span class="w"> </span><span class="n">auth</span><span class="p">);</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="p">});</span>
 </code></pre></div>
-<p>For structured parsing, use the multipart or form-urlencoded utilities under <code>unet/mime/</code>.</p>
-<h2 id="responsewriter"><code>ResponseWriter</code><a class="headerlink" href="#responsewriter" title="Permanent link">&para;</a></h2>
-<p>Defined in <code>unet/http/core/response.hpp</code>. Public fields:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>metadata</code></td>
-<td><code>ResponseMetadata</code></td>
-<td><code>version</code>, <code>status_code</code>, optional <code>status_message</code>.</td>
-</tr>
-<tr>
-<td><code>headers</code></td>
-<td><code>header::Headers</code></td>
-<td>Same container as request.</td>
-</tr>
-<tr>
-<td><code>trailers</code></td>
-<td><code>header::Headers</code></td>
-<td>Emitted after body on h2.</td>
-</tr>
-</tbody>
-</table>
-<p>Write in one of three shapes, picked by which method you call first.</p>
-<h3 id="fixed-size-body">Fixed-size body<a class="headerlink" href="#fixed-size-body" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">200</span><span class="p">;</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;content-type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span><span class="p">);</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">{</span><span class="s">&quot;{</span><span class="se">\&quot;</span><span class="s">ok</span><span class="se">\&quot;</span><span class="s">:true}&quot;</span><span class="p">});</span>
+<p><code>vless::upgrade</code> reads the VLESS header off the request body, authenticates the UUID against the provider, &amp; wires the destination-facing socket to both directions of the tunnel.</p>
+<h3 id="websocket">WebSocket<a class="headerlink" href="#websocket" title="Permanent link">&para;</a></h3>
+<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">server</span><span class="p">.</span><span class="n">handleUpgrade</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{</span><span class="s">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;CONNECT&quot;</span><span class="p">},</span><span class="w"> </span><span class="s">&quot;/ws&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">                     </span><span class="n">usub</span><span class="o">::</span><span class="n">unet</span><span class="o">::</span><span class="n">ws</span><span class="o">::</span><span class="n">upgradeHandler</span><span class="p">(</span><span class="n">chat_handler</span><span class="p">));</span>
 </code></pre></div>
-<p><code>send(std::string)</code> emits headers + body. Framing (content-length on h1, DATA frames on h2) is done for you.</p>
-<h3 id="zero-copy-file">Zero-copy file<a class="headerlink" href="#zero-copy-file" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">O_RDONLY</span><span class="p">);</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">200</span><span class="p">;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;content-type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;text/plain&quot;</span><span class="p">);</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">file</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">file_size</span><span class="p">);</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="o">::</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
-</code></pre></div>
-<p>On POSIX this goes through <code>sendfile(2)</code> when available. Not through the response byte buffer.</p>
-<h3 id="chunked-streaming">Chunked / streaming<a class="headerlink" href="#chunked-streaming" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">res</span><span class="p">.</span><span class="n">metadata</span><span class="p">.</span><span class="n">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">200</span><span class="p">;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">res</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">addHeader</span><span class="p">(</span><span class="s">&quot;content-type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;text/event-stream&quot;</span><span class="p">);</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">start</span><span class="p">())</span><span class="w"> </span><span class="k">co_return</span><span class="p">;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">ev</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">events</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">chunk</span><span class="p">(</span><span class="s">&quot;data: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ev</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">))</span><span class="w"> </span><span class="k">co_return</span><span class="p">;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">co_await</span><span class="w"> </span><span class="n">res</span><span class="p">.</span><span class="n">end</span><span class="p">();</span>
-</code></pre></div>
-<p><code>start()</code> flushes headers, then <code>chunk(bytes)</code> / <code>chunk(fd, len, off)</code> writes body pieces, then <code>end()</code> closes the transfer. On h1 this becomes <code>Transfer-Encoding: chunked</code>. On h2 it's DATA frames with END_STREAM on the final one.</p>
-<p>Every method returns <code>Awaitable&lt;bool&gt;</code>. <code>false</code> means the peer went away or the transport failed. Stop the handler at that point.</p>
-<h3 id="mode-aborts">Mode &amp; aborts<a class="headerlink" href="#mode-aborts" title="Permanent link">&para;</a></h3>
-<p><code>res.mode()</code> returns <code>Mode::Empty | Chunked | Sent | Aborted</code>. Any illegal transition (e.g. <code>chunk()</code> after <code>send()</code>) returns <code>false</code> without doing anything. <code>res.abort()</code> marks the writer aborted; on h2 this triggers a <code>RST_STREAM(CANCEL)</code> in <code>finalizeStreamResponse</code>.</p>
+<p><code>ws::upgradeHandler</code> is a factory that produces the <code>ctx.accept(...)</code> closure for you. See <a href="../websockets/">WebSockets</a>.</p>
 <h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Header names are canonicalized to lowercase inside the container. Whatever case you pass, storage &amp; iteration are lowercase.</li>
-<li><code>content-length</code> on <code>send(std::string)</code> is set for you. Don't add it manually.</li>
-<li><code>content-type</code> is not defaulted. Add one, or the client will guess.</li>
-<li>The <code>RequestWriter</code> &amp; <code>Request</code> types in the same header are client-side scaffolding pending a real client-side session. Don't rely on them yet.</li>
+<li>Middleware runs before the upgrade handler. Same HEADER-phase chain as normal handlers.</li>
+<li>Read the request body inside the handler if you need it before deciding, using <code>req.chunk()</code> / <code>req.collect(limit)</code>. Bytes the handler didn't drain remain in the body channel &amp; are visible to the spawned protocol through <code>StreamTransport</code> (h2) or the shared <code>carry</code> buffer (h1).</li>
+<li><code>ctx.spawn</code> runs detached. Capture what it needs by value or via <code>shared_ptr</code>. The <code>RequestReader</code>/<code>ResponseWriter</code> references are gone by the time it fires.</li>
 </ul>
 
 

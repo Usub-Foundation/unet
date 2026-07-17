@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="HTTP/1-focused documentation for the unet C++ networking library">
+        <meta name="description" content="C++23 HTTP/1, HTTP/2, & WebSocket library on the uvent runtime">
       
       
       
@@ -190,13 +190,13 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
       </div>
@@ -257,6 +257,46 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="websockets/" class="md-tabs__link">
+          
+  
+  
+  Beyond HTTP
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="client/" class="md-tabs__link">
+          
+  
+  
+  Client
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -289,13 +329,13 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/Usub-development/unet/" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/Usub-Foundation/unet/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
-    Usub-development/unet
+    Usub-Foundation/unet
   </div>
 </a>
     </div>
@@ -426,10 +466,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#scope-of-this-documentation" class="md-nav__link">
+  <a href="#where-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scope Of This Documentation
+        Where to start
       
     </span>
   </a>
@@ -437,10 +477,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
+  <a href="#whats-real-vs-aspirational" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Links
+        What's real vs aspirational
       
     </span>
   </a>
@@ -448,10 +488,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-reality-snapshot" class="md-nav__link">
+  <a href="#api-stability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current Reality Snapshot
+        API stability
       
     </span>
   </a>
@@ -843,14 +883,14 @@
   
   
     <li class="md-nav__item">
-      <a href="client/" class="md-nav__link">
+      <a href="parsing/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Client API
+    Parsing
   
 
     
@@ -892,6 +932,67 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Beyond HTTP
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Beyond HTTP
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -899,14 +1000,14 @@
   
   
     <li class="md-nav__item">
-      <a href="parsing/" class="md-nav__link">
+      <a href="websockets/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Parsing
+    WebSockets
   
 
     
@@ -927,14 +1028,103 @@
   
   
     <li class="md-nav__item">
-      <a href="Experimental/parse_error_handling.md" class="md-nav__link">
+      <a href="upgrade/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Experimental Parse Error Notes
+    Upgrade Routes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Client
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Client
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Client
   
 
     
@@ -982,10 +1172,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#scope-of-this-documentation" class="md-nav__link">
+  <a href="#where-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scope Of This Documentation
+        Where to start
       
     </span>
   </a>
@@ -993,10 +1183,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-links" class="md-nav__link">
+  <a href="#whats-real-vs-aspirational" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Links
+        What's real vs aspirational
       
     </span>
   </a>
@@ -1004,10 +1194,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-reality-snapshot" class="md-nav__link">
+  <a href="#api-stability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current Reality Snapshot
+        API stability
       
     </span>
   </a>
@@ -1035,50 +1225,65 @@
 
 
 <h1 id="unet-documentation">unet Documentation<a class="headerlink" href="#unet-documentation" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Disclaimer:</strong> Due to life constraints, I could not write this documentation myself. This documentation was generated from the current repository state. We will review this documentation later.</p>
-</blockquote>
-<p><code>unet</code> is a coroutine-based C++ networking library focused on HTTP request/response handling, routing, middleware, parsing, and client/server primitives on top of <code>uvent</code>.</p>
-<h2 id="scope-of-this-documentation">Scope Of This Documentation<a class="headerlink" href="#scope-of-this-documentation" title="Permanent link">&para;</a></h2>
-<p>This documentation focuses on the parts that are currently practical to use:</p>
+<p>C++23 coroutine-based HTTP / HTTP2 / WebSocket library on top of <a href="https://github.com/Usub-development/uvent">uvent</a>. This doc set describes what the code actually does today, not what a marketing page would say it does.</p>
+<h2 id="where-to-start">Where to start<a class="headerlink" href="#where-to-start" title="Permanent link">&para;</a></h2>
+<p>New here?</p>
 <ul>
-<li>HTTP/1 server flow (<code>ServerImpl</code> / <code>ServerRadix</code>, <code>v1::ServerSession&lt;R&gt;</code>)</li>
-<li>HTTP/2 server flow (<code>v2::ServerSession&lt;R&gt;</code>) — prior-knowledge preface and
-  <code>Upgrade: h2c</code> are both wired; frame layer, HPACK, and SETTINGS exchange are
-  in place; per-stream tunneling (CONNECT, Extended CONNECT, gRPC trailers) is
-  not yet implemented.</li>
-<li>HTTP/1 wire parser and serializer</li>
-<li>HTTP client (<code>ClientImpl</code>) with plain and TLS streams (HTTP/1 only on the
-  client side for now)</li>
-<li>Byte-level radix router with named params, inline regex constraints, and
-  named wildcards</li>
-<li>Middleware, headers, and multipart helpers</li>
+<li><a href="installation/">Installation</a> - build &amp; consume from CMake.</li>
+<li><a href="quick-start/">Quick Start</a> - the smallest working server, in five minutes.</li>
+<li><a href="architecture/">Architecture</a> - how connections turn into handler calls.</li>
 </ul>
-<p>Out of scope in this docs set:</p>
+<p>Building something?</p>
 <ul>
-<li>mail/IMAP model headers (not part of active HTTP runtime)</li>
-<li>old <code>examples/</code> behavior (mostly legacy)</li>
+<li><a href="routing/">Routing</a> - radix patterns, params, constraints.</li>
+<li><a href="handler/">Handlers</a> - handler signatures, streaming, sendfile.</li>
+<li><a href="middlewares/">Middlewares</a> - phases, order, per-route vs global.</li>
+<li><a href="request-response/">Request &amp; Response</a> - the reader/writer types your handlers touch.</li>
+<li><a href="config/">Configuration</a> - <code>Config</code> object shape &amp; recognized keys.</li>
 </ul>
-<h2 id="quick-links">Quick Links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
+<p>Beyond plain HTTP?</p>
 <ul>
-<li>Getting started: <a href="installation/">Installation</a>, <a href="quick-start/">Quick Start</a></li>
-<li>Runtime setup: <a href="architecture/">Architecture</a>, <a href="config/">Configuration</a></li>
-<li>Request handling: <a href="routing/">Routing</a>, <a href="custom-router/">Writing Custom Routers</a>, <a href="middlewares/">Middlewares</a>, <a href="request-response/">Request and Response</a>, <a href="handler/">Handlers</a></li>
-<li>Outbound requests: <a href="client/">HTTP Client</a></li>
-<li>Parsing internals: <a href="parsing/">Parsing</a>, <a href="Experimental/parse_error_handling.md">Experimental Parse Error Notes</a></li>
-<li>Utilities: <a href="multipart-form-data/">Multipart Form Data</a></li>
-<li>Project process: <a href="roadmap/">Roadmap</a>, <a href="contributing/">Contributing</a></li>
+<li><a href="websockets/">WebSockets</a> - RFC 6455 over h1, RFC 8441 over h2.</li>
+<li><a href="upgrade/">Upgrade routes</a> - hand the transport off to your own protocol (VLESS example).</li>
+<li><a href="client/">HTTP Client</a> - outbound requests, keep-alive, TLS, proxies.</li>
 </ul>
-<h2 id="current-reality-snapshot">Current Reality Snapshot<a class="headerlink" href="#current-reality-snapshot" title="Permanent link">&para;</a></h2>
+<p>Reference:</p>
 <ul>
-<li>HTTP/1 parser, core flow, router, and middleware chain are the most mature paths.</li>
-<li>HTTP/2 server can speak prior-knowledge and h2c-upgrade traffic end-to-end.
-  CONNECT/Extended-CONNECT and gRPC trailers are not implemented yet.</li>
-<li>HTTP/2 client is not implemented.</li>
-<li>Middleware phases exist, but runtime invocation details matter (see <a href="middlewares/">Middlewares</a>).</li>
-<li>Tests are present and useful for behavior clues, but they are not exhaustive quality gates yet.</li>
-<li>API names in these docs match current headers under <code>include/unet/**</code>.</li>
+<li><a href="parsing/">Parsing</a> - h1 wire parsers, error surface.</li>
+<li><a href="multipart-form-data/">Multipart Form Data</a> - <code>multipart/form-data</code> decoder.</li>
+<li><a href="custom-router/">Custom Routers</a> - swap <code>Radix</code> for your own type.</li>
 </ul>
+<p>Project process:</p>
+<ul>
+<li><a href="roadmap/">Roadmap</a> - what's next, what's out of scope.</li>
+<li><a href="contributing/">Contributing</a> - workflow &amp; style.</li>
+</ul>
+<h2 id="whats-real-vs-aspirational">What's real vs aspirational<a class="headerlink" href="#whats-real-vs-aspirational" title="Permanent link">&para;</a></h2>
+<p>Working &amp; tested:</p>
+<ul>
+<li>HTTP/1.1 server (RFC 9112), including all four request-target forms &amp; chunked transfer.</li>
+<li>HTTP/2 server (RFC 9113) with HPACK, per-stream flow control, extensions.</li>
+<li>WebSocket server (RFC 6455) with fragmented messages, ping/pong, close frames.</li>
+<li>WebSocket-over-HTTP/2 via extended CONNECT (RFC 8441).</li>
+<li>Radix router.</li>
+<li>Middleware chain (HEADER &amp; BODY phases invoke).</li>
+</ul>
+<p>Working but partial:</p>
+<ul>
+<li>HTTP/1 client. Keep-alive, TLS, proxies, <code>CONNECT</code> tunneling. HTTP/2 client is not implemented.</li>
+<li>h2c upgrade (RFC 7540 §3.2). Wired, may get retired since RFC 9113 deprecates it.</li>
+<li>h2c prior-knowledge sniff. Optional, off by default.</li>
+</ul>
+<p>Not yet:</p>
+<ul>
+<li>HTTP/2 client.</li>
+<li>WebSocket <code>permessage-deflate</code> (RFC 7692).</li>
+<li>HTTP/3.</li>
+<li>Response-phase middleware invocation in the h1 send path.</li>
+<li>Body-trickle timeout (only header-trickle is guarded today).</li>
+</ul>
+<h2 id="api-stability">API stability<a class="headerlink" href="#api-stability" title="Permanent link">&para;</a></h2>
+<p>Names in these docs match <code>include/unet/**</code>. When the header changes, these files should change with it. If you spot drift, open an issue or PR - see <a href="contributing/">Contributing</a>.</p>
 
 
 
