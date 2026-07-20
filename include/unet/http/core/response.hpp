@@ -101,6 +101,8 @@ namespace usub::unet::http {
 
         BodyReaderChannel &getBodyChannel() noexcept { return *channel_; }
 
+        std::shared_ptr<BodyReaderChannel> sharedBodyChannel() const noexcept { return channel_; }
+
     private:
         std::shared_ptr<BodyReaderChannel> channel_;
         std::string residual_{};
