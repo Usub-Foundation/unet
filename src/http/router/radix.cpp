@@ -223,6 +223,85 @@ namespace usub::unet::http::router {
         return this->addRoute(method_set, pathPattern, std::move(function), constraints);
     }
 
+    static bool isPrunable(const RadixNode *node) {
+        return !node->route && node->literal.empty() && node->param.empty() && !node->wildcard;
+    }
+
+    std::size_t Radix::removeWalk(RadixNode *node, const std::vector<Segment> &segs, std::size_t idx,
+                                  const std::set<std::string> *methods) {
+        if (idx == segs.size()) {
+            if (!node->route) { return 0; }
+            RouteType *route = node->route.get();
+            std::size_t removed = 0;
+            if (!methods) {
+                removed = route->allowed_method_tokenns.size() + (route->accept_all_methods ? 1 : 0);
+                node->route.reset();
+                return removed;
+            }
+            for (const auto &method: *methods) { removed += route->allowed_method_tokenns.erase(method); }
+            if (methods->contains("*") && route->accept_all_methods) {
+                route->accept_all_methods = false;
+                ++removed;
+            }
+            if (route->allowed_method_tokenns.empty() && !route->accept_all_methods) { node->route.reset(); }
+            return removed;
+        }
+
+        const Segment &cur = segs[idx];
+
+        if (cur.kind == Segment::Lit) {
+            auto it = node->literal.find(cur.lit);
+            if (it == node->literal.end()) { return 0; }
+            std::size_t removed = removeWalk(it->second.get(), segs, idx + 1, methods);
+            if (isPrunable(it->second.get())) { node->literal.erase(it); }
+            return removed;
+        }
+
+        if (cur.kind == Segment::Par) {
+            for (auto it = node->param.begin(); it != node->param.end(); ++it) {
+                const bool same_constraint =
+                        (it->constraint && cur.constraint && it->constraint->pattern == cur.constraint->pattern) ||
+                        (!it->constraint && !cur.constraint);
+                if (!same_constraint || it->name != cur.name) { continue; }
+                std::size_t removed = removeWalk(it->child.get(), segs, idx + 1, methods);
+                if (isPrunable(it->child.get())) { node->param.erase(it); }
+                return removed;
+            }
+            return 0;
+        }
+
+        // Wildcard
+        if (!node->wildcard) { return 0; }
+        std::size_t removed = removeWalk(node->wildcard.get(), segs, segs.size(), methods);
+        if (isPrunable(node->wildcard.get())) {
+            node->wildcard.reset();
+            node->wildcard_name.clear();
+        }
+        return removed;
+    }
+
+    std::size_t Radix::removeRoute(const std::set<std::string> &methods, const std::string &pattern,
+                                   const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
+        std::vector<std::string> param_names;
+        std::vector<Segment> segs = parseSegments(pattern, param_names);
+        applyConstraints(segs, constraints);
+        return removeWalk(root_.get(), segs, 0, &methods);
+    }
+
+    bool Radix::removeRoute(std::string_view method, const std::string &pattern,
+                            const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
+        std::set<std::string> method_set{std::string(method)};
+        return this->removeRoute(method_set, pattern, constraints) != 0;
+    }
+
+    bool Radix::removeRoute(const std::string &pattern,
+                            const std::unordered_map<std::string_view, const param_constraint *> &constraints) {
+        std::vector<std::string> param_names;
+        std::vector<Segment> segs = parseSegments(pattern, param_names);
+        applyConstraints(segs, constraints);
+        return removeWalk(root_.get(), segs, 0, nullptr) != 0;
+    }
+
     std::expected<Radix::MatchResult, STATUS_CODE> Radix::match(const Request &request, std::string *error_description) {
         const std::string path = request.metadata.uri.path;
 

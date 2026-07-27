@@ -26,7 +26,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     uvent 
-    GIT_REPOSITORY https://github.com/Usub-development/uvent.git
+    GIT_REPOSITORY https://github.com/Usub-Foundation/uvent.git
     GIT_TAG main
 )
 

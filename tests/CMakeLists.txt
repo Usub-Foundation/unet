@@ -26,6 +26,14 @@ add_executable(test_http_server
     test_http_server.cpp
 )
 
+add_executable(test_radix_remove
+    test_radix_remove.cpp
+)
+
+add_executable(test_regex_remove
+    test_regex_remove.cpp
+)
+
 add_executable(test_http_client_persistence
     test_http_client_persistence.cpp
 )
@@ -89,6 +97,14 @@ target_include_directories(test_http_server PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
 
+target_include_directories(test_radix_remove PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
+target_include_directories(test_regex_remove PRIVATE
+    ${CMAKE_SOURCE_DIR}/new-include
+)
+
 target_include_directories(test_http_client_persistence PRIVATE
     ${CMAKE_SOURCE_DIR}/new-include
 )
@@ -132,6 +148,8 @@ if(TARGET unet)
     target_link_libraries(test_http1_parser PRIVATE unet)
     target_link_libraries(test_http2_parser PRIVATE unet)
     target_link_libraries(test_http_server PRIVATE unet)
+    target_link_libraries(test_radix_remove PRIVATE unet)
+    target_link_libraries(test_regex_remove PRIVATE unet)
     target_link_libraries(test_http_client_persistence PRIVATE unet)
     target_link_libraries(test_http_client_proxy PRIVATE unet)
     target_link_libraries(test_ws_parser PRIVATE unet)
@@ -182,6 +200,18 @@ add_custom_target(run_http2_parser_tests
 add_custom_target(run_http_server_tests
     COMMAND test_http_server
     DEPENDS test_http_server
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_radix_remove_tests
+    COMMAND test_radix_remove
+    DEPENDS test_radix_remove
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_regex_remove_tests
+    COMMAND test_regex_remove
+    DEPENDS test_regex_remove
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 

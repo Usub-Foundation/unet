@@ -184,6 +184,9 @@ namespace usub::unet::http::router {
 
         Radix() : root_(std::make_unique<RadixNode>()) {}
 
+        // Re-registration of the same (method, pattern) tuple replaces the previously
+        // bound handler and middleware chain in place — a stable contract callers may
+        // rely on. Not thread-safe.
         RouteType &addRoute(const std::set<std::string> &methods, const std::string &pattern,
                             std::function<RadixRoute::HandlerFunctionType> handler,
                             const std::unordered_map<std::string_view, const param_constraint *> &constraints =
@@ -209,6 +212,26 @@ namespace usub::unet::http::router {
             return this->addRoute(method, pathPattern, RouteType::makeHandler(std::forward<Handler>(function)),
                                   constraints);
         }
+
+        // Removes the listed verbs from the route at `pattern` (parsed like addRoute,
+        // so routes are addressed by their template string; "*" drops
+        // accept_all_methods). A verbless route is destroyed with its middleware and
+        // upgrade handler, emptied nodes are pruned; a missing path is a no-op.
+        // Custom-constraint routes need the same `constraints` to be found.
+        // Returns the number of (verb, path) bindings removed. Not thread-safe.
+        std::size_t removeRoute(const std::set<std::string> &methods, const std::string &pattern,
+                                const std::unordered_map<std::string_view, const param_constraint *> &constraints =
+                                        no_constraints);
+
+        // Single-verb convenience — same semantics; returns whether a binding was removed.
+        bool removeRoute(std::string_view method, const std::string &pattern,
+                         const std::unordered_map<std::string_view, const param_constraint *> &constraints =
+                                 no_constraints);
+
+        // Removes the entire route at `pattern` regardless of verbs.
+        bool removeRoute(const std::string &pattern,
+                         const std::unordered_map<std::string_view, const param_constraint *> &constraints =
+                                 no_constraints);
 
         template<typename Handler>
         RouteType &addUpgradeRoute(std::string_view method, const std::string &pattern, Handler &&handler,
@@ -294,6 +317,9 @@ namespace usub::unet::http::router {
 
         void insert(RadixNode *node, const std::vector<Segment> &segs, std::size_t idx,
                     std::unique_ptr<RouteType> &route, bool has_trailing_slash);
+
+        std::size_t removeWalk(RadixNode *node, const std::vector<Segment> &segs, std::size_t idx,
+                               const std::set<std::string> *methods);
 
         bool matchDFS(RadixNode *node, const std::vector<std::string> &segs, std::size_t idx, const Request &request,
                       MatchResult &out, std::string *last_error);

@@ -121,7 +121,12 @@ namespace usub::unet::http {
 
         ~ServerImpl() = default;
 
+        // With the Radix router, re-registering the same (method, pattern) replaces
+        // the handler and middleware chain in place — a stable contract.
         auto &handle(auto &&...args) { return this->router_->addRoute(std::forward<decltype(args)>(args)...); }
+
+        // Removes bindings registered via handle/handleUpgrade; see RouterType::removeRoute.
+        auto unhandle(auto &&...args) { return this->router_->removeRoute(std::forward<decltype(args)>(args)...); }
 
         auto &handleUpgrade(auto &&...args) {
             return this->router_->addUpgradeRoute(std::forward<decltype(args)>(args)...);

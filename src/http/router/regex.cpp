@@ -54,6 +54,39 @@ namespace usub::unet::http::router {
         return this->addRoute(method_set, pattern, std::move(handler));
     }
 
+    std::size_t Regex::removeRoute(const std::set<std::string> &methods, const std::string &pattern) {
+        std::size_t removed = 0;
+        for (auto it = this->routes_.begin(); it != this->routes_.end();) {
+            RouteType *route = it->get();
+            if (route->pattern != pattern) {
+                ++it;
+                continue;
+            }
+            for (const auto &method: methods) { removed += route->allowed_method_tokenns.erase(method); }
+            if (methods.contains("*") && route->accept_all_methods) {
+                route->accept_all_methods = false;
+                ++removed;
+            }
+            if (route->allowed_method_tokenns.empty() && !route->accept_all_methods) {
+                it = this->routes_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        return removed;
+    }
+
+    bool Regex::removeRoute(std::string_view method, const std::string &pattern) {
+        std::set<std::string> method_set{std::string(method)};
+        return this->removeRoute(method_set, pattern) != 0;
+    }
+
+    bool Regex::removeRoute(const std::string &pattern) {
+        const auto old_size = this->routes_.size();
+        std::erase_if(this->routes_, [&](const auto &route) { return route->pattern == pattern; });
+        return this->routes_.size() != old_size;
+    }
+
     std::expected<Regex::MatchResult, STATUS_CODE> Regex::match(const Request &request, std::string *error_description) {
         const std::string &path = request.metadata.uri.path;
         bool has_path_match = false;

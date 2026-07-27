@@ -165,6 +165,17 @@ namespace usub::unet::http::router {
             return this->addRoute(method, pattern, RouteType::makeHandler(std::forward<Handler>(handler)));
         }
 
+        // Removes the listed verbs from every route registered with exactly `pattern`
+        // ("*" drops accept_all_methods); verbless routes are erased. Returns the
+        // number of (verb, pattern) bindings removed. Not thread-safe.
+        std::size_t removeRoute(const std::set<std::string> &methods, const std::string &pattern);
+
+        // Single-verb convenience; returns whether a binding was removed.
+        bool removeRoute(std::string_view method, const std::string &pattern);
+
+        // Removes every route registered with exactly `pattern` regardless of verbs.
+        bool removeRoute(const std::string &pattern);
+
         template<typename Handler>
         RouteType &addUpgradeRoute(std::string_view method, const std::string &pattern, Handler &&handler) {
             auto &route = this->addRoute(method, pattern,
