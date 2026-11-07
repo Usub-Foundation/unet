@@ -164,6 +164,8 @@ usub::server::protocols::http::Request::parseHTTP1_X(const std::string &request,
                         return c;
                     }
                 }
+                if (c == request.end()) break;
+                [[fallthrough]];
             case REQUEST_STATE::TARGET_START:
                 if (*c == '/') [[likely]] {
                     this->state_ = REQUEST_STATE::ORIGIN_FORM;
