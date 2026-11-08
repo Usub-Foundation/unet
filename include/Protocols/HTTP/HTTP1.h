@@ -47,8 +47,8 @@ namespace usub::server::protocols::http {
             if (c == data.end()) co_return;
             // if (ret) co_return;
             c = this->request_.parseHTTP1_X(data, c);
-            // ret = co_await parser;
-            // if (this->request_.getState() < STATE::HEADERS_PARSED) co_return;
+            // Wait for the complete request line before routing.
+            if (this->request_.getState() < REQUEST_STATE::PRE_HEADERS) co_return;
 
             if (!this->matched_route_) {
                 match = this->endpoint_handler_->match(this->request_);
